@@ -220,6 +220,70 @@
   });
   renderVoices();
 
+  /* ---- Search across every lesson ---- */
+  const plain = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/ü/g, "v").replace(/[\s'’·-]/g, "");
+  function setName(s) { return s[0] === "C" ? "Class" : s[0] === "M" ? "Mine" : s[0] === "A" ? "Added" : "L" + s[0]; }
+  function doSearch() {
+    const raw = $("q").value.trim(), box = $("results");
+    if (!raw) { box.hidden = true; box.innerHTML = ""; return; }
+    const isZh = /[㐀-鿿]/.test(raw), q = plain(raw), ql = raw.toLowerCase();
+    const hits = [];
+    ALL.forEach((s, si) => s[3].forEach((w, wi) => {
+      let score = 0;
+      if (isZh) { if (w[0] === raw) score = 3; else if (w[0].includes(raw)) score = 2; }
+      else {
+        const p = plain(w[1]), m = (w[2] || "").toLowerCase();
+        if (p === q) score = 3; else if (p.startsWith(q)) score = 2.5; else if (p.includes(q)) score = 1.5;
+        if (new RegExp("(^|[^a-z])" + ql.replace(/[^a-z0-9 ]/g, "")).test(m)) score = Math.max(score, 2.2);
+        else if (m.includes(ql)) score = Math.max(score, 1);
+      }
+      if (score) hits.push({ score, si, wi, w });
+    }));
+    hits.sort((a, b) => b.score - a.score || a.w[0].length - b.w[0].length);
+    box.innerHTML = ""; box.hidden = false;
+    // lesson titles too (e.g. "nihao" or "hello" finds Lesson 1 你好)
+    ALL.forEach((s, si) => {
+      if (s[0] === "A") return;
+      const hit = isZh ? s[1].includes(raw) : (plain(s[1]) === q || (q.length > 2 && s[2].toLowerCase().includes(ql)) || ALL[si][3].map(w => plain(w[1])).join("").startsWith(q) && q.length > 3);
+      if (!hit) return;
+      const b = document.createElement("button"); b.className = "hit lesson";
+      b.innerHTML = '<span class="hz"></span><span class="hp"></span><span class="hm"></span><span class="hl"></span>';
+      b.children[0].textContent = s[0] === "C" || s[0] === "M" ? "★" : s[0];
+      b.children[1].textContent = s[1]; b.children[2].textContent = s[2]; b.children[3].textContent = "Lesson";
+      b.onclick = () => { setIdx = si; wordIdx = 0; charIdx = 0; store.set("set", si); $("q").value = ""; box.hidden = true; renderAll(); };
+      box.appendChild(b);
+    });
+    if (!hits.length && box.children.length) return;
+    if (!hits.length) { box.innerHTML = '<p class="empty">No word found. You can add it in the ＋ Added tab.</p>'; return; }
+    hits.slice(0, 30).forEach(h => {
+      const b = document.createElement("button");
+      b.className = "hit";
+      b.innerHTML = '<span class="hz"></span><span class="hp"></span><span class="hm"></span><span class="hl"></span>';
+      b.children[0].textContent = h.w[0]; b.children[1].textContent = h.w[1];
+      b.children[2].textContent = h.w[2]; b.children[3].textContent = setName(ALL[h.si]);
+      b.onclick = () => {
+        setIdx = h.si; wordIdx = h.wi; charIdx = 0; store.set("set", h.si);
+        $("q").value = ""; box.hidden = true; renderAll();
+        $("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+      };
+      box.appendChild(b);
+    });
+  }
+  $("q").addEventListener("input", doSearch);
+  $("q").addEventListener("keydown", e => { if (e.key === "Escape") { $("q").value = ""; doSearch(); } });
+
+  /* ---- Tabs ---- */
+  function showTab(t) {
+    store.set("tab", t);
+    $("tPractice").setAttribute("aria-selected", String(t === "p"));
+    $("tAssign").setAttribute("aria-selected", String(t === "a"));
+    $("paneP").hidden = t !== "p"; $("paneA").hidden = t !== "a"; $("tipsP").hidden = t !== "p";
+    if (t === "p" && writer) loadChar(cur());
+  }
+  $("tPractice").onclick = () => showTab("p");
+  $("tAssign").onclick = () => showTab("a");
+  window.CS = { say: (text, btn) => play(text, false, btn) };
+
   /* ---- Add your own words ---- */
   function saveCustom() { store.set("customWords", customWords); store.set("customData", customData); }
   function msg(t, cls) { const m = $("addmsg"); m.textContent = t; m.className = "hint" + (cls ? " " + cls : ""); }
@@ -284,4 +348,5 @@
   function renderAll() { renderSets(); renderWords(); renderWord(); }
   renderAll();
   lastW = $("box").clientWidth;
+  showTab(store.get("tab", "p") === "a" ? "a" : "p");
 })();
