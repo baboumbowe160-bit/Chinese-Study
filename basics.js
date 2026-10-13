@@ -2,6 +2,17 @@
 (function () {
   "use strict";
   const B = window.BASICS; if (!B) return;
+  if (window.BPLUS) {
+    B.picto = BPLUS.picto; B.point = BPLUS.point; B.ideas = B.ideas.concat(BPLUS.ideasMore);
+    Object.assign(B.audio, BPLUS.audio); window.BSTROKES = Object.assign(window.BSTROKES || {}, BPLUS.strokes);
+  }
+  // Hand-drawn sketch of the picture behind a character (paths in a 100×100 box; "F:" = filled shape).
+  function sketch(paths, cls) {
+    const ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg");
+    s.setAttribute("viewBox", "0 0 100 100"); s.setAttribute("class", "sketch" + (cls ? " " + cls : "")); s.setAttribute("aria-hidden", "true");
+    (paths || []).forEach(d => { const p = document.createElementNS(ns, "path"); const fill = d.startsWith("F:"); p.setAttribute("d", fill ? d.slice(2) : d); if (fill) p.setAttribute("class", "f"); s.appendChild(p); });
+    return s;
+  }
   const $ = id => document.getElementById(id);
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const store = {
@@ -88,7 +99,12 @@
       big.classList.add("plain"); w.textContent = o.c; sheetWriter = null;
     }
     info.append(row);
-    top.append(big, info); body.append(top);
+    if (o.art) {
+      const pair = el("div", "sh-pair"); const a = el("div", "sh-art"); a.append(sketch(o.art));
+      a.append(el("span", "sh-cap", "the picture"));
+      pair.append(a, el("span", "sh-arrow", "→"), big); top.append(pair, info);
+    } else top.append(big, info);
+    body.append(top);
     if (o.story) { const s = el("p", "sh-story"); s.textContent = o.story; body.append(s); }
     if (o.extra) body.append(o.extra);
     if (sh.hidden && window.CSNav) sheetTok = CSNav.push(closeSheet);
@@ -108,14 +124,24 @@
     ["numbers", "数", "Numbers", "零 to 万 – and how to say any number"],
     ["strokes", "笔", "Strokes", "The basic strokes & the order rules"],
     ["radicals", "部", "Radicals", "All 214 building blocks, with origins"],
-    ["pictures", "象", "Picture characters", "How drawings became characters"],
-    ["games", "玩", "Games", "Tones, numbers, radicals & pictures"],
+    ["pictures", "象", "Picture characters", B.picto.length + " drawings that became characters"],
+    ["phrases", "说", "Useful phrases", "Classroom and everyday sentences"],
+    ["qwords", "问", "Question & measure words", "什么, 谁, 哪儿, 几 … and 个, 本, 口"],
+    ["games", "玩", "Games", "5 games: tones, numbers, radicals, pictures"],
   ];
   function hub() {
     const p = $("bpane"); p.innerHTML = "";
     const intro = el("div", "b-intro");
     intro.append(el("h2", null, "Chinese from zero"), el("p", null, "Chinese has no alphabet. Each character is a syllable with a meaning, built from strokes and smaller parts. Start with the sounds, then learn how characters are built."));
     p.append(intro);
+    // character of the day – a picture character that changes every day
+    const now = new Date(), day = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
+    const [c, py, m, emo, story, art] = B.picto[day % B.picto.length];
+    const cod = el("button", "cod"); cod.setAttribute("aria-label", "Character of the day: " + c + " " + py + ", " + m);
+    const left = el("div", "cod-art"); left.append(sketch(art));
+    const mid = el("div", "cod-t"); mid.append(el("span", "cod-l", "Character of the day"), el("span", "cod-c", c), el("span", "cod-m", py + " · " + m));
+    cod.append(left, mid); cod.onclick = () => openSheet({ c, py, mean: m + "  " + emo, story, art });
+    p.append(cod);
     const g = el("div", "b-hub");
     SECTIONS.forEach(([id, ch, name, sub], i) => {
       const b = el("button", "b-tile t" + i);
@@ -136,8 +162,8 @@
     curSec = id;
     store.set("bsec", id); seqToken++;
     const p = $("bpane"); p.innerHTML = "";
-    ({ hub, sounds, numbers, strokes, radicals, pictures, games }[id] || hub)();
-    $("paneB").scrollIntoView({ block: "start" });
+    ({ hub, sounds, numbers, strokes, radicals, pictures, phrases, qwords, games }[id] || hub)();
+    window.scrollTo(0, 0);
   }
 
   /* ---------- 1. Sounds ---------- */
@@ -343,37 +369,127 @@
   function pictures() {
     const p = $("bpane"); p.append(header("Picture characters", "象"));
     const c1 = el("div", "b-card");
-    c1.innerHTML = "<p>Chinese writing is over <b>3,000 years old</b>. The oldest characters were carved on turtle shells and animal bones (甲骨文, “oracle bones”) during the Shang dynasty. Many began as simple <b>drawings</b>. Over centuries the drawings became straighter and simpler, until they looked like today's characters.</p><p>Characters are built in three main ways:</p>";
+    c1.innerHTML = "<p>Chinese writing is more than <b>3,000 years old</b>. The oldest characters were carved on turtle shells and ox bones (甲骨文, “oracle bones”) to ask questions about the future. Many began as simple <b>drawings</b>; over the centuries the drawings became straighter and simpler until they looked like today's characters.</p>";
     p.append(c1);
+    const tl = el("div", "b-card timeline"); tl.append(el("h3", null, "How the shapes changed"));
+    [["甲骨文","Oracle bones","about 1200 BC","scratched with a knife on bones – very picture-like"],
+     ["金文","Bronze script","about 1000 BC","cast on bronze bells and pots – rounder shapes"],
+     ["小篆","Seal script","221 BC","the first emperor, Qin Shi Huang, made one standard script"],
+     ["隶书","Clerical script","about 200 BC – 200 AD","flatter and straighter – easier to write with a brush"],
+     ["楷书","Regular script","from about 300 AD","the clear printed form you are learning"],
+     ["简体字","Simplified","1956","fewer strokes, used in China today: 馬 → 马, 門 → 门"]].forEach(([z, n, y, d]) => {
+      const r = el("div", "tl-row"); r.append(el("span", "tl-zh", z)); const t = el("div", "tl-t"); t.append(el("b", null, n + " "), el("span", "tl-y", y), el("div", "tl-d", d)); r.append(t); tl.append(r);
+    });
+    p.append(tl);
+    p.append(el("p", "hint", "Characters are built in four main ways. Tap any card to see the picture next to the real character, watch it being written and hear it."));
     const sec = (title, zh, note) => { const h = el("div", "b-sec"); const t = el("h3"); t.innerHTML = "<span class='b-hz'></span> "; t.firstChild.textContent = zh; t.append(title); h.append(t, el("p", "hint", note)); p.append(h); };
-    sec("1. Pictures", "象形", "A drawing of the thing itself. Tap a card to see the character, hear it, and read its story.");
+    sec("1. Pictures", "象形", "A drawing of the thing itself. These are the oldest characters – " + B.picto.length + " of them here.");
     const g = el("div", "picgrid");
-    B.picto.forEach(([c, py, m, emo, story]) => {
-      const b = el("button", "pic"); b.innerHTML = '<span class="pe"></span><span class="pc"></span><span class="pm"></span>';
-      b.children[0].textContent = emo; b.children[1].textContent = c; b.children[2].textContent = m;
-      b.onclick = () => openSheet({ c, py, mean: m, story: emo + "  " + story });
-      g.append(b);
+    B.picto.forEach(pc => {
+      const [c, py, m, emo, story, art] = pc;
+      const btn = el("button", "pic"); btn.append(sketch(art), el("span", "pc", c), el("span", "pm", m));
+      btn.setAttribute("aria-label", c + " " + py + ", " + m);
+      btn.onclick = () => openSheet({ c, py, mean: m + "  " + emo, story, art });
+      g.append(btn);
     });
     p.append(g);
-    sec("2. Ideas", "会意", "Two or more pictures put together to make a new idea.");
+    sec("2. Pointing", "指事", "A simple picture plus a mark that points to the meaning.");
+    const g4 = el("div", "idealist");
+    B.point.forEach(([c, py, m, story]) => {
+      const btn = el("button", "idea"); btn.innerHTML = '<span class="ic"></span><span class="it"><span class="ip"></span><span class="im"></span></span>';
+      btn.children[0].textContent = c; btn.querySelector(".ip").textContent = py + " – " + m; btn.querySelector(".im").textContent = story;
+      btn.onclick = () => openSheet({ c, py, mean: m, story });
+      g4.append(btn);
+    });
+    p.append(g4);
+    sec("3. Ideas", "会意", "Two or more pictures put together to make a new idea. It is like a little riddle.");
     const g2 = el("div", "idealist");
     B.ideas.forEach(([c, py, m, parts, story]) => {
-      const b = el("button", "idea"); b.innerHTML = '<span class="ic"></span><span class="it"><span class="ip"></span><span class="im"></span></span>';
-      b.children[0].textContent = c; b.querySelector(".ip").textContent = parts; b.querySelector(".im").textContent = "= " + m;
-      b.onclick = () => openSheet({ c, py, mean: m, forms: parts, story });
-      g2.append(b);
+      const btn = el("button", "idea"); btn.innerHTML = '<span class="ic"></span><span class="it"><span class="ip"></span><span class="im"></span></span>';
+      btn.children[0].textContent = c; btn.querySelector(".ip").textContent = parts; btn.querySelector(".im").textContent = "= " + m;
+      btn.onclick = () => openSheet({ c, py, mean: m, forms: parts, story });
+      g2.append(btn);
     });
     p.append(g2);
-    sec("3. Meaning + sound", "形声", "About 80% of characters work like this: one part (often the radical) shows the meaning, the other part shows the sound. This is your secret weapon for guessing new characters!");
+    sec("4. Meaning + sound", "形声", "About 80% of characters work like this: one part (often the radical) shows the meaning, the other part shows the sound. This is your secret weapon for guessing new characters!");
     const g3 = el("div", "idealist");
     B.sounds.forEach(([c, py, m, parts]) => {
-      const b = el("button", "idea"); b.innerHTML = '<span class="ic"></span><span class="it"><span class="ip"></span><span class="im"></span></span>';
-      b.children[0].textContent = c; b.querySelector(".ip").textContent = parts; b.querySelector(".im").textContent = py + " = " + m;
-      b.onclick = () => openSheet({ c, py, mean: m, forms: parts, story: "Look at the parts: the meaning part tells you what it is about, the sound part tells you roughly how to say it." });
-      g3.append(b);
+      const btn = el("button", "idea"); btn.innerHTML = '<span class="ic"></span><span class="it"><span class="ip"></span><span class="im"></span></span>';
+      btn.children[0].textContent = c; btn.querySelector(".ip").textContent = parts; btn.querySelector(".im").textContent = py + " = " + m;
+      btn.onclick = () => openSheet({ c, py, mean: m, forms: parts, story: "Look at the parts: the meaning part tells you what it is about, the sound part tells you roughly how to say it." });
+      g3.append(btn);
     });
     p.append(g3);
-    const play = el("button", "primarybtn", "Play Picture Match"); play.onclick = () => { go("games"); startGame("pic"); }; p.append(play);
+    const row = el("div", "frow");
+    const p1 = el("button", "primarybtn", "Play Picture Match"); p1.onclick = () => { go("games"); startGame("pic"); };
+    const p2 = el("button", "ghost", "Play Make a Character"); p2.onclick = () => { go("games"); startGame("idea"); };
+    row.append(p1, p2); p.append(row);
+  }
+
+  /* ---------- 7. Useful phrases ---------- */
+  const PHRASES = [
+    ["In class", [
+      ["老师好！", "Lǎoshī hǎo!", "Hello, teacher!"], ["同学们好！", "Tóngxuémen hǎo!", "Hello, classmates!"],
+      ["我不懂。", "Wǒ bù dǒng.", "I don't understand."], ["请再说一遍。", "Qǐng zài shuō yí biàn.", "Please say it again."],
+      ["请说慢一点儿。", "Qǐng shuō màn yìdiǎnr.", "Please speak more slowly."], ["这个字怎么读？", "Zhège zì zěnme dú?", "How do you read this character?"],
+      ["这个字怎么写？", "Zhège zì zěnme xiě?", "How do you write this character?"], ["“book”用汉语怎么说？", "“book” yòng Hànyǔ zěnme shuō?", "How do you say “book” in Chinese?"],
+      ["我有一个问题。", "Wǒ yǒu yí ge wèntí.", "I have a question."], ["我知道。", "Wǒ zhīdào.", "I know."], ["我不知道。", "Wǒ bù zhīdào.", "I don't know."],
+      ["对！", "Duì!", "Correct!"], ["不对。", "Bú duì.", "That's not right."]]],
+    ["Meeting people", [
+      ["你好！", "Nǐ hǎo!", "Hello!"], ["你好吗？", "Nǐ hǎo ma?", "How are you?"], ["我很好，谢谢！", "Wǒ hěn hǎo, xièxie!", "I'm fine, thank you!"],
+      ["你叫什么名字？", "Nǐ jiào shénme míngzi?", "What's your name?"], ["认识你很高兴。", "Rènshi nǐ hěn gāoxìng.", "Nice to meet you."],
+      ["我是冈比亚人。", "Wǒ shì Gāngbǐyà rén.", "I am Gambian."], ["再见！", "Zàijiàn!", "Goodbye!"], ["明天见！", "Míngtiān jiàn!", "See you tomorrow!"]]],
+    ["Polite words", [
+      ["谢谢！", "Xièxie!", "Thank you!"], ["不客气。", "Bú kèqi.", "You're welcome."], ["对不起。", "Duìbuqǐ.", "Sorry."],
+      ["没关系。", "Méi guānxi.", "It doesn't matter."], ["请坐。", "Qǐng zuò.", "Please sit down."], ["没问题。", "Méi wèntí.", "No problem."]]],
+    ["Everyday", [
+      ["多少钱？", "Duōshao qián?", "How much is it?"], ["太贵了！", "Tài guì le!", "Too expensive!"], ["我想喝水。", "Wǒ xiǎng hē shuǐ.", "I'd like some water."],
+      ["厕所在哪儿？", "Cèsuǒ zài nǎr?", "Where is the toilet?"], ["现在几点？", "Xiànzài jǐ diǎn?", "What time is it?"],
+      ["我饿了。", "Wǒ è le.", "I'm hungry."], ["我累了。", "Wǒ lèi le.", "I'm tired."], ["加油！", "Jiāyóu!", "You can do it! / Keep going!"]]],
+  ];
+  function phrases() {
+    const p = $("bpane"); p.append(header("Useful phrases", "说"));
+    p.append(el("p", "hint", "Tap the speaker to hear each sentence. Say it out loud three times – speaking is the fastest way to remember."));
+    PHRASES.forEach(([title, list]) => {
+      const c = el("div", "b-card"); c.append(el("h3", null, title));
+      list.forEach(([zh, py, en]) => {
+        const r = el("div", "u-line"); const t = el("div", "u-txt");
+        t.append(el("div", "u-zh", zh), el("div", "u-py", py), el("div", "u-en", en));
+        r.append(t, sayBtn(btn => (window.CSSay ? CSSay(zh, btn) : null), "Listen: " + en));
+        c.append(r);
+      });
+      p.append(c);
+    });
+  }
+
+  /* ---------- 8. Question & measure words ---------- */
+  function qwords() {
+    const p = $("bpane"); p.append(header("Question & measure words", "问"));
+    const c1 = el("div", "b-card"); c1.append(el("h3", null, "Question words"));
+    c1.append(el("p", "hint", "Big rule: put the question word where the answer will go. 你叫什么？ → 我叫马丁。 No need to change the word order!"));
+    [["什么", "shénme", "what", "你叫什么名字？", "Nǐ jiào shénme míngzi?"], ["谁", "shéi", "who", "她是谁？", "Tā shì shéi?"],
+     ["哪", "nǎ", "which", "你是哪国人？", "Nǐ shì nǎ guó rén?"], ["哪儿", "nǎr", "where", "你在哪儿工作？", "Nǐ zài nǎr gōngzuò?"],
+     ["几", "jǐ", "how many (small numbers)", "你家有几口人？", "Nǐ jiā yǒu jǐ kǒu rén?"], ["多少", "duōshao", "how many / how much", "多少钱？", "Duōshao qián?"],
+     ["多大", "duō dà", "how old", "你多大了？", "Nǐ duō dà le?"], ["怎么", "zěnme", "how (to do)", "汉字怎么写？", "Hànzì zěnme xiě?"],
+     ["怎么样", "zěnmeyàng", "how is it", "天气怎么样？", "Tiānqì zěnmeyàng?"], ["什么时候", "shénme shíhou", "when", "你什么时候回家？", "Nǐ shénme shíhou huí jiā?"],
+     ["吗", "ma", "yes/no question", "你是学生吗？", "Nǐ shì xuésheng ma?"], ["呢", "ne", "and you? / what about…?", "我很好，你呢？", "Wǒ hěn hǎo, nǐ ne?"]].forEach(([w, py, en, ex, expy]) => {
+      const r = el("div", "u-line"); const t = el("div", "u-txt");
+      const head = el("div", "u-zh"); head.append(el("b", "qw", w), " " + ex);
+      t.append(head, el("div", "u-py", py + " – " + en), el("div", "u-en", expy));
+      r.append(t, sayBtn(btn => (window.CSSay ? CSSay(ex, btn) : null), "Listen")); c1.append(r);
+    });
+    p.append(c1);
+    const c2 = el("div", "b-card"); c2.append(el("h3", null, "Measure words"));
+    c2.append(el("p", "hint", "In Chinese you can't say “three book”. You need a measure word between the number and the thing: 三本书 (three [volume] books). Before a measure word, “two” is 两: 两个人."));
+    [["个", "gè", "people and most things – use it when unsure", "一个人 · 三个杯子"], ["口", "kǒu", "family members", "我家有四口人"],
+     ["本", "běn", "books", "两本书"], ["块", "kuài", "money (yuan)", "十块钱"], ["杯", "bēi", "a cup of …", "一杯茶"],
+     ["岁", "suì", "years of age", "五岁"], ["些", "xiē", "some", "这些 · 一些水果"], ["点", "diǎn", "o'clock", "八点"], ["分钟", "fēnzhōng", "minutes", "十分钟"]].forEach(([w, py, use, ex]) => {
+      const r = el("div", "u-line"); const t = el("div", "u-txt");
+      const head = el("div", "u-zh"); head.append(el("b", "qw", w), " " + ex);
+      t.append(head, el("div", "u-py", py), el("div", "u-en", use));
+      r.append(t, sayBtn(btn => (window.CSSay ? CSSay(ex.split(" · ")[0], btn) : null), "Listen")); c2.append(r);
+    });
+    p.append(c2);
   }
 
   /* ---------- 6. Games ---------- */
@@ -382,6 +498,7 @@
     ["num", "Number Match", "Match numbers and characters"],
     ["rad", "Radical Quiz", "What does this radical mean?"],
     ["pic", "Picture Match", "Which character is the picture?"],
+    ["idea", "Make a Character", "Put two pictures together"],
   ];
   let best = store.get("bBest", {}), gameId = null, streak = 0, score = 0, total = 0, current = null;
   function games() {
@@ -389,7 +506,7 @@
     const g = el("div", "b-hub");
     GAMES.forEach(([id, name, sub], i) => {
       const b = el("button", "b-tile t" + (i + 1));
-      const s = el("span", "b-tch", ["声", "数", "部", "象"][i]); const t = el("span", "b-tname", name); const d = el("span", "b-tsub", sub + (best[id] ? " · best streak " + best[id] : ""));
+      const s = el("span", "b-tch", ["声", "数", "部", "象", "明"][i]); const t = el("span", "b-tname", name); const d = el("span", "b-tsub", sub + (best[id] ? " · best streak " + best[id] : ""));
       b.append(s, t, d); b.onclick = () => startGame(id); g.append(b);
     });
     const area = el("div"); area.id = "gameArea"; p.append(g, area);
@@ -432,14 +549,20 @@
       q.append(el("p", null, "What does this radical mean?"), el("div", "g-big", r.v && r.v !== r.r ? r.v : (r.s || r.r)));
       if (r.ex.length) q.append(el("p", "hint", "Found in: " + r.ex.slice(0, 3).map(e => e[0]).join(" ")));
       options = shuffle([r, ...wrongs]); correct = r; label = x => x.m;
+    } else if (gameId === "idea") {
+      const it = B.ideas[Math.floor(Math.random() * B.ideas.length)];
+      const wrongs = pickN(B.ideas, 3, it);
+      q.append(el("p", null, "Which character do these make?"), el("div", "g-parts", it[3]), el("p", "hint", "Meaning: " + it[2]));
+      options = shuffle([it, ...wrongs]); correct = it; label = x => x[0];
     } else {
       const pic = B.picto[Math.floor(Math.random() * B.picto.length)];
       const wrongs = pickN(B.picto, 3, pic);
-      q.append(el("p", null, "Which character comes from this picture?"), el("div", "g-big emo", pic[3]), el("p", "hint", pic[2]));
+      const art = el("div", "g-art"); art.append(sketch(pic[5]));
+      q.append(el("p", null, "Which character comes from this picture?"), art, el("p", "hint", pic[3] + " " + pic[2]));
       options = shuffle([pic, ...wrongs]); correct = pic; label = x => x[0];
     }
     options.forEach(o => {
-      const b = el("button", "g-opt" + (gameId === "num" || gameId === "pic" ? " zh" : ""), label(o));
+      const b = el("button", "g-opt" + (gameId === "num" || gameId === "pic" || gameId === "idea" ? " zh" : ""), label(o));
       b.onclick = () => {
         if (opts.dataset.done) return; opts.dataset.done = "1"; total++;
         const ok = o === correct;
@@ -452,6 +575,7 @@
         if (gameId === "pic") { sayChar(correct[0]); fb.textContent += " " + correct[0] + " " + correct[1] + ": " + correct[4]; }
         if (gameId === "num") saySeq([...toZh(correct)]);
         if (gameId === "rad") fb.textContent += " " + (correct.o || "");
+        if (gameId === "idea") { sayChar(correct[0]); fb.textContent += " " + correct[0] + " " + correct[1] + " – " + correct[4]; }
         const nx = el("button", "primarybtn", "Next ›"); nx.onclick = nextQ; box.append(nx); nx.focus();
         box.querySelector(".g-score").textContent = "Score " + score + "/" + total + " · streak " + streak + " · best " + (best[gameId] || 0);
       };

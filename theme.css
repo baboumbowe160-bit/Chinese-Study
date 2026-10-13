@@ -278,3 +278,35 @@ body{font-size:15px;letter-spacing:-.003em}
 .ob-box{background-color:var(--paper)}
 .seal.big{background:var(--seal)}
 .seal.big span{color:#fff7e8}
+
+/* ===== sketches & picture characters ===== */
+.sketch{width:100%;height:100%;display:block}
+.sketch path{fill:none;stroke:var(--seal);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.sketch path.f{fill:var(--seal);stroke:none}
+.picgrid{grid-template-columns:repeat(auto-fill,minmax(98px,1fr))}
+.pic{gap:2px;padding:10px 6px 8px}
+.pic .sketch{width:54px;height:54px;opacity:.9}
+.pic .pc{font-family:var(--f-han);font-size:1.9rem}
+.sh-pair{display:flex;align-items:center;gap:8px}
+.sh-art{width:120px;height:120px;border:1.5px dashed var(--grid);border-radius:8px;background:var(--sheet);position:relative;padding:8px;flex:0 0 auto}
+.sh-cap{position:absolute;left:0;right:0;bottom:-20px;text-align:center;font-size:.72rem;color:var(--muted)}
+.sh-arrow{font-family:var(--f-display);font-size:1.6rem;color:var(--gold)}
+.sh-top{padding-bottom:8px}
+@media (max-width:420px){.sh-art{width:96px;height:96px}}
+.timeline .tl-row{display:flex;gap:12px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line)}
+.timeline .tl-row:last-child{border-bottom:none}
+.tl-zh{flex:0 0 3.6em;font-family:var(--f-brush);font-size:1.25rem;color:var(--seal)}
+.tl-t{flex:1;min-width:0;font-size:.9rem}
+.tl-y{color:var(--jade);font-size:.8rem}
+.tl-d{color:var(--muted);font-size:.82rem}
+.cod{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:1px solid var(--gold);background:linear-gradient(135deg,var(--gold-soft),#fff);color:var(--ink);border-radius:14px;padding:12px 14px;font:inherit;cursor:pointer}
+.cod-art{flex:0 0 64px;height:64px;background:#fff;border-radius:10px;border:1px dashed var(--grid);padding:6px}
+.cod-t{display:flex;flex-direction:column;min-width:0}
+.cod-l{font-size:.78rem;color:var(--jade);font-weight:700}
+.cod-c{font-family:var(--f-han);font-size:2rem;line-height:1.15}
+.cod-m{font-size:.85rem;color:var(--muted)}
+.g-art{width:120px;height:120px;margin:6px auto;border:1.5px dashed var(--grid);border-radius:10px;padding:8px;background:#fff}
+.g-parts{font-family:var(--f-han);font-size:1.8rem;margin:8px 0}
+.frow .ghost{flex:1}
+.qw{font-family:var(--f-han);color:var(--seal);font-weight:700}
+.b-hub>.b-tile:last-child:nth-child(odd){grid-column:1/-1;min-height:0}
