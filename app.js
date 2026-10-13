@@ -157,6 +157,38 @@
   $("bNext").onclick = () => move(1);
   $("bPrev").onclick = () => move(-1);
 
+  /* ---- Pronunciation (phone's built-in Chinese voice) ---- */
+  const synth = window.speechSynthesis;
+  let zhVoice = null;
+  function pickVoice() {
+    if (!synth) return;
+    const vs = synth.getVoices();
+    zhVoice = vs.find(v => /^zh[-_]CN/i.test(v.lang)) || vs.find(v => /^cmn/i.test(v.lang)) ||
+              vs.find(v => /^zh/i.test(v.lang) && !/HK|yue/i.test(v.lang)) || null;
+  }
+  if (synth) { pickVoice(); try { synth.addEventListener("voiceschanged", pickVoice); } catch (e) { synth.onvoiceschanged = pickVoice; } }
+  function voiceHelp(show) {
+    const m = $("voicemsg");
+    m.hidden = !show;
+    if (show) m.textContent = "No Chinese voice found on this phone. Go to Settings → Accessibility → Text-to-speech → Google speech engine → Install voice data → Chinese (Mandarin).";
+  }
+  function speak(text, rate, btn) {
+    if (!synth) { voiceHelp(true); return; }
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "zh-CN"; u.rate = rate;
+    if (zhVoice) u.voice = zhVoice;
+    btn.classList.add("playing");
+    let started = false;
+    u.onstart = () => { started = true; voiceHelp(false); };
+    u.onend = u.onerror = () => btn.classList.remove("playing");
+    synth.speak(u);
+    setTimeout(() => { if (!started && !synth.speaking) { btn.classList.remove("playing"); if (!zhVoice) voiceHelp(true); } }, 2500);
+  }
+  const curWord = () => words()[wordIdx] && words()[wordIdx][0];
+  $("bSay").onclick = () => { const w = curWord(); if (w) speak(w, 0.9, $("bSay")); };
+  $("bSlow").onclick = () => { const w = curWord(); if (w) speak(w, 0.5, $("bSlow")); };
+
   /* ---- Add your own words ---- */
   function saveCustom() { store.set("customWords", customWords); store.set("customData", customData); }
   function msg(t, cls) { const m = $("addmsg"); m.textContent = t; m.className = "hint" + (cls ? " " + cls : ""); }

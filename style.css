@@ -66,3 +66,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--seal);outline-o
 .err{background:var(--seal-soft);padding:10px 12px;border-radius:10px;font-size:.9rem}
 .credits{font-size:.72rem;margin-top:6px}
 .credits a{color:inherit}
+
+.sayrow{display:flex;gap:8px;justify-content:center;margin-top:8px}
+.say{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--seal);background:var(--sheet);color:var(--seal);border-radius:999px;padding:7px 14px;font:inherit;font-weight:700;cursor:pointer}
+.say svg{width:18px;height:18px;fill:var(--seal);stroke:var(--seal)}
+.say.playing{background:var(--seal);color:#fff}
+.say.playing svg{fill:#fff;stroke:#fff}
+#voicemsg{max-width:300px;margin:8px auto 0}
