@@ -91,13 +91,16 @@
     top.append(big, info); body.append(top);
     if (o.story) { const s = el("p", "sh-story"); s.textContent = o.story; body.append(s); }
     if (o.extra) body.append(o.extra);
+    if (sh.hidden && window.CSNav) sheetTok = CSNav.push(closeSheet);
     sh.hidden = false; document.body.classList.add("noscroll");
     $("bsheetClose").focus();
   }
+  let sheetTok = null;
+  const userCloseSheet = () => { if (!(window.CSNav && CSNav.done(sheetTok))) closeSheet(); };
   function closeSheet() { $("bsheet").hidden = true; document.body.classList.remove("noscroll"); sheetWriter = null; $("bsheetBody").innerHTML = ""; }
-  $("bsheetClose").onclick = closeSheet;
-  $("bsheet").addEventListener("click", e => { if (e.target === $("bsheet")) closeSheet(); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("bsheet").hidden) closeSheet(); });
+  $("bsheetClose").onclick = userCloseSheet;
+  $("bsheet").addEventListener("click", e => { if (e.target === $("bsheet")) userCloseSheet(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("bsheet").hidden) userCloseSheet(); });
 
   /* ---------- hub & navigation ---------- */
   const SECTIONS = [
@@ -123,11 +126,14 @@
   }
   function header(title, zh) {
     const h = el("div", "b-head");
-    const back = el("button", "ghost b-back", "‹ Basics"); back.onclick = () => go("hub");
+    const back = el("button", "ghost b-back", "‹ Back"); back.onclick = () => { if (!(window.CSNav && CSNav.done(secTok))) go("hub"); };
     const t = el("h2", null); t.innerHTML = '<span class="b-hz"></span>'; t.firstChild.textContent = zh; t.append(" " + title);
     h.append(back, t); return h;
   }
+  let curSec = "hub", secTok = null;
   function go(id) {
+    if (id !== curSec && window.CSNav && !CSNav.restoring) { const prev = curSec; secTok = CSNav.push(() => go(prev)); }
+    curSec = id;
     store.set("bsec", id); seqToken++;
     const p = $("bpane"); p.innerHTML = "";
     ({ hub, sounds, numbers, strokes, radicals, pictures, games }[id] || hub)();

@@ -12,8 +12,10 @@
 
   /* ---------- overlay shell ---------- */
   const ov = $("ob");
-  function show(build) { const box = $("obBox"); box.innerHTML = ""; build(box); ov.hidden = false; document.body.classList.add("noscroll"); box.scrollTop = 0; const f = box.querySelector("input") || box.querySelector(".primarybtn"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 60); }
+  let obTok = null;
+  function show(build) { if (ov.hidden && window.CSNav) obTok = CSNav.push(close); const box = $("obBox"); box.innerHTML = ""; build(box); ov.hidden = false; document.body.classList.add("noscroll"); box.scrollTop = 0; const f = box.querySelector("input") || box.querySelector(".primarybtn"); if (f) setTimeout(() => f.focus({ preventScroll: true }), 60); }
   function close() { ov.hidden = true; document.body.classList.remove("noscroll"); }
+  const userClose = () => { if (!(window.CSNav && CSNav.done(obTok))) close(); };
   function dots(n, i) { const d = el("div", "ob-dots"); for (let k = 0; k < n; k++) d.append(el("span", k === i ? "on" : null)); d.setAttribute("aria-label", "Step " + (i + 1) + " of " + n); return d; }
   function foot(onNext, nextLabel, onSkip, skipLabel) {
     const f = el("div", "ob-foot");
@@ -29,9 +31,9 @@
       b.append(dots(STEPS, 0));
       const hero = el("div", "ob-hero");
       const seal = el("div", "seal big"); seal.append(el("span", null, "学")); hero.append(seal);
-      hero.append(el("div", "ob-zh", "欢迎！"), el("h2", null, "Welcome to Chinese Study"));
+      hero.append(el("div", "ob-zh", "欢迎！"), el("h2", null, "Welcome to Chinese Study Partner"));
       b.append(hero);
-      b.append(el("p", null, "Your pocket exercise book for learning Chinese from zero – made for students using HSK Standard Course 1."));
+      b.append(el("p", null, "学伴 xuébàn – your study partner for learning Chinese from zero, made for students using HSK Standard Course 1."));
       const ul = el("ul", "ob-list");
       [["学", "Learn", "pinyin, tones, numbers, strokes, radicals and how characters began"],
        ["写", "Write", "every word from Lessons 1–15, with stroke order, tracing and real voices"],
@@ -115,15 +117,15 @@
     });
   }
   function finish() {
-    store.set("welcomed", true); close();
-    const t = document.getElementById("tBasics"); if (t) t.click();
+    store.set("welcomed", true); userClose();
+    setTimeout(() => { const t = document.getElementById("tBasics"); if (t) t.click(); }, 120);
   }
 
   /* ---------- profile panel ---------- */
   function profile() {
     const n = store.get("myName", null), pr = store.get("profile", { first: "", last: "" }) || {};
     show(b => {
-      const x = el("button", "ghost ob-x", "✕"); x.setAttribute("aria-label", "Close"); x.onclick = close; b.append(x);
+      const x = el("button", "ghost ob-x", "✕"); x.setAttribute("aria-label", "Close"); x.onclick = userClose; b.append(x);
       b.append(el("h2", null, "My profile"));
       const f = el("div", "n-form");
       f.innerHTML = '<label for="pfFirst">First name</label><input id="pfFirst" autocomplete="given-name"><label for="pfLast">Surname</label><input id="pfLast" autocomplete="family-name">';
@@ -151,7 +153,7 @@
   /* ---------- references ---------- */
   function references() {
     show(b => {
-      const x = el("button", "ghost ob-x", "✕"); x.setAttribute("aria-label", "Close"); x.onclick = close; b.append(x);
+      const x = el("button", "ghost ob-x", "✕"); x.setAttribute("aria-label", "Close"); x.onclick = userClose; b.append(x);
       b.append(el("h2", null, "References & credits"));
       const sec = (title, items) => {
         b.append(el("h3", null, title));
@@ -182,7 +184,7 @@
       ]);
       sec("Fonts", ["Ma Shan Zheng (brush), Young Serif and Lexend – SIL Open Font License."]);
       b.append(el("p", "hint", "Origins of characters are the traditional explanations used in teaching. Scholars sometimes disagree about the oldest meanings."));
-      const back = el("button", "primarybtn", "Close"); back.onclick = close; b.append(back);
+      const back = el("button", "primarybtn", "Close"); back.onclick = userClose; b.append(back);
     });
   }
 

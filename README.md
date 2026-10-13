@@ -1,4 +1,4 @@
-# Chinese Study
+# Chinese Study Partner (学伴)
 
 Offline app for practising Chinese character stroke order (HSK 1 words, class words and your own words).
 

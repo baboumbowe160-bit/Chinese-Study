@@ -93,7 +93,7 @@
       const f = document.createElement("figure");
       const img = document.createElement("img");
       const url = URL.createObjectURL(p.blob); img.src = url; img.alt = "Photo of " + a.title;
-      img.onclick = () => { $("viewerImg").src = url; $("viewer").hidden = false; };
+      img.onclick = () => { $("viewerImg").src = url; if (window.CSNav) viewTok = CSNav.push(hideViewer); $("viewer").hidden = false; };
       const del = document.createElement("button"); del.className = "pdel"; del.textContent = "×"; del.setAttribute("aria-label", "Remove photo");
       del.onclick = async () => {
         if (del.dataset.c !== "1") { del.dataset.c = "1"; del.textContent = "Remove?"; setTimeout(() => { del.dataset.c = ""; del.textContent = "×"; }, 3000); return; }
@@ -154,6 +154,9 @@
     });
   }
 
+  let viewTok = null, formTok = null;
+  function hideViewer() { $("viewer").hidden = true; }
+  function userHideViewer() { if (!(window.CSNav && CSNav.done(viewTok))) hideViewer(); }
   /* ---- Add / edit form ---- */
   function openForm(a) {
     editing = a || null;
@@ -163,13 +166,15 @@
     $("aTask").value = a ? (a.task || "") : "";
     $("aWork").value = a ? (a.work || "") : "";
     $("aDelete").hidden = !a; $("aDelete").textContent = "Delete"; $("aDelete").dataset.c = "";
+    if ($("aForm").hidden && window.CSNav) formTok = CSNav.push(closeForm);
     $("aForm").hidden = false; $("aNew").hidden = true;
     $("aForm").scrollIntoView({ behavior: "smooth", block: "start" });
     $("aTitle").focus();
   }
   function closeForm() { $("aForm").hidden = true; $("aNew").hidden = false; editing = null; }
   $("aNew").onclick = () => openForm(null);
-  $("aCancel").onclick = closeForm;
+  const userCloseForm = () => { if (!(window.CSNav && CSNav.done(formTok))) closeForm(); };
+  $("aCancel").onclick = userCloseForm;
   $("aForm").addEventListener("submit", e => {
     e.preventDefault();
     const v = { title: $("aTitle").value.trim(), date: $("aDate").value, task: $("aTask").value.trim(), work: $("aWork").value.replace(/\s+$/, "") };
@@ -179,7 +184,7 @@
       const a = Object.assign({ id: "a" + Date.now(), n: Math.max(0, ...list.map(x => x.n)) + 1, done: false }, v);
       list.push(a); open.add(a.id); store.set("aOpen", [...open]);
     }
-    save(); closeForm(); render();
+    save(); userCloseForm(); render();
   });
   $("aDelete").onclick = async () => {
     const b = $("aDelete");
@@ -188,11 +193,11 @@
     const id = editing.id;
     list = list.filter(x => x.id !== id); save();
     try { await delAllPhotos(id); } catch (e) {}
-    closeForm(); render();
+    userCloseForm(); render();
   };
   $("aq").addEventListener("input", render);
-  $("viewerClose").onclick = () => { $("viewer").hidden = true; };
-  $("viewer").addEventListener("click", e => { if (e.target === $("viewer")) $("viewer").hidden = true; });
+  $("viewerClose").onclick = userHideViewer;
+  $("viewer").addEventListener("click", e => { if (e.target === $("viewer")) userHideViewer(); });
 
   render();
 })();

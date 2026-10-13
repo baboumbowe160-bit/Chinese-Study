@@ -290,6 +290,7 @@
 
   /* ---- Tabs ---- */
   function showTab(t) {
+    curTab = t;
     store.set("tab", t);
     const map = { b: ["tBasics", "paneB"], p: ["tPractice", "paneP"], u: ["tUse", "paneU"], a: ["tAssign", "paneA"] };
     Object.entries(map).forEach(([k, [tab, pane]]) => { $(tab).setAttribute("aria-selected", String(k === t)); $(pane).hidden = k !== t; });
@@ -297,10 +298,16 @@
     window.scrollTo(0, 0);
     if (t === "p" && writer) loadChar(cur());
   }
-  $("tPractice").onclick = () => showTab("p");
-  $("tAssign").onclick = () => showTab("a");
-  $("tBasics").onclick = () => showTab("b");
-  $("tUse").onclick = () => showTab("u");
+  let curTab = null;
+  function userTab(t) {
+    const prev = curTab;
+    if (prev && prev !== t && window.CSNav) CSNav.push(() => showTab(prev), "tab");
+    showTab(t);
+  }
+  $("tPractice").onclick = () => userTab("p");
+  $("tAssign").onclick = () => userTab("a");
+  $("tBasics").onclick = () => userTab("b");
+  $("tUse").onclick = () => userTab("u");
   window.CS = { say: (text, btn) => play(text, false, btn) };
 
   /* ---- Add your own words ---- */

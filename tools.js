@@ -76,7 +76,7 @@
   /* ---------- layout helpers ---------- */
   function header(title, zh) {
     const h = el("div", "b-head");
-    const back = el("button", "ghost b-back", "‹ Back"); back.onclick = () => go("hub");
+    const back = el("button", "ghost b-back", "‹ Back"); back.onclick = () => { if (!(window.CSNav && CSNav.done(secTok))) go("hub"); };
     const t = el("h2"); const z = el("span", "b-hz", zh); t.append(z, " " + title); h.append(back, t); return h;
   }
   function card(title) { const c = el("div", "b-card"); if (title) c.append(el("h3", null, title)); return c; }
@@ -100,7 +100,10 @@
     });
     p.append(g);
   }
-  function go(id) { store.set("usec", id); tokn++; const p = $("upane"); p.innerHTML = ""; ({ hub, name, dates, words }[id] || hub)(); }
+  let curSec = "hub", secTok = null;
+  function go(id) {
+    if (id !== curSec && window.CSNav && !CSNav.restoring && document.getElementById("upane").childElementCount) { const prev = curSec; secTok = CSNav.push(() => go(prev)); }
+    curSec = id; store.set("usec", id); tokn++; const p = $("upane"); p.innerHTML = ""; ({ hub, name, dates, words }[id] || hub)(); }
 
   /* ---------- 1. Chinese name ---------- */
   const FAM = { b: "bp", p: "bp", d: "dt", t: "dt", g: "gk", k: "gk", j: "jqzh", q: "qjch", x: "xsh", zh: "zhj", ch: "chq", sh: "shx", z: "zj", c: "cq", s: "sx", l: "lr", r: "rl", n: "nl", m: "m", f: "f", h: "h", y: "y", w: "w", "": "" };

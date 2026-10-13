@@ -8,21 +8,18 @@
 @font-face{font-family:"CS Body";src:url(fonts/body-Bold.woff) format("woff");font-weight:700;font-display:swap}
 
 :root{
-  --paper:#edf1ea; --sheet:#f8faf5; --tile:#fbfcf8; --ink:#1f2622; --muted:#5b665f; --line:#d3dbd1;
-  --seal:#b8321e; --seal-soft:#f4ddd6; --grid:#e3aa9c; --ok:#2e7350; --outline:#dde3da;
-  --jade:#2e6b5e; --gold:#a87410; --indigo:#3d4c8f; --plum:#86395f;
+  /* 中国红 China red, 金 gold, on warm silk-white paper. One bright theme on every phone. */
+  --paper:#fff8f2; --sheet:#ffffff; --tile:#fffdfb; --ink:#2b1915; --muted:#7b625a; --line:#f0ddd4;
+  --seal:#c8161d; --seal-deep:#9e0f15; --seal-soft:#fde6e1; --grid:#f2b1a6; --ok:#2e7d4f; --outline:#f3e3dc;
+  --jade:#a3650a; --gold:#d9a521; --gold-soft:#fff1cf; --indigo:#a3650a; --plum:#9e0f15;
   --f-body:"CS Body","Lexend",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-display:"CS Display",Georgia,"Times New Roman",serif;
   --f-brush:"CS Brush","Ma Shan Zheng","KaiTi","STKaiti","Kaiti SC",serif;
   --dock-h:70px;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root{
-  --paper:#121815; --sheet:#19211d; --tile:#1c2420; --ink:#e8ede6; --muted:#9ba79f; --line:#2b3631;
-  --seal:#e0644c; --seal-soft:#3a221d; --grid:#6e3a30; --ok:#6cc391; --outline:#323d37;
-  --jade:#6cc2ae; --gold:#e2b04e; --indigo:#a2afef; --plum:#e08fbb; color-scheme:dark}}
-
 body{font-family:var(--f-body);background-color:var(--paper);
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.25 0 0 0 0 0.2 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.25 0 0 0 0 0.15 0 0 0 .045 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   padding-bottom:calc(var(--dock-h) + env(safe-area-inset-bottom,0px))}
 .wrap{gap:16px;padding-block:10px 28px}
 
@@ -245,3 +242,39 @@ body{font-size:15px;letter-spacing:-.003em}
 .n-why summary{padding:0}
 .ob-picker .n-area .primarybtn{margin-top:4px}
 .ob-chosen{color:var(--seal)!important;font-weight:700}
+
+/* ===== red & gold header ===== */
+.top{margin:-10px -16px 0;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 16px;background:var(--seal);
+  background-image:repeating-linear-gradient(45deg,rgba(255,215,120,.07) 0 2px,transparent 2px 14px),repeating-linear-gradient(-45deg,rgba(255,215,120,.07) 0 2px,transparent 2px 14px);
+  border-bottom:3px solid var(--gold);border-radius:0 0 18px 18px}
+:root{padding-top:0!important}
+.top .seal{background:var(--gold);box-shadow:inset 0 0 0 3px var(--gold),inset 0 0 0 5px rgba(158,15,21,.55)}
+.top .seal span{color:var(--seal-deep)}
+.top .hello-zh{color:#fff7e8}
+.top .hello-sub{color:#ffe3b0}
+.top #today{color:#ffd77a}
+.top #helloName{color:#fff7e8}
+.top .profile:focus-visible{outline-color:#ffd77a}
+/* dock */
+.dock{background:#fffdfb;border-top:2px solid var(--gold)}
+.dock button[aria-selected="true"] .stamp{background:var(--seal);border-color:var(--seal);color:#fff7e8}
+.stamp{border-color:var(--line)}
+/* accents */
+.b-tile .b-tch{border-color:var(--c);color:var(--c)}
+.b-tile{--c:var(--seal)}
+.b-tile.t1,.b-tile.t3,.b-tile.t5{--c:var(--jade)}
+.b-tile::after{background:var(--gold);opacity:.10}
+.strip button[aria-pressed="true"],.voices button[aria-pressed="true"],.trait[aria-pressed="true"],.ord{background:var(--seal);border-color:var(--seal);color:#fff}
+.trait[aria-pressed="true"] span{color:#fff}
+.bookref,.n-tag{color:var(--jade);border-color:var(--gold)}
+.help summary,.refs a{color:var(--seal-deep)}
+.u-note{border-left-color:var(--gold)}
+.cal-d.today{border-color:var(--gold);background:var(--gold-soft)}
+.clock-big{color:var(--seal)}
+.primarybtn{background:var(--seal);box-shadow:0 2px 0 var(--seal-deep)}
+.primarybtn:active{transform:translateY(1px);box-shadow:none}
+.b-head{background:var(--paper)}
+.ob-dots span.on{background:var(--seal)}
+.ob-box{background-color:var(--paper)}
+.seal.big{background:var(--seal)}
+.seal.big span{color:#fff7e8}

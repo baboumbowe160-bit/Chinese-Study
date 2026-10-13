@@ -1,14 +1,14 @@
 {
-  "name": "Chinese Study",
-  "short_name": "Chinese Study",
-  "description": "Learn to write Chinese characters in the correct stroke order. HSK 1 words, class words and your own words. Works offline.",
+  "name": "Chinese Study Partner",
+  "short_name": "Study Partner",
+  "description": "Your partner for learning Chinese: HSK 1 words with stroke order and native voices, pinyin, numbers, radicals, your Chinese name, dates and homework. Works offline.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f4f5f1",
-  "theme_color": "#b3321f",
+  "background_color": "#fff8f2",
+  "theme_color": "#c8161d",
   "lang": "en",
   "icons": [
     {
