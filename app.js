@@ -71,7 +71,8 @@
   }
 
   function renderWord() {
-    if ($("ppanel") && !$("ppanel").hidden) { const mode = $("ppanel").dataset.mode; setTimeout(() => (mode === "type" ? typePanel() : paperPanel()), 0); }
+    // a new word starts fresh on the writing grid – close Type it / Paper so they don't follow you around
+    if ($("ppanel") && !$("ppanel").hidden) closePanel();
     const W = words();
     $("practice").hidden = !W.length;
     if (!W.length) { writer = null; return; }
@@ -228,57 +229,198 @@
       img.onerror = () => { URL.revokeObjectURL(url); res(file); }; img.src = url;
     });
   }
+  async function updatePhoto(rec) { const d = await photoDb(); return new Promise(res => { const t = d.transaction("photos", "readwrite"); t.objectStore("photos").put(rec); t.oncomplete = res; t.onerror = res; }); }
+  // every character the app has stroke data for = what the checker can recognise
+  const pool = c => DATA[c] || customData[c] || (window.BPLUS && BPLUS.strokes[c]) || (window.BSTROKES && BSTROKES[c]);
+  pool.all = () => [...new Set([...Object.keys(DATA), ...Object.keys(customData), ...Object.keys((window.BPLUS && BPLUS.strokes) || {}), ...Object.keys(window.BSTROKES || {})])].filter(c => /[㐀-鿿]/.test(c));
+  function loadImg(blob) {
+    return new Promise((res, rej) => { const url = URL.createObjectURL(blob), img = new Image(); img.onload = () => res({ img, url }); img.onerror = rej; img.src = url; });
+  }
   function paperPanel() {
     const w = words()[wordIdx]; if (!w) return;
     const key = "practice:" + w[0];
     const p = $("ppanel"); p.innerHTML = ""; p.hidden = false;
     p.append(mk("h3", null, "Practise on paper or in your book"));
     const steps = mk("ol", "pp-steps");
-    ["Watch the stroke order above.", "Write " + w[0] + " in your book 10 times, saying it aloud each time.", "Take a photo and add it here.", "Compare with the model below and tick what you got right."].forEach(s => steps.append(mk("li", null, s)));
+    ["Watch the stroke order above.", "Write " + w[0] + " in your book several times, saying it aloud each time. Use dark pen or pencil.", "Take a clear photo from straight above, in good light.", "Tap the photo – the app reads your writing and marks it."].forEach(s => steps.append(mk("li", null, s)));
     p.append(steps);
-    const model = mk("div", "pp-model"); model.append(mk("span", "pp-z", w[0]), mk("span", "pp-py", w[1] + (w[2] ? " · " + w[2] : "")));
-    const strokes = hanChars(w[0]).map(c => c + " = " + charData(c).strokes.length + " strokes").join(" · ");
-    model.append(mk("span", "hint", strokes));
-    p.append(model);
-    const gal = mk("div", "photos"); p.append(gal);
+    const gal = mk("div", "photos"), ck = mk("div", "ck"); ck.hidden = true;
+    p.append(gal, ck);
     const review = mk("div", "pp-review");
     const saved = store.get("paperReview", {})[w[0]] || {};
-    review.append(mk("p", "label", "Review your writing"));
+    review.append(mk("p", "label", "Your own checklist"));
+    const boxes = {};
     [["count", "Right number of strokes"], ["order", "Strokes in the correct order"], ["shape", "Shape matches the model"], ["box", "Fits neatly in the square"]].forEach(([k, label]) => {
-      const l = mk("label", "pp-chk"); const cb = mk("input"); cb.type = "checkbox"; cb.checked = !!saved[k];
+      const l = mk("label", "pp-chk"); const cb = mk("input"); cb.type = "checkbox"; cb.checked = !!saved[k]; boxes[k] = cb;
       cb.onchange = () => { const all = store.get("paperReview", {}); all[w[0]] = Object.assign({}, all[w[0]], { [k]: cb.checked, t: Date.now() }); store.set("paperReview", all); score(); };
       l.append(cb, " " + label); review.append(l);
     });
     const sc = mk("p", "g-fb"); review.append(sc);
-    function score() { const r = store.get("paperReview", {})[w[0]] || {}; const n = ["count", "order", "shape", "box"].filter(k => r[k]).length; sc.textContent = n === 4 ? "Excellent – all four checks! 很好！" : n + " of 4 checks. Write it again and look at what is missing."; sc.className = "g-fb " + (n === 4 ? "good" : ""); }
+    function score() { const r = store.get("paperReview", {})[w[0]] || {}; const n = ["count", "order", "shape", "box"].filter(k => r[k]).length; sc.textContent = n === 4 ? "Excellent – all four checks! 很好！" : n + " of 4 checks."; sc.className = "g-fb " + (n === 4 ? "good" : ""); }
     score();
     p.append(review);
-    p.append(mk("p", "hint", "The app can't read handwriting from a photo. Use the checklist, or share the photo with your teacher for a real review."));
+    p.append(mk("p", "hint", "The app checks the shape of each character in your photo. A photo can't show the order you wrote the strokes in – use the strict Test above for stroke order."));
+
     async function draw() {
       gal.innerHTML = "";
       const list = await wordPhotos(key);
       list.forEach(ph => {
         const f = mk("figure"); const img = mk("img"); const url = URL.createObjectURL(ph.blob); img.src = url; img.alt = "My handwriting of " + w[0];
-        img.onclick = () => { $("viewerImg").src = url; $("viewer").hidden = false; };
+        img.onclick = () => openCheck(ph);
         const del = mk("button", "pdel", "×"); del.setAttribute("aria-label", "Remove photo");
         del.onclick = async () => { if (del.dataset.c !== "1") { del.dataset.c = "1"; del.textContent = "Remove?"; return; } await delPhoto(ph.id); draw(); };
-        f.append(img, del); gal.append(f);
-        if (navigator.canShare) {
-          try {
-            const file = new File([ph.blob], "handwriting-" + w[0] + ".jpg", { type: "image/jpeg" });
-            if (navigator.canShare({ files: [file] })) {
-              const sh = mk("button", "ghost pp-share", "Send to teacher");
-              sh.onclick = () => navigator.share({ files: [file], title: "My handwriting: " + w[0], text: "My handwriting practice: " + w[0] + " (" + w[1] + ")" }).catch(() => {});
-              f.append(sh);
-            }
-          } catch (e) {}
-        }
+        const best = ph.checks ? Object.values(ph.checks) : [];
+        const tag = mk("button", "pp-tag", best.length ? "✓ " + Math.round(Math.max(...best) * 100) + "%" : "Check ✓");
+        tag.onclick = () => openCheck(ph);
+        f.append(img, del, tag); gal.append(f);
       });
       const add = mk("label", "padd"); add.innerHTML = '<input type="file" accept="image/*" capture="environment" hidden><span>＋ Take photo</span>';
-      add.querySelector("input").onchange = async e => { add.querySelector("span").textContent = "Saving…"; try { for (const f of e.target.files) await savePhoto(key, await shrink(f)); } catch (err) { add.querySelector("span").textContent = "Couldn't save photo"; return; } draw(); };
-      const pick = mk("label", "padd"); pick.innerHTML = '<input type="file" accept="image/*" multiple hidden><span>＋ From gallery</span>';
-      pick.querySelector("input").onchange = add.querySelector("input").onchange;
+      const onPick = async e => {
+        add.querySelector("span").textContent = "Saving…"; let last = null;
+        try { for (const f of e.target.files) { await savePhoto(key, await shrink(f)); } } catch (err) { add.querySelector("span").textContent = "Couldn't save photo"; return; }
+        await draw(); const l = await wordPhotos(key); last = l[l.length - 1]; if (last) openCheck(last);
+      };
+      add.querySelector("input").onchange = onPick;
+      const pick = mk("label", "padd"); pick.innerHTML = '<input type="file" accept="image/*" hidden><span>＋ From gallery</span>';
+      pick.querySelector("input").onchange = onPick;
       gal.append(add, pick);
+    }
+
+    /* ---- the checker ---- */
+    let navTok = null;
+    function closeCheck() { ck.hidden = true; ck.innerHTML = ""; gal.hidden = false; draw(); if (navTok && window.CSNav) { const t = navTok; navTok = null; CSNav.done(t); } }
+    async function openCheck(ph) {
+      ck.innerHTML = ""; ck.hidden = false; gal.hidden = true;
+      if (window.CSNav && !navTok) navTok = CSNav.push(() => { navTok = null; ck.hidden = true; ck.innerHTML = ""; gal.hidden = false; draw(); });
+      const head = mk("div", "ck-head");
+      const back = mk("button", "ghost", "‹ Photos"); back.onclick = closeCheck;
+      head.append(back, mk("b", null, "Check my writing"));
+      ck.append(head);
+      const targets = [...new Set(hanChars(w[0]))];
+      let target = targets[charIdx] || targets[0];
+      const chips = mk("div", "ck-chips");
+      if (targets.length > 1) {
+        chips.append(mk("span", "hint", "Which character? "));
+        targets.forEach(c => { const b = mk("button", "ck-chip" + (c === target ? " on" : ""), c); b.onclick = () => { target = c; chips.querySelectorAll(".ck-chip").forEach(x => x.classList.toggle("on", x === b)); }; chips.append(b); });
+        ck.append(chips);
+      }
+      const tip = mk("p", "hint", "Finding your characters…"); ck.append(tip);
+      const stage = mk("div", "ck-stage"); const cv = mk("canvas"); stage.append(cv); ck.append(stage);
+      const sizeRow = mk("label", "ck-size"); const rng = mk("input"); rng.type = "range"; rng.min = "5"; rng.max = "100"; rng.value = "45"; sizeRow.append("Box size ", rng); ck.append(sizeRow);
+      const go = mk("button", "primarybtn", "Check this character"); ck.append(go);
+      const out = mk("div", "ck-out"); ck.append(out);
+      const tools = mk("div", "frow");
+      const full = mk("button", "ghost", "View full photo");
+      tools.append(full); ck.append(tools);
+      let img, url;
+      try { ({ img, url } = await loadImg(ph.blob)); } catch (e) { tip.textContent = "Couldn't open this photo."; return; }
+      full.onclick = () => { $("viewerImg").src = url; $("viewer").hidden = false; };
+      if (navigator.canShare) {
+        try {
+          const file = new File([ph.blob], "handwriting-" + w[0] + ".jpg", { type: "image/jpeg" });
+          if (navigator.canShare({ files: [file] })) {
+            const sh = mk("button", "ghost", "Send to teacher");
+            sh.onclick = () => navigator.share({ files: [file], title: "My handwriting: " + w[0], text: "My handwriting practice: " + w[0] + " (" + w[1] + ")" + (ph.checks ? " – app score " + Math.round(Math.max(...Object.values(ph.checks)) * 100) + "%" : "") }).catch(() => {});
+            tools.append(sh);
+          }
+        } catch (e) {}
+      }
+      // working copy (max 1000px) for speed
+      const k0 = Math.min(1, 1000 / Math.max(img.width, img.height));
+      const src = mk("canvas"); src.width = Math.round(img.width * k0); src.height = Math.round(img.height * k0);
+      src.getContext("2d").drawImage(img, 0, 0, src.width, src.height);
+      const SW = src.width, SH = src.height;
+      // find characters on a small copy
+      const k1 = Math.min(1, 380 / Math.max(SW, SH)), sm = mk("canvas"); sm.width = Math.round(SW * k1); sm.height = Math.round(SH * k1);
+      sm.getContext("2d").drawImage(src, 0, 0, sm.width, sm.height);
+      let found = [];
+      try { found = CSInk.findBoxes(sm.getContext("2d").getImageData(0, 0, sm.width, sm.height)).map(b => ({ x: b.x / k1, y: b.y / k1, s: b.s / k1 })); } catch (e) { found = []; }
+      let frame = found[0] ? Object.assign({}, found[0]) : { s: Math.min(SW, SH) * 0.45, x: 0, y: 0 };
+      if (!found[0]) { frame.x = (SW - frame.s) / 2; frame.y = (SH - frame.s) / 2; }
+      tip.textContent = found.length ? "Found " + found.length + " character" + (found.length > 1 ? "s" : "") + " (gold boxes). Tap one, or drag the red box onto the character you want checked." : "Drag the red box onto one character, and resize it so the whole character fits inside.";
+      const smin = Math.min(SW, SH);
+      rng.value = Math.round(frame.s / smin * 100);
+      // display
+      const dpr = window.devicePixelRatio || 1;
+      function paint() {
+        const cw = stage.clientWidth || 300, sc = cw / SW, ch = Math.min(SH * sc, 460);
+        const s2 = Math.min(sc, ch / SH);
+        cv.style.width = SW * s2 + "px"; cv.style.height = SH * s2 + "px";
+        cv.width = Math.round(SW * s2 * dpr); cv.height = Math.round(SH * s2 * dpr);
+        const x = cv.getContext("2d"), z = s2 * dpr; x.drawImage(src, 0, 0, cv.width, cv.height);
+        x.lineWidth = 2 * dpr; x.setLineDash([5 * dpr, 4 * dpr]); x.strokeStyle = "#d9a521";
+        found.forEach(b => x.strokeRect(b.x * z, b.y * z, b.s * z, b.s * z));
+        x.setLineDash([]); x.lineWidth = 3 * dpr; x.strokeStyle = "#c8161d"; x.strokeRect(frame.x * z, frame.y * z, frame.s * z, frame.s * z);
+        x.fillStyle = "rgba(200,22,29,.08)"; x.fillRect(frame.x * z, frame.y * z, frame.s * z, frame.s * z);
+        cv._z = s2;
+      }
+      paint();
+      const clamp = () => { frame.s = Math.max(12, Math.min(frame.s, Math.max(SW, SH))); frame.x = Math.max(-frame.s * 0.3, Math.min(frame.x, SW - frame.s * 0.7)); frame.y = Math.max(-frame.s * 0.3, Math.min(frame.y, SH - frame.s * 0.7)); };
+      rng.oninput = () => { const c = { x: frame.x + frame.s / 2, y: frame.y + frame.s / 2 }; frame.s = smin * rng.value / 100; frame.x = c.x - frame.s / 2; frame.y = c.y - frame.s / 2; clamp(); paint(); };
+      let drag = null;
+      const at = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / cv._z, y: (e.clientY - r.top) / cv._z }; };
+      cv.addEventListener("pointerdown", e => { const q = at(e); drag = { q, f: Object.assign({}, frame), moved: false }; cv.setPointerCapture(e.pointerId); });
+      cv.addEventListener("pointermove", e => { if (!drag) return; const q = at(e); const dx = q.x - drag.q.x, dy = q.y - drag.q.y; if (Math.abs(dx) + Math.abs(dy) > 4 / cv._z) drag.moved = true; if (drag.moved) { frame.x = drag.f.x + dx; frame.y = drag.f.y + dy; clamp(); paint(); } });
+      cv.addEventListener("pointerup", e => {
+        if (drag && !drag.moved) {
+          const q = at(e), hit = found.find(b => q.x >= b.x && q.x <= b.x + b.s && q.y >= b.y && q.y <= b.y + b.s);
+          if (hit) frame = Object.assign({}, hit); else { frame.x = q.x - frame.s / 2; frame.y = q.y - frame.s / 2; }
+          clamp(); rng.value = Math.round(frame.s / smin * 100); paint();
+          if (hit) run();
+        }
+        drag = null;
+      });
+      cv.style.touchAction = "none";
+      window.addEventListener("resize", paint, { once: true });
+      function run() {
+        const c = mk("canvas"); c.width = c.height = 200; const x = c.getContext("2d");
+        x.fillStyle = "#fff"; x.fillRect(0, 0, 200, 200);
+        x.drawImage(src, frame.x, frame.y, frame.s, frame.s, 0, 0, 200, 200);
+        out.innerHTML = ""; out.append(mk("p", "hint", "Reading your writing…"));
+        setTimeout(async () => {
+          let r;
+          try { r = CSInk.check(x.getImageData(0, 0, 200, 200), target, pool); } catch (e) { r = { error: "fail" }; }
+          out.innerHTML = "";
+          if (r.error) {
+            out.append(mk("p", "g-fb bad", { empty: "No writing found in the red box. Move it onto a character.", dark: "The photo is too dark or the box has too much ink. Try a brighter photo, or a smaller box around one character.", nodata: "No stroke data for " + target + "." }[r.error] || "Couldn't read this part of the photo."));
+            return;
+          }
+          const pct = Math.round(r.score * 100), top = r.ranked[0][0], isTop = top === target;
+          const good = r.score >= 0.68 && r.rank <= 3;
+          const row = mk("div", "ck-res");
+          const ov = mk("canvas"); ov.width = ov.height = 192; ov.className = "ck-ov"; CSInk.overlay(ov, r);
+          const mine = mk("canvas"); mine.width = mine.height = 192; mine.className = "ck-ov"; mine.getContext("2d").drawImage(c, 0, 0, 192, 192);
+          const fig1 = mk("figure"); fig1.append(mine, mk("figcaption", null, "Your writing"));
+          const fig2 = mk("figure"); fig2.append(ov, mk("figcaption", null, "Compared with " + target));
+          row.append(fig1, fig2); out.append(row);
+          out.append(mk("p", "ck-legend", "Grey = textbook shape · red = your strokes · gold = parts that are missing or out of place"));
+          const meter = mk("div", "ck-meter"); const bar = mk("span"); bar.style.width = pct + "%"; bar.className = r.score >= 0.78 ? "hi" : r.score >= 0.68 ? "mid" : "lo"; meter.append(bar);
+          out.append(mk("p", "ck-score", "Shape match: " + pct + "%"), meter);
+          let verdict;
+          if (r.score >= 0.78 && isTop) verdict = ["Excellent! 很好！ The app reads this as " + target + ".", "good"];
+          else if (good && isTop) verdict = ["Good – it reads as " + target + ". Tidy the gold parts to make it neater.", "good"];
+          else if (good) verdict = ["Close. It's recognisable as " + target + ", but it also looks like " + top + ". Make the gold parts clearer.", ""];
+          else if (r.score >= 0.58) verdict = ["Getting there. The shape is partly right – compare the gold parts with the model and write it again.", ""];
+          else verdict = ["This doesn't match " + target + " yet. Check that the red box holds only this character, then compare with the model and try again.", "bad"];
+          out.append(mk("p", "g-fb " + verdict[1], verdict[0]));
+          const read = mk("p", "ck-read"); read.append(mk("span", "hint", "Best guesses: "));
+          r.ranked.slice(0, 3).forEach(([cc, f], i) => { const s = mk("span", "ck-cand" + (cc === target ? " me" : ""), cc); s.title = Math.round(f * 100) + "%"; read.append(s); });
+          out.append(read);
+          if (r.zones.length) {
+            const ul = mk("ul", "ck-tips");
+            r.zones.slice(0, 3).forEach(z => ul.append(mk("li", null, z.kind === "missing" ? "Check the " + z.where + " – a stroke there is missing, too short or in the wrong place." : "Extra or misplaced marks in the " + z.where + ".")));
+            out.append(ul);
+          }
+          const strokesN = (pool(target).strokes || []).length;
+          out.append(mk("p", "hint", target + " has " + strokesN + " strokes. Count yours – a photo can't show stroke order, so do the strict Test above for that."));
+          // remember the best score on the photo, and tick "shape" in the checklist when it is good
+          ph.checks = Object.assign({}, ph.checks, { [target]: Math.max(r.score, (ph.checks && ph.checks[target]) || 0) });
+          updatePhoto(ph);
+          if (good && isTop && !boxes.shape.checked) { boxes.shape.checked = true; boxes.shape.onchange(); }
+          out.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, 30);
+      }
+      go.onclick = run;
     }
     draw();
   }

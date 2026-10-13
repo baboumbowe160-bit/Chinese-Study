@@ -463,7 +463,7 @@
       const copy = el("button", "ghost", "Copy"); copy.onclick = () => { try { navigator.clipboard.writeText(zh).then(() => copy.textContent = "Copied", () => copy.textContent = "Select and copy"); } catch (e) { copy.textContent = "Select and copy"; } };
       ctl.append(copy); big.append(ctl);
       out.append(big);
-      notes.forEach(n => out.append(el("p", "u-note", n)));
+      notes.forEach(n => out.append(el("p", "u-note", "💡 " + n)));
     }
     build();
   }

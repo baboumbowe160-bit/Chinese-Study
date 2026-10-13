@@ -100,7 +100,7 @@
     }
     info.append(row);
     if (o.art) {
-      const pair = el("div", "sh-pair"); const a = el("div", "sh-art"); a.append(sketch(o.art));
+      const pair = el("div", "sh-pair"); const a = el("div", "sh-art"); a.append(sketch(o.art)); if (o.emo) a.append(el("span", "emo-badge", o.emo));
       a.append(el("span", "sh-cap", "the picture"));
       pair.append(a, el("span", "sh-arrow", "→"), big); top.append(pair, info);
     } else top.append(big, info);
@@ -138,9 +138,9 @@
     const now = new Date(), day = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
     const [c, py, m, emo, story, art] = B.picto[day % B.picto.length];
     const cod = el("button", "cod"); cod.setAttribute("aria-label", "Character of the day: " + c + " " + py + ", " + m);
-    const left = el("div", "cod-art"); left.append(sketch(art));
+    const left = el("div", "cod-art"); left.append(sketch(art), el("span", "emo-badge", emo));
     const mid = el("div", "cod-t"); mid.append(el("span", "cod-l", "Character of the day"), el("span", "cod-c", c), el("span", "cod-m", py + " · " + m));
-    cod.append(left, mid); cod.onclick = () => openSheet({ c, py, mean: m + "  " + emo, story, art });
+    cod.append(left, mid); cod.onclick = () => openSheet({ c, py, mean: m + "  " + emo, story, art, emo });
     p.append(cod);
     const g = el("div", "b-hub");
     SECTIONS.forEach(([id, ch, name, sub], i) => {
@@ -206,7 +206,7 @@
     const rules = el("div", "b-card");
     rules.innerHTML = "<h3>Tone changes to remember</h3><ul><li><b>3rd + 3rd → 2nd + 3rd.</b> 你好 is written nǐ hǎo but said <b>ní hǎo</b>.</li><li><b>不 bù → bú</b> before a 4th tone: 不是 bú shì, 不客气 bú kèqi.</li><li><b>一 yī → yí</b> before a 4th tone (一个 yí ge), <b>yì</b> before tones 1–3 (一本 yì běn). When counting, just yī.</li></ul><h3>Spelling rules</h3><ul><li>The tone mark goes on <b>a</b> or <b>e</b> if there is one; in <b>ou</b> on the o; otherwise on the last vowel: duì, liù.</li><li>After j, q, x and y, ü is written as u: 去 qù, 学 xué. After n and l it keeps the dots: 女 nǚ.</li></ul>";
     p.append(rules);
-    const play = el("button", "primarybtn", "Play Tone Detective"); play.onclick = () => go("games"); p.append(play);
+    const play = el("button", "primarybtn", "🎮 Play Tone Detective"); play.onclick = () => go("games"); p.append(play);
   }
 
   /* ---------- 2. Numbers ---------- */
@@ -280,7 +280,7 @@
     c3.append(ul);
     c3.append(el("p", "hint", "Lucky and unlucky: 8 八 bā sounds like 发 fā “get rich” – very lucky. 4 四 sì sounds like 死 sǐ “death”, so many buildings skip the 4th floor."));
     p.append(c3);
-    const play = el("button", "primarybtn", "Play Number Match"); play.onclick = () => { go("games"); startGame("num"); }; p.append(play);
+    const play = el("button", "primarybtn", "🎮 Play Number Match"); play.onclick = () => { go("games"); startGame("num"); }; p.append(play);
   }
 
   /* ---------- 3. Strokes ---------- */
@@ -387,9 +387,9 @@
     const g = el("div", "picgrid");
     B.picto.forEach(pc => {
       const [c, py, m, emo, story, art] = pc;
-      const btn = el("button", "pic"); btn.append(sketch(art), el("span", "pc", c), el("span", "pm", m));
+      const btn = el("button", "pic"); btn.append(el("span", "pe", emo), sketch(art), el("span", "pc", c), el("span", "pm", m));
       btn.setAttribute("aria-label", c + " " + py + ", " + m);
-      btn.onclick = () => openSheet({ c, py, mean: m + "  " + emo, story, art });
+      btn.onclick = () => openSheet({ c, py, mean: m + "  " + emo, story, art, emo });
       g.append(btn);
     });
     p.append(g);
@@ -421,8 +421,8 @@
     });
     p.append(g3);
     const row = el("div", "frow");
-    const p1 = el("button", "primarybtn", "Play Picture Match"); p1.onclick = () => { go("games"); startGame("pic"); };
-    const p2 = el("button", "ghost", "Play Make a Character"); p2.onclick = () => { go("games"); startGame("idea"); };
+    const p1 = el("button", "primarybtn", "🎮 Play Picture Match"); p1.onclick = () => { go("games"); startGame("pic"); };
+    const p2 = el("button", "ghost", "🧩 Play Make a Character"); p2.onclick = () => { go("games"); startGame("idea"); };
     row.append(p1, p2); p.append(row);
   }
 
@@ -557,8 +557,8 @@
     } else {
       const pic = B.picto[Math.floor(Math.random() * B.picto.length)];
       const wrongs = pickN(B.picto, 3, pic);
-      const art = el("div", "g-art"); art.append(sketch(pic[5]));
-      q.append(el("p", null, "Which character comes from this picture?"), art, el("p", "hint", pic[3] + " " + pic[2]));
+      const art = el("div", "g-art"); art.append(sketch(pic[5]), el("span", "emo-badge", pic[3]));
+      q.append(el("p", null, "Which character comes from this picture?"), art, el("p", "hint", pic[2]));
       options = shuffle([pic, ...wrongs]); correct = pic; label = x => x[0];
     }
     options.forEach(o => {
