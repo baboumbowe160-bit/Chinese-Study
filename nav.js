@@ -10,7 +10,7 @@
   function push(fn, kind) {
     if (restoring) return null;
     const top = stack[stack.length - 1];
-    if (kind === "tab" && top && top.kind === "tab") { top.fn = fn; return top.id; } // keep one entry for tab hops
+    if (kind && kind !== "view" && top && top.kind === kind) { top.fn = fn; return top.id; } // one entry for tab hops / section hops
     const id = ++seq;
     stack.push({ id, kind: kind || "view", fn });
     try { history.pushState({ csnav: id }, ""); } catch (e) {}

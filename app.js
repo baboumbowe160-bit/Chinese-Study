@@ -569,6 +569,12 @@
   let curTab = null;
   function userTab(t) {
     const prev = curTab;
+    // tapping the tab you are already on takes you to its start
+    if (prev === t) {
+      if (t === "b" && window.CSBasics) return CSBasics.home();
+      if (t === "u" && window.CSUse) return CSUse.home();
+      return window.scrollTo({ top: 0, behavior: "smooth" });
+    }
     if (prev && prev !== t && window.CSNav) CSNav.push(() => showTab(prev), "tab");
     showTab(t);
   }

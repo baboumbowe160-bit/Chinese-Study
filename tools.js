@@ -76,7 +76,7 @@
   /* ---------- layout helpers ---------- */
   function header(title, zh) {
     const h = el("div", "b-head");
-    const back = el("button", "ghost b-back", "‹ Back"); back.onclick = () => { if (!(window.CSNav && CSNav.done(secTok))) go("hub"); };
+    const back = el("button", "ghost b-back", "‹ All tools"); back.onclick = () => go("hub");
     const t = el("h2"); const z = el("span", "b-hz", zh); t.append(z, " " + title); h.append(back, t); return h;
   }
   function card(title) { const c = el("div", "b-card"); if (title) c.append(el("h3", null, title)); return c; }
@@ -102,8 +102,11 @@
   }
   let curSec = "hub", secTok = null;
   function go(id) {
-    if (id !== curSec && window.CSNav && !CSNav.restoring && document.getElementById("upane").childElementCount) { const prev = curSec; secTok = CSNav.push(() => go(prev)); }
-    curSec = id; store.set("usec", id); tokn++; const p = $("upane"); p.innerHTML = ""; ({ hub, name, dates, words }[id] || hub)(); }
+    if (id !== curSec && window.CSNav && !CSNav.restoring && document.getElementById("upane").childElementCount) {
+      if (id === "hub") { if (CSNav.done(secTok)) return; }
+      else secTok = CSNav.push(() => go("hub"), "usec");
+    }
+    curSec = id; window.scrollTo(0, 0); store.set("usec", id); tokn++; const p = $("upane"); p.innerHTML = ""; ({ hub, name, dates, words }[id] || hub)(); }
 
   /* ---------- 1. Chinese name ---------- */
   const FAM = { b: "bp", p: "bp", d: "dt", t: "dt", g: "gk", k: "gk", j: "jqzh", q: "qjch", x: "xsh", zh: "zhj", ch: "chq", sh: "shx", z: "zj", c: "cq", s: "sx", l: "lr", r: "rl", n: "nl", m: "m", f: "f", h: "h", y: "y", w: "w", "": "" };
@@ -477,6 +480,6 @@
     $("today").title = d.toDateString();
   };
   CSGreet();
-  window.CSUse = { go, suggest, nameCard, buildPicker, say, sayBtn };
+  window.CSUse = { go, home: () => { if (curSec !== "hub") go("hub"); else window.scrollTo({ top: 0, behavior: "smooth" }); }, suggest, nameCard, buildPicker, say, sayBtn };
   go(store.get("usec", "hub"));
 })();

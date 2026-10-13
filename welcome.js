@@ -175,6 +175,8 @@
         "The 214 radicals follow the <b>Kangxi Dictionary</b> (康熙字典, 1716), as listed in the Unicode Kangxi Radicals block.",
         "Pinyin was created in China in the 1950s by a committee whose best-known member was Zhou Youguang (周有光), and adopted in 1958.",
       ]);
+      sec("Numbers with meaning", (window.LUCKY ? LUCKY.sources : []).map(([t, who, url]) => '<a href="' + url + '" target="_blank" rel="noopener">' + t + "</a> – " + who + ".")
+        .concat(["上山打老虎 is a traditional children's rhyme. 一去二三里 is by the Song-dynasty poet 邵雍 Shào Yōng (1011–1077)."]));
       sec("Voices", [
         'Native-speaker recordings from <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a> (CC BY-SA): HSK words read by Yue Tan, syllables read by Chen Wang (Shtooka project). Volume-adjusted and joined for this app.',
         "Phone voice: your phone's own text-to-speech.",

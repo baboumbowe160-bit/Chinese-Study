@@ -153,13 +153,17 @@
   }
   function header(title, zh) {
     const h = el("div", "b-head");
-    const back = el("button", "ghost b-back", "‹ Back"); back.onclick = () => { if (!(window.CSNav && CSNav.done(secTok))) go("hub"); };
+    const back = el("button", "ghost b-back", "‹ All topics"); back.onclick = () => go("hub");
     const t = el("h2", null); t.innerHTML = '<span class="b-hz"></span>'; t.firstChild.textContent = zh; t.append(" " + title);
     h.append(back, t); return h;
   }
   let curSec = "hub", secTok = null;
   function go(id) {
-    if (id !== curSec && window.CSNav && !CSNav.restoring) { const prev = curSec; secTok = CSNav.push(() => go(prev)); }
+    // Back from any topic goes straight to the topic list (no retracing every step)
+    if (id !== curSec && window.CSNav && !CSNav.restoring) {
+      if (id === "hub") { if (CSNav.done(secTok)) return; }
+      else secTok = CSNav.push(() => go("hub"), "bsec");
+    }
     curSec = id;
     store.set("bsec", id); seqToken++;
     const p = $("bpane"); p.innerHTML = "";
@@ -339,7 +343,8 @@
         const r = el("div", "lk-seg " + c[8]);
         r.append(el("span", "lk-emo", c[7]));
         const t = el("div"); const h = el("div", "lk-segh"); h.append(el("b", null, c[0]), " → ", el("span", "lk-zh", c[3]), " ", el("span", "lk-py", c[4]));
-        t.append(h, el("div", null, c[5] + (c[6] ? " – " + c[6] : "")));
+        const d = el("div", null, c[5] + (c[6] ? " – " + c[6] : "")); d.append(srcTag(c[9]));
+        t.append(h, d);
         r.append(t, sayBtn(btn => window.CSSay && CSSay(c[1] + "，" + c[3], btn), "Listen"));
         list.append(r);
         if (c[8] === "warn") bad = true; else good++;
@@ -348,7 +353,8 @@
         const dg = L.digits[+s]; const r = el("div", "lk-seg " + dg[6]);
         r.append(el("span", "lk-emo", dg[7]));
         const t = el("div"); const h = el("div", "lk-segh"); h.append(el("b", null, s), " " + dg[1] + " " + dg[2] + " ~ ", el("span", "lk-zh", dg[3]), " ", el("span", "lk-py", dg[4]));
-        t.append(h, el("div", null, dg[5]));
+        const d = el("div", null, dg[5]); d.append(srcTag(dg[8]));
+        t.append(h, d);
         r.append(t); list.append(r);
         if (dg[6] === "bad") bad = true; if (dg[6] === "good") good++;
       }
@@ -357,6 +363,12 @@
     const v = el("p", "g-fb " + (bad ? "bad" : good ? "good" : ""));
     v.textContent = bad ? "⚠️ Careful – this number has an unlucky or rude meaning. Don't use it for a gift." : whole ? "✨ This is a well-known code – people will understand your message!" : good ? "👍 A friendly number with good meanings." : "A neutral number – no special message.";
     out.append(v);
+  }
+  // little [1][2] links that jump to the Sources card
+  function srcTag(arr) {
+    const s = el("span", "lk-src");
+    (arr || []).forEach(n => { const a = el("a", null, String(n)); a.href = "#lksrc" + n; a.title = L.sources[n - 1] ? L.sources[n - 1][1] : ""; a.onclick = e => { e.preventDefault(); e.stopPropagation(); const t = $("lksrc" + n); if (t) { t.scrollIntoView({ behavior: "smooth", block: "center" }); t.classList.remove("flash"); void t.offsetWidth; t.classList.add("flash"); } }; s.append(a); });
+    return s;
   }
   function lucky() {
     const p = $("bpane"); p.append(header("Numbers with meaning", "吉"));
@@ -377,11 +389,11 @@
     // digits
     const c2 = el("div", "b-card"); c2.append(el("h3", null, "What each digit says"), el("p", "hint", "Green = lucky · gold = it depends · red = avoid. Tap to hear."));
     const g = el("div", "lk-digits");
-    L.digits.forEach(([d, zh, py, sl, slpy, mean, mood, emo]) => {
+    L.digits.forEach(([d, zh, py, sl, slpy, mean, mood, emo, src]) => {
       const b = el("button", "lk-d " + mood);
       b.append(el("span", "lk-demo", emo), el("span", "lk-dn", d), el("span", "lk-dz", zh + " " + py.split(" / ")[0]), el("span", "lk-ds", "≈ " + sl.split(" / ")[0] + " " + slpy.split(" / ")[0]));
       b.setAttribute("aria-label", d + " " + zh + " sounds like " + sl + ": " + mean);
-      b.onclick = () => { g.querySelectorAll(".on").forEach(x => x.classList.remove("on")); b.classList.add("on"); dtip.textContent = emo + " " + d + " " + zh + " (" + py + ") sounds like " + sl + " (" + slpy + "): " + mean + "."; window.CSSay && CSSay(zh + "，" + sl.split(" / ")[0], b); };
+      b.onclick = () => { g.querySelectorAll(".on").forEach(x => x.classList.remove("on")); b.classList.add("on"); dtip.textContent = emo + " " + d + " " + zh + " (" + py + ") sounds like " + sl + " (" + slpy + "): " + mean + ". "; dtip.append(srcTag(src)); window.CSSay && CSSay(zh + "，" + sl.split(" / ")[0], b); };
       g.append(b);
     });
     const dtip = el("p", "lk-dtip", "Tap a digit.");
@@ -399,7 +411,7 @@
         const t = el("div", "lk-t");
         const h = el("div", "lk-segh"); h.append(el("span", "lk-zh", c[3]), " ", el("span", "lk-py", c[4]));
         t.append(h, el("div", "lk-en", c[5]));
-        if (c[6]) t.append(el("div", "lk-tip", c[6]));
+        const tp = el("div", "lk-tip", c[6] ? c[6] + " " : ""); tp.append(srcTag(c[9])); t.append(tp);
         r.append(n, t, sayBtn(btn => window.CSSay && CSSay(c[1] + "，" + c[3], btn), "Listen: " + c[0]));
         list.append(r);
       });
@@ -420,9 +432,39 @@
     c4.append(occ, etip, env, eout); p.append(c4); if (L.occasions[0]) showOcc(L.occasions[0]);
     // manners
     const c5 = el("div", "b-card"); c5.append(el("h3", null, "Red envelope manners"));
-    const ul = el("div", "lk-man"); L.etiquette.forEach(([e, t]) => { const r = el("div", "lk-manr"); r.append(el("span", "lk-emo", e), el("span", null, t)); ul.append(r); });
+    const ul = el("div", "lk-man"); L.etiquette.forEach(([e, t, src]) => { const r = el("div", "lk-manr"); const s = el("span", null, t + " "); s.append(srcTag(src)); r.append(el("span", "lk-emo", e), s); ul.append(r); });
     c5.append(ul); p.append(c5);
+    // rhymes
+    const c6 = el("div", "b-card"); c6.append(el("h3", null, "🎵 Number rhymes"), el("p", "hint", "Rhymes make numbers stick. The rhyming sounds are in gold – say them out loud and clap the beat."));
+    L.rhymes.forEach(r => {
+      const box = el("div", "lk-rhyme");
+      const top = el("div", "lk-rh"); top.append(el("b", null, r.t));
+      const all = sayBtn(btn => window.CSSay && CSSay(r.lines.map(l => l[0]).join(""), btn), "Listen to the whole rhyme");
+      top.append(all); box.append(top, el("p", "hint", r.note));
+      r.lines.forEach(([zh, py, en]) => {
+        const row = el("div", "u-line"); const t = el("div", "u-txt"); const z = el("div", "u-zh lk-rz");
+        [...zh].forEach(ch => z.append(r.rhyme.includes(ch) ? el("span", "lk-rhy", ch) : document.createTextNode(ch)));
+        t.append(z, el("div", "u-py", py), el("div", "u-en", en));
+        row.append(t, sayBtn(btn => window.CSSay && CSSay(zh, btn), "Listen")); box.append(row);
+      });
+      c6.append(box);
+    });
+    p.append(c6);
+    // idioms
+    const c7 = el("div", "b-card"); c7.append(el("h3", null, "🧩 Sayings with numbers (成语)"), el("p", "hint", "Four-character sayings that use numbers. Read the literal words, then the real meaning."));
+    L.idioms.forEach(([zh, py, lit, mean]) => {
+      const row = el("div", "u-line"); const t = el("div", "u-txt");
+      t.append(el("div", "u-zh", zh), el("div", "u-py", py), el("div", "u-en", "“" + lit + "” → " + mean));
+      row.append(t, sayBtn(btn => window.CSSay && CSSay(zh, btn), "Listen")); c7.append(row);
+    });
+    p.append(c7);
     const play = el("button", "primarybtn", "🎮 Play Number Codes"); play.onclick = () => { go("games"); startGame("code"); }; p.append(play);
+    // sources
+    const c8 = el("div", "b-card lk-sources"); c8.append(el("h3", null, "📚 Sources"), el("p", "hint", "Where these meanings come from. The small numbers next to each meaning point here. Number slang is informal internet language – it changes, and not everyone uses every code."));
+    const ol = el("ol");
+    L.sources.forEach(([title, who, url], i) => { const li = el("li"); li.id = "lksrc" + (i + 1); const a = el("a", null, title); a.href = url; a.target = "_blank"; a.rel = "noopener"; li.append(a, " – " + who); ol.append(li); });
+    c8.append(ol, el("p", "hint", "Rhymes: 上山打老虎 is a traditional children's rhyme; 一去二三里 is by the Song-dynasty poet 邵雍 Shào Yōng (1011–1077). Number words follow HSK Standard Course 1 (HSK标准教程1)."));
+    p.append(c8);
   }
 
   /* ---------- 3. Strokes ---------- */
@@ -736,6 +778,6 @@
   }
 
   /* ---------- init ---------- */
-  window.CSBasics = { go };
+  window.CSBasics = { go, home: () => { if (curSec !== "hub") go("hub"); else window.scrollTo({ top: 0, behavior: "smooth" }); } };
   go(store.get("bsec", "hub"));
 })();

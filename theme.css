@@ -426,3 +426,14 @@ body{font-size:15px;letter-spacing:-.003em}
 .lk-env{aspect-ratio:4/5;padding:8px 2px 6px}
 .lk-envt{width:30px;height:30px;font-size:1.15rem}
 .lk-enva{font-size:.88rem}
+.lk-src{display:inline-flex;gap:2px;margin-left:3px;vertical-align:super;font-size:.66rem;line-height:1}
+.lk-src a{color:var(--jade);text-decoration:none;border:1px solid color-mix(in srgb,var(--gold) 60%,#fff);border-radius:4px;padding:1px 3px;background:#fffaf0}
+.lk-sources ol{margin:0;padding-left:1.3em;line-height:1.55;display:flex;flex-direction:column;gap:6px}
+.lk-sources a{color:var(--seal)}
+.lk-sources li.flash{animation:lkflash 1.6s}
+@keyframes lkflash{0%,60%{background:#ffe9a8}100%{background:transparent}}
+.lk-rhyme{border:1px dashed color-mix(in srgb,var(--gold) 70%,#fff);border-radius:12px;padding:10px 12px;margin-top:10px;background:#fffbf2}
+.lk-rh{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lk-rhyme .hint{margin:4px 0 6px}
+.lk-rz{font-size:1.25rem;letter-spacing:.04em}
+.lk-rhy{color:#a66f00;background:#ffe9a8;border-radius:5px;padding:0 2px;font-weight:700}
