@@ -73,3 +73,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--seal);outline-o
 .say.playing{background:var(--seal);color:#fff}
 .say.playing svg{fill:#fff;stroke:#fff}
 #voicemsg{max-width:300px;margin:8px auto 0}
+
+.voices{display:inline-flex;margin-top:10px;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--paper)}
+.voices button{border:none;background:none;color:var(--muted);font:inherit;font-size:.8rem;padding:5px 11px;border-radius:999px;cursor:pointer}
+.voices button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}

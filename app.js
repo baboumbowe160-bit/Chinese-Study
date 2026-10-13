@@ -157,9 +157,10 @@
   $("bNext").onclick = () => move(1);
   $("bPrev").onclick = () => move(-1);
 
-  /* ---- Pronunciation (phone's built-in Chinese voice) ---- */
+  /* ---- Pronunciation: two recorded native speakers + the phone's own voice ---- */
   const synth = window.speechSynthesis;
-  let zhVoice = null;
+  let zhVoice = null, voice = store.get("voice", "v1");
+  const player = new Audio(); player.preload = "auto";
   function pickVoice() {
     if (!synth) return;
     const vs = synth.getVoices();
@@ -167,27 +168,57 @@
               vs.find(v => /^zh/i.test(v.lang) && !/HK|yue/i.test(v.lang)) || null;
   }
   if (synth) { pickVoice(); try { synth.addEventListener("voiceschanged", pickVoice); } catch (e) { synth.onvoiceschanged = pickVoice; } }
-  function voiceHelp(show) {
-    const m = $("voicemsg");
-    m.hidden = !show;
-    if (show) m.textContent = "No Chinese voice found on this phone. Go to Settings → Accessibility → Text-to-speech → Google speech engine → Install voice data → Chinese (Mandarin).";
+  function note(t) { const m = $("voicemsg"); m.hidden = !t; m.textContent = t || ""; }
+  function renderVoices() {
+    document.querySelectorAll(".voices button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === voice)));
   }
-  function speak(text, rate, btn) {
-    if (!synth) { voiceHelp(true); return; }
-    synth.cancel();
+  function stopAll() {
+    try { player.pause(); } catch (e) {}
+    if (synth) synth.cancel();
+    document.querySelectorAll(".say.playing").forEach(b => b.classList.remove("playing"));
+  }
+  function ttsSpeak(text, rate, btn) {
+    if (!synth) { note("This phone can't read text aloud. Try Voice 1 or Voice 2."); return; }
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "zh-CN"; u.rate = rate;
-    if (zhVoice) u.voice = zhVoice;
-    btn.classList.add("playing");
+    u.lang = "zh-CN"; u.rate = rate; if (zhVoice) u.voice = zhVoice;
     let started = false;
-    u.onstart = () => { started = true; voiceHelp(false); };
+    u.onstart = () => { started = true; };
     u.onend = u.onerror = () => btn.classList.remove("playing");
-    synth.speak(u);
-    setTimeout(() => { if (!started && !synth.speaking) { btn.classList.remove("playing"); if (!zhVoice) voiceHelp(true); } }, 2500);
+    btn.classList.add("playing"); synth.speak(u);
+    setTimeout(() => {
+      if (!started && !synth.speaking) {
+        btn.classList.remove("playing");
+        note("No Chinese voice on this phone. Settings → Accessibility → Text-to-speech → Google (⚙️) → Install voice data → Chinese (Mandarin).");
+      }
+    }, 2500);
+  }
+  function play(text, slow, btn) {
+    stopAll();
+    const a = (typeof AUDIO !== "undefined") && AUDIO[text];
+    const order = voice === "v2" ? ["v2", "v1"] : voice === "v1" ? ["v1", "v2"] : [];
+    const pick = a ? order.find(v => a[v === "v1" ? 1 : 2]) : null;
+    if (!pick) {
+      if (voice !== "tts") note(a ? "" : "No recording for this word yet, so your phone's voice is reading it.");
+      return ttsSpeak(text, slow ? 0.5 : 0.85, btn);
+    }
+    note(pick !== voice ? "Voice " + voice.slice(1) + " has no recording of this word, so Voice " + pick.slice(1) + " is playing." : "");
+    player.src = "audio/" + pick + "/" + a[0] + ".mp3";
+    player.playbackRate = slow ? 0.65 : 1;
+    try { player.preservesPitch = true; player.mozPreservesPitch = true; player.webkitPreservesPitch = true; } catch (e) {}
+    btn.classList.add("playing");
+    player.onended = player.onerror = () => btn.classList.remove("playing");
+    const p = player.play();
+    if (p && p.catch) p.catch(() => { btn.classList.remove("playing"); ttsSpeak(text, slow ? 0.5 : 0.85, btn); });
   }
   const curWord = () => words()[wordIdx] && words()[wordIdx][0];
-  $("bSay").onclick = () => { const w = curWord(); if (w) speak(w, 0.9, $("bSay")); };
-  $("bSlow").onclick = () => { const w = curWord(); if (w) speak(w, 0.5, $("bSlow")); };
+  $("bSay").onclick = () => { const w = curWord(); if (w) play(w, false, $("bSay")); };
+  $("bSlow").onclick = () => { const w = curWord(); if (w) play(w, true, $("bSlow")); };
+  document.querySelectorAll(".voices button").forEach(b => b.onclick = () => {
+    voice = b.dataset.v; store.set("voice", voice); renderVoices();
+    $("bSay").click();
+    if (voice === "tts") note("Phone voice uses your phone's text-to-speech. For a male voice: Settings → Accessibility → Text-to-speech → Google (⚙️) → Chinese, then pick a male voice.");
+  });
+  renderVoices();
 
   /* ---- Add your own words ---- */
   function saveCustom() { store.set("customWords", customWords); store.set("customData", customData); }
