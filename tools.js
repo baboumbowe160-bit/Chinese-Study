@@ -74,10 +74,15 @@
   const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
   /* ---------- layout helpers ---------- */
+  const USECS = [["name", "名", "My name"], ["dates", "日", "Dates & time"], ["words", "词", "Word lab"]];
   function header(title, zh) {
-    const h = el("div", "b-head");
+    const wrap = el("div", "b-head");
+    const h = el("div", "b-headrow");
     const back = el("button", "ghost b-back", "‹ All tools"); back.onclick = () => go("hub");
-    const t = el("h2"); const z = el("span", "b-hz", zh); t.append(z, " " + title); h.append(back, t); return h;
+    const t = el("h2"); const z = el("span", "b-hz", zh); t.append(z, " " + title); h.append(back, t);
+    const bar = el("div", "topicbar");
+    USECS.forEach(([id, ch, n]) => { const b = el("button", "tb" + (id === curSec ? " on" : "")); b.append(el("span", "tb-z", ch), " " + n); b.onclick = () => go(id); bar.append(b); });
+    wrap.append(h, bar); return wrap;
   }
   function card(title) { const c = el("div", "b-card"); if (title) c.append(el("h3", null, title)); return c; }
   function line(zh, py, en, sayText) {

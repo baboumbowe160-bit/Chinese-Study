@@ -62,21 +62,6 @@ var LUCKY = {
     ["🎎", "At Spring Festival, children get 压岁钱 yāsuìqián – New Year money that, in the old story, keeps them safe.", [6]],
     ["📱", "Today many people send electronic red envelopes on WeChat (微信), especially to family and friends far away.", [6]]
   ],
-  // rhymes: lines are [zh, pinyin, English]; rhyme = the syllables that rhyme (highlighted)
-  rhymes: [
-    { t: "上山打老虎 · Up the hill to hunt a tiger", note: "A traditional children's counting rhyme. Every line ends in -u: wǔ, hǔ, shǔ… Clap on each number!", rhyme: ["五", "虎", "鼠", "数"],
-      lines: [["一二三四五，上山打老虎。", "Yī èr sān sì wǔ, shàng shān dǎ lǎohǔ.", "One, two, three, four, five – up the hill to hunt a tiger."],
-              ["老虎没打着，打着小松鼠。", "Lǎohǔ méi dǎzháo, dǎzháo xiǎo sōngshǔ.", "Didn't catch the tiger – caught a little squirrel."],
-              ["松鼠有几只？让我数一数。", "Sōngshǔ yǒu jǐ zhī? Ràng wǒ shǔ yi shǔ.", "How many squirrels? Let me count."],
-              ["数来又数去，一二三四五。", "Shǔ lái yòu shǔ qù, yī èr sān sì wǔ.", "Counting this way and that – one, two, three, four, five!"]] },
-    { t: "一去二三里 · Off I go, two or three li", note: "A famous little poem by 邵雍 Shào Yōng (Song dynasty, about 1,000 years ago). It counts from 1 to 10! Lines 2 and 4 rhyme: jiā – huā.", rhyme: ["家", "花"],
-      lines: [["一去二三里，", "Yí qù èr sān lǐ,", "Off I go, two or three li (Chinese miles),"],
-              ["烟村四五家。", "yān cūn sì wǔ jiā.", "a misty village of four or five homes,"],
-              ["亭台六七座，", "tíng tái liù qī zuò,", "six or seven pavilions,"],
-              ["八九十枝花。", "bā jiǔ shí zhī huā.", "and eight, nine, ten flowers."]] },
-    { t: "恭喜发财 · Happy New Year rhyme", note: "What children say at Spring Festival to get a red envelope – cái and lái rhyme. Say it with a big smile!", rhyme: ["财", "来"],
-      lines: [["恭喜发财，红包拿来！", "Gōngxǐ fācái, hóngbāo ná lái!", "Wishing you wealth – now hand over the red envelope!"]] }
-  ],
   // idioms with numbers: [idiom, pinyin, literal, meaning]
   idioms: [
     ["一心一意", "yì xīn yí yì", "one heart, one mind", "whole-heartedly"],

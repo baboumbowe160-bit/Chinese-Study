@@ -128,6 +128,7 @@
     ["pictures", "象", "Picture characters", B.picto.length + " drawings that became characters"],
     ["phrases", "说", "Useful phrases", "Classroom and everyday sentences"],
     ["qwords", "问", "Question & measure words", "什么, 谁, 哪儿, 几 … and 个, 本, 口"],
+    ["rhymes", "诗", "Rhymes & poems", "Famous children's rhymes, poems 🎵 and tongue twisters"],
     ["games", "玩", "Games", "6 games: tones, numbers, codes, radicals, pictures"],
   ];
   function hub() {
@@ -151,11 +152,32 @@
     });
     p.append(g);
   }
+  const SHORT = { sounds: "Sounds", numbers: "Numbers", lucky: "Lucky numbers", strokes: "Strokes", radicals: "Radicals", pictures: "Pictures", phrases: "Phrases", qwords: "Questions", rhymes: "Rhymes", games: "Games" };
   function header(title, zh) {
-    const h = el("div", "b-head");
+    const wrap = el("div", "b-head");
+    const h = el("div", "b-headrow");
     const back = el("button", "ghost b-back", "‹ All topics"); back.onclick = () => go("hub");
     const t = el("h2", null); t.innerHTML = '<span class="b-hz"></span>'; t.firstChild.textContent = zh; t.append(" " + title);
-    h.append(back, t); return h;
+    h.append(back, t);
+    // jump straight to any other topic
+    const bar = el("div", "topicbar"); bar.setAttribute("role", "navigation"); bar.setAttribute("aria-label", "Topics");
+    SECTIONS.forEach(([id, ch]) => {
+      const b = el("button", "tb" + (id === curSec ? " on" : "")); b.append(el("span", "tb-z", ch), " " + (SHORT[id] || id));
+      if (id === curSec) b.setAttribute("aria-current", "page");
+      b.onclick = () => go(id); bar.append(b);
+    });
+    wrap.append(h, bar);
+    setTimeout(() => { const on = bar.querySelector(".on"); if (on) bar.scrollLeft = on.offsetLeft - bar.clientWidth / 2 + on.clientWidth / 2; }, 0);
+    return wrap;
+  }
+  // previous / next topic at the bottom of every page
+  function footer(id) {
+    const i = SECTIONS.findIndex(s => s[0] === id); if (i < 0) return;
+    const f = el("div", "b-foot");
+    const prev = SECTIONS[i - 1], next = SECTIONS[i + 1];
+    const pb = el("button", "ghost"); pb.innerHTML = "<small>‹ Previous</small>"; pb.append(el("b", null, prev ? prev[1] + " " + SHORT[prev[0]] : "All topics")); pb.onclick = () => go(prev ? prev[0] : "hub");
+    const nb = el("button", "ghost next"); nb.innerHTML = "<small>Next ›</small>"; nb.append(el("b", null, next ? next[1] + " " + SHORT[next[0]] : "All topics")); nb.onclick = () => go(next ? next[0] : "hub");
+    f.append(pb, nb); $("bpane").append(f);
   }
   let curSec = "hub", secTok = null;
   function go(id) {
@@ -167,7 +189,8 @@
     curSec = id;
     store.set("bsec", id); seqToken++;
     const p = $("bpane"); p.innerHTML = "";
-    ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, games }[id] || hub)();
+    ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, rhymes, games }[id] || hub)();
+    if (id !== "hub") footer(id);
     window.scrollTo(0, 0);
   }
 
@@ -434,22 +457,11 @@
     const c5 = el("div", "b-card"); c5.append(el("h3", null, "Red envelope manners"));
     const ul = el("div", "lk-man"); L.etiquette.forEach(([e, t, src]) => { const r = el("div", "lk-manr"); const s = el("span", null, t + " "); s.append(srcTag(src)); r.append(el("span", "lk-emo", e), s); ul.append(r); });
     c5.append(ul); p.append(c5);
-    // rhymes
-    const c6 = el("div", "b-card"); c6.append(el("h3", null, "🎵 Number rhymes"), el("p", "hint", "Rhymes make numbers stick. The rhyming sounds are in gold – say them out loud and clap the beat."));
-    L.rhymes.forEach(r => {
-      const box = el("div", "lk-rhyme");
-      const top = el("div", "lk-rh"); top.append(el("b", null, r.t));
-      const all = sayBtn(btn => window.CSSay && CSSay(r.lines.map(l => l[0]).join(""), btn), "Listen to the whole rhyme");
-      top.append(all); box.append(top, el("p", "hint", r.note));
-      r.lines.forEach(([zh, py, en]) => {
-        const row = el("div", "u-line"); const t = el("div", "u-txt"); const z = el("div", "u-zh lk-rz");
-        [...zh].forEach(ch => z.append(r.rhyme.includes(ch) ? el("span", "lk-rhy", ch) : document.createTextNode(ch)));
-        t.append(z, el("div", "u-py", py), el("div", "u-en", en));
-        row.append(t, sayBtn(btn => window.CSSay && CSSay(zh, btn), "Listen")); box.append(row);
-      });
-      c6.append(box);
-    });
-    p.append(c6);
+    // rhymes with numbers (the full collection is in Rhymes & poems)
+    const c6 = el("div", "b-card"); c6.append(el("h3", null, "🎵 Number rhymes"), el("p", "hint", "Rhymes make numbers stick. Tap one to open it – the rhyming sounds are in gold."));
+    RH.filter(r => r.cat === "num").forEach(r => c6.append(rhymeItem(r, false)));
+    const more = el("button", "b-link"); more.innerHTML = "<span>📜</span><span><b>More rhymes & poems</b><br>静夜思, 春晓, children's rhymes and tongue twisters</span><span>›</span>"; more.onclick = () => go("rhymes");
+    c6.append(more); p.append(c6);
     // idioms
     const c7 = el("div", "b-card"); c7.append(el("h3", null, "🧩 Sayings with numbers (成语)"), el("p", "hint", "Four-character sayings that use numbers. Read the literal words, then the real meaning."));
     L.idioms.forEach(([zh, py, lit, mean]) => {
@@ -465,6 +477,55 @@
     L.sources.forEach(([title, who, url], i) => { const li = el("li"); li.id = "lksrc" + (i + 1); const a = el("a", null, title); a.href = url; a.target = "_blank"; a.rel = "noopener"; li.append(a, " – " + who); ol.append(li); });
     c8.append(ol, el("p", "hint", "Rhymes: 上山打老虎 is a traditional children's rhyme; 一去二三里 is by the Song-dynasty poet 邵雍 Shào Yōng (1011–1077). Number words follow HSK Standard Course 1 (HSK标准教程1)."));
     p.append(c8);
+  }
+
+
+  /* ---------- Rhymes & poems ---------- */
+  const RH = window.RHYMES || [];
+  const PUNCT = /[，。！？、；：,.!?]/;
+  function rhymeItem(r, open) {
+    const box = el("details", "rh-item"); if (open) box.open = true;
+    const sum = el("summary"); const st = el("span", "rh-t");
+    st.append(el("span", "rh-zh", r.t), el("span", "rh-en", r.py + " · " + r.en));
+    sum.append(st); box.append(sum);
+    const body = el("div", "rh-body");
+    body.append(el("p", "rh-by", r.by), el("p", "hint", r.note));
+    const tools = el("div", "frow");
+    const all = el("button", "ghost", "▶ Listen to all"); all.onclick = () => window.CSSay && CSSay(r.lines.map(l => l[0]).join(""), all);
+    const hide = el("button", "ghost", "Hide pinyin & English");
+    hide.onclick = () => { const h = body.classList.toggle("memo"); hide.textContent = h ? "Show pinyin & English" : "Hide pinyin & English"; };
+    tools.append(all, hide); body.append(tools);
+    r.lines.forEach(([zh, py, en]) => {
+      const row = el("div", "u-line"); const t = el("div", "u-txt"); const z = el("div", "u-zh rh-line");
+      const chars = [...zh];
+      chars.forEach((ch, i) => z.append(r.rhyme.includes(ch) && (i === chars.length - 1 || PUNCT.test(chars[i + 1])) ? el("span", "lk-rhy", ch) : document.createTextNode(ch)));
+      t.append(z, el("div", "u-py", py), el("div", "u-en", en));
+      t.onclick = () => body.classList.contains("memo") && row.classList.toggle("peek");
+      row.append(t, sayBtn(btn => window.CSSay && CSSay(zh, btn), "Listen")); body.append(row);
+    });
+    box.append(body);
+    box.addEventListener("toggle", () => { if (box.open) box.parentElement.querySelectorAll("details[open]").forEach(d => d !== box && (d.open = false)); });
+    return box;
+  }
+  function rhymes() {
+    const p = $("bpane"); p.append(header("Rhymes & poems", "诗"));
+    const c0 = el("div", "b-card");
+    c0.innerHTML = "<p>Chinese children learn thousands of characters by <b>chanting rhymes and short poems</b>. The rhythm and the rhyme help words stick. Rhyming sounds are in <span class='lk-rhy'>gold</span>.</p><p class='hint'>Tip: open a rhyme, listen, then tap “Hide pinyin & English” and try to say it from memory. Tap a line to peek.</p>";
+    p.append(c0);
+    const CATS = [["kids", "🧸 Children's rhymes", "儿歌"], ["poem", "📜 Classic poems", "古诗"], ["twist", "👅 Tongue twisters", "绕口令"], ["num", "🔢 Number rhymes", "数字"]];
+    const tabs = el("div", "lk-tabs"), list = el("div", "rh-list");
+    const show = k => {
+      tabs.querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.k === k));
+      list.innerHTML = "";
+      const c = CATS.find(x => x[0] === k);
+      list.append(el("p", "hint", c[2] + " – " + RH.filter(r => r.cat === k).length + " to learn. Tap one to open it."));
+      RH.filter(r => r.cat === k).forEach(r => list.append(rhymeItem(r, false)));
+      store.set("rhCat", k);
+    };
+    CATS.forEach(([k, n]) => { const b = el("button", "chip", n); b.dataset.k = k; b.onclick = () => show(k); tabs.append(b); });
+    const c1 = el("div", "b-card"); c1.append(tabs, list); p.append(c1);
+    show(store.get("rhCat", "kids"));
+    p.append(el("p", "hint", "All rhymes here are traditional folk rhymes or classical poems (Han, Tang and Song dynasties). Translations are simple learner versions."));
   }
 
   /* ---------- 3. Strokes ---------- */

@@ -437,3 +437,33 @@ body{font-size:15px;letter-spacing:-.003em}
 .lk-rhyme .hint{margin:4px 0 6px}
 .lk-rz{font-size:1.25rem;letter-spacing:.04em}
 .lk-rhy{color:#a66f00;background:#ffe9a8;border-radius:5px;padding:0 2px;font-weight:700}
+/* topic bar: jump between topics without going back */
+.b-head{flex-direction:column;align-items:stretch;gap:6px;padding-bottom:8px;box-shadow:0 6px 8px -8px rgba(80,20,10,.25)}
+.b-headrow{display:flex;align-items:center;gap:10px}
+.topicbar{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px;scroll-behavior:smooth}
+.topicbar::-webkit-scrollbar{display:none}
+.topicbar .tb{flex:0 0 auto;display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:5px 11px 5px 6px;font:inherit;font-size:.82rem;cursor:pointer;white-space:nowrap}
+.topicbar .tb-z{width:22px;height:22px;display:grid;place-items:center;border-radius:6px;background:var(--seal-soft);color:var(--seal);font-family:var(--f-brush);font-size:.95rem}
+.topicbar .tb.on{background:var(--seal);border-color:var(--seal);color:#fff;font-weight:700}
+.topicbar .tb.on .tb-z{background:#fff;color:var(--seal)}
+.b-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0 8px}
+.b-foot button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;text-align:left}
+.b-foot button.next{align-items:flex-end;text-align:right}
+.b-foot small{color:var(--muted);font-weight:400}
+/* rhymes */
+.rh-list{display:flex;flex-direction:column;gap:8px}
+.rh-item{border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+.rh-item[open]{border-color:var(--gold);background:#fffbf2}
+.rh-item summary{list-style:none;cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.rh-item summary::-webkit-details-marker{display:none}
+.rh-item summary::after{content:"›";margin-left:auto;font-size:1.4rem;color:var(--seal);transition:transform .2s}
+.rh-item[open] summary::after{transform:rotate(90deg)}
+.rh-t{display:flex;flex-direction:column}
+.rh-zh{font-family:var(--f-han);font-size:1.25rem}
+.rh-en{font-size:.85rem;color:var(--muted)}
+.rh-body{padding:0 12px 10px}
+.rh-by{margin:0;font-size:.85rem;color:var(--jade);font-weight:700}
+.rh-line{font-size:1.3rem;letter-spacing:.04em}
+.rh-body.memo .u-py,.rh-body.memo .u-en{visibility:hidden}
+.rh-body.memo .u-line.peek .u-py,.rh-body.memo .u-line.peek .u-en{visibility:visible}
+.rh-body.memo .u-txt{cursor:pointer}
