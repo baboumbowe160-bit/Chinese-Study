@@ -9,17 +9,12 @@
   };
   const DATA_URL = c => "https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0.1/" + encodeURIComponent(c) + ".json";
 
-  // One-time move for people who used the app before the welcome screen existed:
-  // the old built-in "Mine" list becomes their own Added words, so nothing they used disappears.
-  (function migrate() {
-    let used = false;
-    try { used = ["passed", "assignments", "set", "customWords"].some(k => localStorage.getItem(k) !== null); } catch (e) {}
-    if (!used || store.get("migrated9", false)) return;
-    const OLD_MINE = [["马博", "Mǎ Bó", "my Chinese name"], ["冈比亚", "Gāngbǐyà", "The Gambia"], ["冈比亚大学", "Gāngbǐyà Dàxué", "University of the Gambia"], ["法拉巴", "Fǎlābā", "Faraba"], ["上课", "shàng kè", "attend class"], ["弟弟", "dìdi", "younger brother"], ["一千", "yìqiān", "one thousand"], ["掌", "zhǎng", "palm"], ["早饭", "zǎofàn", "breakfast"], ["起床", "qǐchuáng", "to get up"], ["半", "bàn", "half"]];
-    const cw = store.get("customWords", []);
-    OLD_MINE.forEach(w => { if (!cw.some(x => x[0] === w[0])) cw.push(w); });
-    store.set("customWords", cw);
-    store.set("migrated9", true);
+  // Remove words from the old personal list if they were copied into this phone's Added words.
+  (function cleanOld() {
+    if (store.get("cleaned10", false)) return;
+    const drop = ["马博", "冈比亚", "冈比亚大学", "法拉巴"];
+    const cw = store.get("customWords", []).filter(w => !drop.includes(w[0]));
+    store.set("customWords", cw); store.set("cleaned10", true);
   })();
   let passed = new Set(store.get("passed", []));
   let customWords = store.get("customWords", []);
@@ -76,6 +71,7 @@
   }
 
   function renderWord() {
+    if ($("ppanel") && !$("ppanel").hidden) { const mode = $("ppanel").dataset.mode; setTimeout(() => (mode === "type" ? typePanel() : paperPanel()), 0); }
     const W = words();
     $("practice").hidden = !W.length;
     if (!W.length) { writer = null; return; }
@@ -108,7 +104,7 @@
       strokeColor: tok("--ink"), radicalColor: tok("--seal"), outlineColor: tok("--outline"),
       highlightColor: tok("--seal"), drawingColor: tok("--seal"), drawingWidth: Math.max(6, size / 40),
       strokeAnimationSpeed: 0.9, delayBetweenStrokes: 450, showOutline: true, showCharacter: true,
-      leniency: 1.4, showHintAfterMisses: 2,
+      leniency: 1.0, showHintAfterMisses: 2,
       charDataLoader: (ch, done) => done(charData(ch))
     });
     const n = charData(c).strokes.length;
@@ -133,31 +129,161 @@
   };
   function quiz(withOutline) {
     if (!writer) return;
+    closePanel();
     step = 0;
     const c = cur(), n = charData(c).strokes.length;
     writer.hideCharacter();
     withOutline ? writer.showOutline() : writer.hideOutline();
- const w = writer, sayIf = (t, k) => { if (w === writer) say(t, k); };
-    say(withOutline ? "Trace stroke 1 of " + n + " with your finger" : "Write " + c + " from memory – stroke 1 of " + n);
+    const w = writer, sayIf = (t, k) => { if (w === writer) say(t, k); };
+    say(withOutline ? "Trace stroke 1 of " + n + ". Follow the order and direction." : "Strict test: write " + c + " from memory. No outline, no hints – stroke 1 of " + n);
+    let failed = false;
     writer.quiz({
-      onCorrectStroke: d => { if (d.strokesRemaining) sayIf("Good. Stroke " + (d.strokeNum + 2) + " of " + n, "good"); },
-      onMistake: d => sayIf(d.mistakesOnStroke >= 2 ? "Follow the flashing hint" : "Not quite – check the direction and order", "bad"),
+      leniency: withOutline ? 1.0 : 0.8,
+      showHintAfterMisses: withOutline ? 2 : false,
+      markStrokeCorrectAfterMisses: withOutline ? 4 : false,
+      onCorrectStroke: d => { if (d.strokesRemaining) sayIf((d.mistakesOnStroke ? "OK. " : "Good. ") + "Stroke " + (d.strokeNum + 2) + " of " + n, "good"); },
+      onMistake: d => {
+        if (!withOutline && d.mistakesOnStroke >= 3 && !failed) {
+          failed = true; w.cancelQuiz();
+          sayIf("Not passed – stroke " + (d.strokeNum + 1) + " was wrong 3 times. Watch it, then try again.", "bad");
+          w.showOutline(); w.animateStroke(d.strokeNum);
+          return;
+        }
+        sayIf(withOutline ? (d.mistakesOnStroke >= 2 ? "Follow the flashing hint" : "Wrong stroke – check the order and direction") : "Wrong – " + (3 - d.mistakesOnStroke) + " tries left for this stroke", "bad");
+      },
       onComplete: d => {
         if (w !== writer) return;
         const m = d.totalMistakes, s = m === 1 ? "" : "s";
-        if (!withOutline && m <= 3) {
+        if (!withOutline && m <= 1) {
           passed.add(c); store.set("passed", [...passed]);
-          say(m === 0 ? "Perfect! Passed ✓" : "Passed ✓ with " + m + " mistake" + s, "good");
+          say(m === 0 ? "Perfect! Passed ✓" : "Passed ✓ with 1 mistake", "good");
           renderWords();
           [...$("chars").children].forEach(b => { if (passed.has(b.textContent)) b.classList.add("done"); });
         } else if (!withOutline) {
-          say(m + " mistakes. Watch again, then retry Test.", "bad");
+          say(m + " mistakes – not passed yet. A pass needs 1 mistake or fewer. Trace again, then retry.", "bad");
         } else {
-          say(m === 0 ? "Clean trace! Now try Test." : "Finished with " + m + " mistake" + s + ". Trace again or try Test.", m ? "" : "good");
+          say(m === 0 ? "Clean trace! Now try the strict Test." : "Finished with " + m + " mistake" + s + ". Trace again until it is clean.", m ? "" : "good");
         }
       }
     });
   }
+  /* ---- extra practice panels ---- */
+  function closePanel() { const p = $("ppanel"); p.hidden = true; p.innerHTML = ""; }
+  const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  function typePanel() {
+    const w = words()[wordIdx]; if (!w) return;
+    const p = $("ppanel"); p.innerHTML = ""; p.hidden = false;
+    p.append(mk("h3", null, "Type it with a Chinese keyboard"));
+    const hide = store.get("typeHide", false);
+    const cue = mk("div", "tp-cue");
+    const showCue = () => { cue.innerHTML = ""; cue.append(mk("b", null, w[2] || "(no meaning)")); if (!store.get("typeHide", false)) cue.append(" · ", mk("span", "tp-py", w[1])); };
+    showCue();
+    const row = mk("div", "arow");
+    const inp = mk("input"); inp.id = "typeIn"; inp.lang = "zh"; inp.autocomplete = "off"; inp.placeholder = "Type the characters…"; inp.setAttribute("aria-label", "Type the word in Chinese");
+    const chk = mk("button", "primarybtn small", "Check");
+    row.append(inp, chk);
+    const lis = mk("button", "ghost", "Listen"); lis.onclick = () => play(w[0], false, lis);
+    const hid = mk("button", "ghost", hide ? "Show pinyin" : "Hide pinyin (harder)");
+    hid.onclick = () => { store.set("typeHide", !store.get("typeHide", false)); hid.textContent = store.get("typeHide", false) ? "Show pinyin" : "Hide pinyin (harder)"; showCue(); };
+    const res = mk("div", "tp-res");
+    const tools = mk("div", "frow"); tools.append(lis, hid);
+    p.append(mk("p", "hint", "Listen, then type the word using your phone's Chinese keyboard (pinyin or handwriting). The app checks every character."), cue, row, tools, res);
+    const check = () => {
+      const got = [...inp.value.replace(/\s+/g, "")], want = [...w[0].replace(/\s+/g, "")];
+      res.innerHTML = "";
+      if (!got.length) { res.append(mk("p", "hint", "Type something first.")); return; }
+      const line = mk("div", "tp-line");
+      const n = Math.max(got.length, want.length); let ok = 0;
+      for (let i = 0; i < n; i++) { const g = got[i] || "＿", good = got[i] === want[i]; if (good) ok++; line.append(mk("span", "tp-c " + (good ? "ok" : "no"), g)); }
+      res.append(line);
+      if (ok === want.length && got.length === want.length) { res.append(mk("p", "g-fb good", "Correct! 对了！ " + w[0] + " (" + w[1] + ")")); play(w[0], false, lis); }
+      else res.append(mk("p", "g-fb bad", ok + " of " + want.length + " correct. The answer is " + w[0] + " (" + w[1] + "). Look closely and try again."));
+    };
+    chk.onclick = check; inp.addEventListener("keydown", e => { if (e.key === "Enter") check(); });
+    const help = mk("details", "help"); help.innerHTML = "<summary>How to add a Chinese keyboard</summary><ol><li>Open <b>Settings → System → Languages &amp; input → On-screen keyboard → Gboard → Languages</b>.</li><li>Tap <b>Add keyboard</b>, choose <b>中文（中国）Chinese (Simplified, China)</b>.</li><li>Pick <b>Pinyin</b> (type sounds like “xiexie”) and/or <b>Handwriting</b> (draw characters with your finger – great practice!).</li><li>In any text box, hold the 🌐 key to switch keyboards.</li></ol>";
+    p.append(help);
+    setTimeout(() => inp.focus(), 50);
+  }
+  /* photos of paper practice, stored with the word (same photo store as Homework) */
+  let pdb = null;
+  function photoDb() {
+    if (pdb) return pdb;
+    pdb = new Promise((res, rej) => {
+      if (!window.indexedDB) return rej(new Error("no idb"));
+      const r = indexedDB.open("chinese-study", 1);
+      r.onupgradeneeded = () => { const s = r.result.createObjectStore("photos", { keyPath: "id", autoIncrement: true }); s.createIndex("aid", "aid"); };
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+    return pdb;
+  }
+  async function wordPhotos(key) {
+    try { const d = await photoDb(); return await new Promise((res, rej) => { const q = d.transaction("photos").objectStore("photos").index("aid").getAll(key); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); } catch (e) { return []; }
+  }
+  async function savePhoto(key, blob) { const d = await photoDb(); return new Promise((res, rej) => { const t = d.transaction("photos", "readwrite"); t.objectStore("photos").add({ aid: key, blob, t: Date.now() }); t.oncomplete = res; t.onerror = () => rej(t.error); }); }
+  async function delPhoto(id) { const d = await photoDb(); return new Promise(res => { const t = d.transaction("photos", "readwrite"); t.objectStore("photos").delete(id); t.oncomplete = res; }); }
+  function shrink(file) {
+    return new Promise(res => {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => { const k = Math.min(1, 1600 / Math.max(img.width, img.height)); const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); c.toBlob(b => res(b || file), "image/jpeg", 0.82); };
+      img.onerror = () => { URL.revokeObjectURL(url); res(file); }; img.src = url;
+    });
+  }
+  function paperPanel() {
+    const w = words()[wordIdx]; if (!w) return;
+    const key = "practice:" + w[0];
+    const p = $("ppanel"); p.innerHTML = ""; p.hidden = false;
+    p.append(mk("h3", null, "Practise on paper or in your book"));
+    const steps = mk("ol", "pp-steps");
+    ["Watch the stroke order above.", "Write " + w[0] + " in your book 10 times, saying it aloud each time.", "Take a photo and add it here.", "Compare with the model below and tick what you got right."].forEach(s => steps.append(mk("li", null, s)));
+    p.append(steps);
+    const model = mk("div", "pp-model"); model.append(mk("span", "pp-z", w[0]), mk("span", "pp-py", w[1] + (w[2] ? " · " + w[2] : "")));
+    const strokes = hanChars(w[0]).map(c => c + " = " + charData(c).strokes.length + " strokes").join(" · ");
+    model.append(mk("span", "hint", strokes));
+    p.append(model);
+    const gal = mk("div", "photos"); p.append(gal);
+    const review = mk("div", "pp-review");
+    const saved = store.get("paperReview", {})[w[0]] || {};
+    review.append(mk("p", "label", "Review your writing"));
+    [["count", "Right number of strokes"], ["order", "Strokes in the correct order"], ["shape", "Shape matches the model"], ["box", "Fits neatly in the square"]].forEach(([k, label]) => {
+      const l = mk("label", "pp-chk"); const cb = mk("input"); cb.type = "checkbox"; cb.checked = !!saved[k];
+      cb.onchange = () => { const all = store.get("paperReview", {}); all[w[0]] = Object.assign({}, all[w[0]], { [k]: cb.checked, t: Date.now() }); store.set("paperReview", all); score(); };
+      l.append(cb, " " + label); review.append(l);
+    });
+    const sc = mk("p", "g-fb"); review.append(sc);
+    function score() { const r = store.get("paperReview", {})[w[0]] || {}; const n = ["count", "order", "shape", "box"].filter(k => r[k]).length; sc.textContent = n === 4 ? "Excellent – all four checks! 很好！" : n + " of 4 checks. Write it again and look at what is missing."; sc.className = "g-fb " + (n === 4 ? "good" : ""); }
+    score();
+    p.append(review);
+    p.append(mk("p", "hint", "The app can't read handwriting from a photo. Use the checklist, or share the photo with your teacher for a real review."));
+    async function draw() {
+      gal.innerHTML = "";
+      const list = await wordPhotos(key);
+      list.forEach(ph => {
+        const f = mk("figure"); const img = mk("img"); const url = URL.createObjectURL(ph.blob); img.src = url; img.alt = "My handwriting of " + w[0];
+        img.onclick = () => { $("viewerImg").src = url; $("viewer").hidden = false; };
+        const del = mk("button", "pdel", "×"); del.setAttribute("aria-label", "Remove photo");
+        del.onclick = async () => { if (del.dataset.c !== "1") { del.dataset.c = "1"; del.textContent = "Remove?"; return; } await delPhoto(ph.id); draw(); };
+        f.append(img, del); gal.append(f);
+        if (navigator.canShare) {
+          try {
+            const file = new File([ph.blob], "handwriting-" + w[0] + ".jpg", { type: "image/jpeg" });
+            if (navigator.canShare({ files: [file] })) {
+              const sh = mk("button", "ghost pp-share", "Send to teacher");
+              sh.onclick = () => navigator.share({ files: [file], title: "My handwriting: " + w[0], text: "My handwriting practice: " + w[0] + " (" + w[1] + ")" }).catch(() => {});
+              f.append(sh);
+            }
+          } catch (e) {}
+        }
+      });
+      const add = mk("label", "padd"); add.innerHTML = '<input type="file" accept="image/*" capture="environment" hidden><span>＋ Take photo</span>';
+      add.querySelector("input").onchange = async e => { add.querySelector("span").textContent = "Saving…"; try { for (const f of e.target.files) await savePhoto(key, await shrink(f)); } catch (err) { add.querySelector("span").textContent = "Couldn't save photo"; return; } draw(); };
+      const pick = mk("label", "padd"); pick.innerHTML = '<input type="file" accept="image/*" multiple hidden><span>＋ From gallery</span>';
+      pick.querySelector("input").onchange = add.querySelector("input").onchange;
+      gal.append(add, pick);
+    }
+    draw();
+  }
+  $("bType").onclick = () => { if ($("ppanel").dataset.mode === "type" && !$("ppanel").hidden) return closePanel(); $("ppanel").dataset.mode = "type"; typePanel(); };
+  $("bPaper").onclick = () => { if ($("ppanel").dataset.mode === "paper" && !$("ppanel").hidden) return closePanel(); $("ppanel").dataset.mode = "paper"; paperPanel(); };
   $("bTrace").onclick = () => quiz(true);
   $("bTest").onclick = () => quiz(false);
 
@@ -313,14 +439,13 @@
   /* ---- Add your own words ---- */
   function saveCustom() { store.set("customWords", customWords); store.set("customData", customData); }
   function msg(t, cls) { const m = $("addmsg"); m.textContent = t; m.className = "hint" + (cls ? " " + cls : ""); }
-  $("addform").addEventListener("submit", async e => {
-    e.preventDefault();
-    const z = $("fz").value.trim(), p = $("fp").value.trim(), m = $("fm").value.trim();
+  // Download stroke data for any missing characters, then add the word to Added.
+  async function addWord(z, p, m, say2) {
     const han = [...new Set([...z].filter(isHan))];
-    if (!han.length) { msg("Type at least one Chinese character.", "bad"); return; }
+    if (!han.length) { say2("Type at least one Chinese character.", "bad"); return false; }
     const need = han.filter(c => !charData(c));
     if (need.length) {
-      msg("Downloading strokes for " + need.join(" ") + "…");
+      say2("Downloading strokes for " + need.join(" ") + "…");
       const failed = [];
       for (const c of need) {
         try {
@@ -331,17 +456,30 @@
         } catch (err) { failed.push(c); }
       }
       if (failed.length) {
-        msg(navigator.onLine === false ? "You're offline. Connect to the internet once to add new characters." :
+        say2(navigator.onLine === false ? "You're offline. Connect to the internet once to add new characters." :
           "No stroke data found for " + failed.join(" ") + ". Check the characters and try again.", "bad");
-        return;
+        return false;
       }
     }
-    customWords.push([z, p || "", m || ""]);
+    let i = customWords.findIndex(w => w[0] === z);
+    if (i < 0) { customWords.push([z, p || "", m || ""]); i = customWords.length - 1; }
     saveCustom();
-    $("addform").reset();
-    wordIdx = customWords.length - 1; charIdx = 0;
-    msg("Added " + z + ".", "good");
-    renderWords(); renderWord();
+    setIdx = ALL.length - 1; wordIdx = i; charIdx = 0; store.set("set", setIdx);
+    renderAll();
+    return true;
+  }
+  $("addform").addEventListener("submit", async e => {
+    e.preventDefault();
+    const z = $("fz").value.trim();
+    if (await addWord(z, $("fp").value.trim(), $("fm").value.trim(), msg)) { $("addform").reset(); msg("Added " + z + ".", "good"); }
+  });
+  $("anyForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const z = $("anyIn").value.replace(/\s+/g, "");
+    const m = (t, cls) => { $("anyMsg").textContent = t; $("anyMsg").className = "hint" + (cls ? " " + cls : ""); };
+    // already in a lesson? jump there
+    for (let si = 0; si < ALL.length; si++) { const wi = ALL[si][3].findIndex(w => w[0] === z); if (wi >= 0) { setIdx = si; wordIdx = wi; charIdx = 0; renderAll(); m("Found in " + (ALL[si][0] === "A" ? "your Added words" : "Lesson " + ALL[si][0]) + ".", "good"); $("practice").scrollIntoView({ behavior: "smooth" }); return; } }
+    if (await addWord(z, "", "", m)) { m("Ready – " + z + " is saved in ＋ Added.", "good"); $("anyIn").value = ""; $("practice").scrollIntoView({ behavior: "smooth" }); }
   });
   $("bDel").onclick = () => {
     if (ALL[setIdx][0] !== "A" || !customWords.length) return;

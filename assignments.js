@@ -8,6 +8,11 @@
   };
 
   let list = store.get("assignments", []) || [];
+  const COURSES = [["c1", "Chinese 1", "Synthesis"], ["c2", "Chinese 2", "Listening & Speaking"], ["c3", "Chinese 3", "Characters"]];
+  const CLASS = (window.CLASS_ASSIGNMENTS || []).map(a => Object.assign({ fromClass: true }, a));
+  let classState = store.get("classState", {});   // per class assignment: { done, work }
+  let course = store.get("aCourse", "all");
+  const courseName = c => { const x = COURSES.find(k => k[0] === c); return x ? x[1] + " · " + x[2] : "Not sorted"; };
   let open = new Set(store.get("aOpen", []));
   let editing = null;
   const save = () => store.set("assignments", list);
@@ -111,47 +116,81 @@
     };
     wrap.appendChild(add);
   }
+  function chips() {
+    const box = $("aCourses"); box.innerHTML = "";
+    [["all", "All", ""]].concat(COURSES).forEach(([id, n, sub]) => {
+      const b = document.createElement("button"); b.className = "acourse"; b.setAttribute("aria-pressed", String(course === id));
+      const t = document.createElement("b"); t.textContent = n; b.appendChild(t);
+      if (sub) { const s2 = document.createElement("span"); s2.textContent = sub; b.appendChild(s2); }
+      b.onclick = () => { course = id; store.set("aCourse", id); chips(); render(); };
+      box.appendChild(b);
+    });
+  }
+  function view(a) {   // merge class assignments with this phone's progress
+    if (!a.fromClass) return a;
+    const st = classState[a.id] || {};
+    return Object.assign({}, a, { done: !!st.done, work: st.work || "" });
+  }
+  function card(a) {
+    const card = document.createElement("article"); card.className = "acard" + (a.done ? " isdone" : "") + (a.fromClass ? " fromclass" : "");
+    const head = document.createElement("button"); head.className = "ahead"; head.setAttribute("aria-expanded", String(open.has(a.id)));
+    head.innerHTML = '<span class="anum"></span><span class="ameta"><span class="atitle"></span><span class="adate"></span></span><span class="astate"></span>';
+    head.querySelector(".anum").textContent = a.n || "•";
+    head.querySelector(".atitle").textContent = a.title;
+    head.querySelector(".adate").textContent = (a.fromClass ? "From class" : "My assignment") + (course === "all" ? " · " + courseName(a.course) : "") + (a.date ? " · " + niceDate(a.date) : "");
+    head.querySelector(".astate").textContent = a.done ? "Done" : "To do";
+    head.onclick = () => { open.has(a.id) ? open.delete(a.id) : open.add(a.id); store.set("aOpen", [...open]); render(); };
+    card.appendChild(head);
+    if (!open.has(a.id)) return card;
+    const body = document.createElement("div"); body.className = "abody";
+    if (a.task) {
+      const t = document.createElement("div"); t.className = "atask";
+      const l = document.createElement("p"); l.className = "label"; l.textContent = "Instructions";
+      t.appendChild(l); a.task.split("\n").forEach(x => t.appendChild(lineEl(x))); body.appendChild(t);
+    }
+    if (a.fromClass) {
+      const l = document.createElement("label"); l.className = "label"; l.textContent = "My answers"; l.htmlFor = "w-" + a.id;
+      const ta = document.createElement("textarea"); ta.id = "w-" + a.id; ta.className = "awork-in"; ta.rows = 6; ta.value = a.work || "";
+      ta.placeholder = "Write your answers here, one per line. Lines with Chinese get a speaker button.";
+      const prev = document.createElement("div"); prev.className = "awork";
+      const draw = () => { prev.innerHTML = ""; (ta.value || "").split("\n").forEach(x => x.trim() && prev.appendChild(lineEl(x))); };
+      ta.oninput = () => { classState[a.id] = Object.assign({}, classState[a.id], { work: ta.value }); store.set("classState", classState); draw(); };
+      draw(); body.append(l, ta, prev);
+    } else if (a.work) {
+      const w = document.createElement("div"); w.className = "awork";
+      const l = document.createElement("p"); l.className = "label"; l.textContent = "My work";
+      w.appendChild(l); a.work.split("\n").forEach(x => w.appendChild(lineEl(x))); body.appendChild(w);
+    }
+    const pl = document.createElement("p"); pl.className = "label"; pl.textContent = "Photos of my written work";
+    const pw = document.createElement("div"); pw.className = "photos";
+    body.append(pl, pw); renderPhotos(a, pw);
+    const act = document.createElement("div"); act.className = "frow";
+    const done = document.createElement("button"); done.className = "ghost"; done.textContent = a.done ? "Mark as to do" : "Mark as done";
+    done.onclick = () => {
+      if (a.fromClass) { classState[a.id] = Object.assign({}, classState[a.id], { done: !a.done }); store.set("classState", classState); }
+      else { const real = list.find(x => x.id === a.id); real.done = !real.done; save(); }
+      render();
+    };
+    act.append(done);
+    if (!a.fromClass) { const ed = document.createElement("button"); ed.className = "ghost"; ed.textContent = "Edit"; ed.onclick = () => openForm(list.find(x => x.id === a.id)); act.append(ed); }
+    body.appendChild(act);
+    card.appendChild(body);
+    return card;
+  }
   function render() {
     const q = $("aq").value.trim().toLowerCase();
     const box = $("aList"); box.innerHTML = "";
-    const shown = list.slice().sort((x, y) => y.n - x.n)
-      .filter(a => !q || [a.title, a.task, a.work, "assignment " + a.n].join(" ").toLowerCase().includes(q));
-    if (!shown.length) { box.innerHTML = '<p class="empty">' + (q ? "No assignment matches your search." : "No assignments yet. Tap ＋ New to add one.") + "</p>"; return; }
-    shown.forEach(a => {
-      const card = document.createElement("article"); card.className = "acard" + (a.done ? " isdone" : "");
-      const head = document.createElement("button"); head.className = "ahead"; head.setAttribute("aria-expanded", String(open.has(a.id)));
-      head.innerHTML = '<span class="anum"></span><span class="ameta"><span class="atitle"></span><span class="adate"></span></span><span class="astate"></span>';
-      head.querySelector(".anum").textContent = a.n;
-      head.querySelector(".atitle").textContent = a.title;
-      head.querySelector(".adate").textContent = "Assignment " + a.n + (a.date ? " · " + niceDate(a.date) : "");
-      head.querySelector(".astate").textContent = a.done ? "Done" : "To do";
-      head.onclick = () => { open.has(a.id) ? open.delete(a.id) : open.add(a.id); store.set("aOpen", [...open]); render(); };
-      card.appendChild(head);
-      if (open.has(a.id)) {
-        const body = document.createElement("div"); body.className = "abody";
-        if (a.task) {
-          const t = document.createElement("div"); t.className = "atask";
-          const l = document.createElement("p"); l.className = "label"; l.textContent = "Task";
-          t.appendChild(l); a.task.split("\n").forEach(s => t.appendChild(lineEl(s))); body.appendChild(t);
-        }
-        if (a.work) {
-          const w = document.createElement("div"); w.className = "awork";
-          const l = document.createElement("p"); l.className = "label"; l.textContent = "My work";
-          w.appendChild(l); a.work.split("\n").forEach(s => w.appendChild(lineEl(s))); body.appendChild(w);
-        }
-        const pl = document.createElement("p"); pl.className = "label"; pl.textContent = "Photos of my written work";
-        const pw = document.createElement("div"); pw.className = "photos";
-        body.append(pl, pw); renderPhotos(a, pw);
-        const act = document.createElement("div"); act.className = "frow";
-        const done = document.createElement("button"); done.className = "ghost"; done.textContent = a.done ? "Mark as to do" : "Mark as done";
-        done.onclick = () => { a.done = !a.done; save(); render(); };
-        const ed = document.createElement("button"); ed.className = "ghost"; ed.textContent = "Edit";
-        ed.onclick = () => openForm(a);
-        act.append(done, ed); body.appendChild(act);
-        card.appendChild(body);
-      }
-      box.appendChild(card);
-    });
+    const match = a => !q || [a.title, a.task, a.work, "assignment " + a.n, courseName(a.course)].join(" ").toLowerCase().includes(q);
+    const inCourse = a => course === "all" || a.course === course;
+    const cls = CLASS.map(view).filter(inCourse).filter(match).sort((x, y) => (x.course || "").localeCompare(y.course || "") || (y.n || 0) - (x.n || 0));
+    const mine = list.filter(inCourse).filter(match).sort((x, y) => y.n - x.n);
+    const section = (title, items, empty) => {
+      const h = document.createElement("h3"); h.className = "asec"; h.textContent = title; box.appendChild(h);
+      if (!items.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = empty; box.appendChild(p); return; }
+      items.forEach(a => box.appendChild(card(a)));
+    };
+    section("From class", cls, q ? "No class assignment matches your search." : "Class assignments for " + (course === "all" ? "your courses" : courseName(course)) + " will appear here.");
+    section("My own assignments", mine, q ? "None of your assignments match." : "Tap ＋ New to add your own.");
   }
 
   let viewTok = null, formTok = null;
@@ -165,6 +204,7 @@
     $("aDate").value = a ? (a.date || "") : new Date().toISOString().slice(0, 10);
     $("aTask").value = a ? (a.task || "") : "";
     $("aWork").value = a ? (a.work || "") : "";
+    $("aCourseSel").value = a ? (a.course || "") : (course === "all" ? "" : course);
     $("aDelete").hidden = !a; $("aDelete").textContent = "Delete"; $("aDelete").dataset.c = "";
     if ($("aForm").hidden && window.CSNav) formTok = CSNav.push(closeForm);
     $("aForm").hidden = false; $("aNew").hidden = true;
@@ -177,7 +217,7 @@
   $("aCancel").onclick = userCloseForm;
   $("aForm").addEventListener("submit", e => {
     e.preventDefault();
-    const v = { title: $("aTitle").value.trim(), date: $("aDate").value, task: $("aTask").value.trim(), work: $("aWork").value.replace(/\s+$/, "") };
+    const v = { title: $("aTitle").value.trim(), date: $("aDate").value, task: $("aTask").value.trim(), work: $("aWork").value.replace(/\s+$/, ""), course: $("aCourseSel").value };
     if (!v.title) return;
     if (editing) Object.assign(editing, v);
     else {
@@ -196,6 +236,7 @@
     userCloseForm(); render();
   };
   $("aq").addEventListener("input", render);
+  chips();
   $("viewerClose").onclick = userHideViewer;
   $("viewer").addEventListener("click", e => { if (e.target === $("viewer")) userHideViewer(); });
 

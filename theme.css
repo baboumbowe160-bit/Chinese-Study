@@ -310,3 +310,39 @@ body{font-size:15px;letter-spacing:-.003em}
 .frow .ghost{flex:1}
 .qw{font-family:var(--f-han);color:var(--seal);font-weight:700}
 .b-hub>.b-tile:last-child:nth-child(odd){grid-column:1/-1;min-height:0}
+
+/* homework courses */
+.acourses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.acourse{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--tile);color:var(--ink);border-radius:12px;padding:8px 10px;font:inherit;cursor:pointer}
+.acourse b{font-family:var(--f-display);font-weight:400;font-size:1rem}
+.acourse span{font-size:.76rem;color:var(--muted)}
+.acourse[aria-pressed="true"]{background:var(--seal);border-color:var(--seal);color:#fff}
+.acourse[aria-pressed="true"] span{color:#ffe3b0}
+.asec{margin:8px 0 0;font-size:1.05rem}
+.fromclass .anum{border-color:var(--gold);color:var(--jade)}
+.awork-in{font:inherit;font-size:1rem;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);width:100%;resize:vertical}
+.aform select{font:inherit;font-size:1rem;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);width:100%}
+
+/* ---- writing practice extras ---- */
+.anychar{background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 14px}
+.anychar label{display:block;font-weight:700;margin-bottom:6px}
+.anychar .hint{margin:6px 0 0;min-height:1em}
+.ppanel{width:100%;margin-top:12px;background:var(--sheet);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;text-align:left}
+.ppanel h3{margin:0;font-size:1.05rem;color:var(--seal)}
+.ppanel .hint{margin:0}
+.tp-cue{font-size:1.1rem;text-align:center;padding:10px;border-radius:10px;background:var(--paper)}
+.tp-py{color:var(--jade)}
+.tp-line{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.tp-c{font-size:2rem;min-width:2.6rem;text-align:center;padding:4px 6px;border-radius:10px;border:2px solid}
+.tp-c.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.tp-c.no{border-color:var(--seal);background:color-mix(in srgb,var(--seal) 8%,transparent);color:var(--seal)}
+.ppanel .help ol{padding-left:1.2em;margin:.4em 0;line-height:1.6}
+.pp-steps{margin:0;padding-left:1.3em;line-height:1.6}
+.pp-model{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px;border-radius:12px;background:var(--paper);border:1px dashed var(--gold)}
+.pp-z{font-size:3.4rem;line-height:1.1;letter-spacing:.1em}
+.pp-py{color:var(--jade);font-weight:700}
+.pp-review{display:flex;flex-direction:column;gap:6px}
+.pp-review .label{margin:0;font-weight:700}
+.pp-chk{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);cursor:pointer}
+.pp-chk input{width:20px;height:20px;accent-color:var(--seal)}
+.pp-share{position:absolute;left:4px;right:4px;bottom:4px;font-size:.72rem;padding:4px;background:rgba(255,248,242,.92)}

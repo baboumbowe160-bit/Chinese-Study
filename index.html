@@ -34,6 +34,12 @@
     <div class="results" id="results" hidden></div>
   </section>
 
+  <form class="anychar" id="anyForm" autocomplete="off">
+    <label for="anyIn">Practise any character or word</label>
+    <div class="arow"><input id="anyIn" lang="zh" maxlength="8" placeholder="Type e.g. 爱 or 学习"><button class="primarybtn small" type="submit">Practise</button></div>
+    <p class="hint" id="anyMsg"></p>
+  </form>
+
   <section aria-label="Lessons">
     <p class="label">Lesson</p>
     <div class="strip" id="sets"></div>
@@ -93,8 +99,11 @@
       <button id="bWatch" class="primary">▶ Watch<small>see the full order</small></button>
       <button id="bStep">Next stroke<small>one stroke at a time</small></button>
       <button id="bTrace">✍ Trace<small>write over the grey</small></button>
-      <button id="bTest">Test<small>write from memory</small></button>
+      <button id="bTest">Test<small>strict · from memory</small></button>
+      <button id="bType">⌨ Type it<small>Chinese keyboard check</small></button>
+      <button id="bPaper">Paper / book<small>photo of your writing</small></button>
     </div>
+    <div class="ppanel" id="ppanel" hidden></div>
     <div class="nav">
       <button id="bPrev">‹ Previous</button>
       <button id="bDel" hidden>Remove this word</button>
@@ -127,9 +136,11 @@
       <input id="aq" type="search" placeholder="Search assignments…" autocomplete="off">
       <button id="aNew" class="primarybtn small">＋ New</button>
     </div>
+    <div class="acourses" id="aCourses" role="group" aria-label="Course"></div>
     <form id="aForm" class="card aform" hidden autocomplete="off">
       <p class="label" id="aFormTitle">New assignment</p>
       <label for="aTitle">Title</label><input id="aTitle" required maxlength="80" placeholder="e.g. Lesson 8 · Shopping dialogue">
+      <label for="aCourseSel">Course</label><select id="aCourseSel"><option value="">Not sorted</option><option value="c1">Chinese 1 · Synthesis</option><option value="c2">Chinese 2 · Listening &amp; Speaking</option><option value="c3">Chinese 3 · Characters</option></select>
       <label for="aDate">Date</label><input id="aDate" type="date">
       <label for="aTask">What the teacher asked</label><textarea id="aTask" rows="3" placeholder="Write the instructions here"></textarea>
       <label for="aWork">My work</label><textarea id="aWork" rows="8" placeholder="One answer per line, e.g.&#10;1. Hello! → 你好！ (Nǐ hǎo!)"></textarea>
@@ -166,6 +177,7 @@
 <script src="hanzi-writer.min.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script src="class-assignments.js"></script>
 <script src="assignments.js"></script>
 <script src="basics-data.js"></script>
 <script src="basics-plus.js"></script>

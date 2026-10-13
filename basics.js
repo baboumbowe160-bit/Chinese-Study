@@ -438,7 +438,7 @@
     ["Meeting people", [
       ["你好！", "Nǐ hǎo!", "Hello!"], ["你好吗？", "Nǐ hǎo ma?", "How are you?"], ["我很好，谢谢！", "Wǒ hěn hǎo, xièxie!", "I'm fine, thank you!"],
       ["你叫什么名字？", "Nǐ jiào shénme míngzi?", "What's your name?"], ["认识你很高兴。", "Rènshi nǐ hěn gāoxìng.", "Nice to meet you."],
-      ["我是冈比亚人。", "Wǒ shì Gāngbǐyà rén.", "I am Gambian."], ["再见！", "Zàijiàn!", "Goodbye!"], ["明天见！", "Míngtiān jiàn!", "See you tomorrow!"]]],
+      ["我是学生。", "Wǒ shì xuésheng.", "I am a student."], ["再见！", "Zàijiàn!", "Goodbye!"], ["明天见！", "Míngtiān jiàn!", "See you tomorrow!"]]],
     ["Polite words", [
       ["谢谢！", "Xièxie!", "Thank you!"], ["不客气。", "Bú kèqi.", "You're welcome."], ["对不起。", "Duìbuqǐ.", "Sorry."],
       ["没关系。", "Méi guānxi.", "It doesn't matter."], ["请坐。", "Qǐng zuò.", "Please sit down."], ["没问题。", "Méi wèntí.", "No problem."]]],

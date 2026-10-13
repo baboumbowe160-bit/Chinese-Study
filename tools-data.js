@@ -78,7 +78,7 @@ var TOOLS = {
  builder: {
   who: [["我","wǒ","I"],["你","nǐ","you"],["他","tā","he"],["她","tā","she"],["我们","wǒmen","we"],["我朋友","wǒ péngyou","my friend"],["老师","lǎoshī","the teacher"]],
   when: [["今天","jīntiān","today"],["明天","míngtiān","tomorrow"],["昨天","zuótiān","yesterday"],["现在","xiànzài","now"],["上午","shàngwǔ","in the morning"],["下午","xiàwǔ","in the afternoon"],["星期六","xīngqīliù","on Saturday"],["星期天","xīngqītiān","on Sunday"]],
-  where: [["家","jiā","home"],["学校","xuéxiào","school"],["商店","shāngdiàn","the shop"],["医院","yīyuàn","the hospital"],["饭店","fàndiàn","the restaurant"],["冈比亚","Gāngbǐyà","The Gambia"],["北京","Běijīng","Beijing"]],
+  where: [["家","jiā","home"],["学校","xuéxiào","school"],["商店","shāngdiàn","the shop"],["医院","yīyuàn","the hospital"],["饭店","fàndiàn","the restaurant"],["北京","Běijīng","Beijing"]],
   verb: [["是","shì","am / is / are"],["有","yǒu","have"],["喜欢","xǐhuan","like"],["想","xiǎng","want to"],["去","qù","go"],["吃","chī","eat"],["喝","hē","drink"],["看","kàn","watch / read"],["学习","xuéxí","study"],["买","mǎi","buy"],["说","shuō","speak"],["工作","gōngzuò","work"],["睡觉","shuì jiào","sleep"]],
   what: [["汉语","Hànyǔ","Chinese"],["中国菜","Zhōngguó cài","Chinese food"],["米饭","mǐfàn","rice"],["茶","chá","tea"],["水","shuǐ","water"],["书","shū","a book"],["电影","diànyǐng","a movie"],["电视","diànshì","TV"],["水果","shuǐguǒ","fruit"],["苹果","píngguǒ","apples"],["学生","xuésheng","a student"],["老师","lǎoshī","a teacher"],["医生","yīshēng","a doctor"],["衣服","yīfu","clothes"]],
   end: [["吗","ma","? (yes/no question)"],["不","bù","not (before the verb)"]]
