@@ -2,12 +2,25 @@
 (function () {
   "use strict";
   const $ = id => document.getElementById(id);
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
   const DATA_URL = c => "https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0.1/" + encodeURIComponent(c) + ".json";
 
+  // One-time move for people who used the app before the welcome screen existed:
+  // the old built-in "Mine" list becomes their own Added words, so nothing they used disappears.
+  (function migrate() {
+    let used = false;
+    try { used = ["passed", "assignments", "set", "customWords"].some(k => localStorage.getItem(k) !== null); } catch (e) {}
+    if (!used || store.get("migrated9", false)) return;
+    const OLD_MINE = [["马博", "Mǎ Bó", "my Chinese name"], ["冈比亚", "Gāngbǐyà", "The Gambia"], ["冈比亚大学", "Gāngbǐyà Dàxué", "University of the Gambia"], ["法拉巴", "Fǎlābā", "Faraba"], ["上课", "shàng kè", "attend class"], ["弟弟", "dìdi", "younger brother"], ["一千", "yìqiān", "one thousand"], ["掌", "zhǎng", "palm"], ["早饭", "zǎofàn", "breakfast"], ["起床", "qǐchuáng", "to get up"], ["半", "bàn", "half"]];
+    const cw = store.get("customWords", []);
+    OLD_MINE.forEach(w => { if (!cw.some(x => x[0] === w[0])) cw.push(w); });
+    store.set("customWords", cw);
+    store.set("migrated9", true);
+  })();
   let passed = new Set(store.get("passed", []));
   let customWords = store.get("customWords", []);
   let customData = store.get("customData", {});
@@ -38,6 +51,9 @@
     $("settitle").innerHTML = "";
     const b = document.createElement("b"); b.textContent = s[0] === "A" ? "我的新词" : s[1];
     $("settitle").append(b, document.createTextNode(s[2]));
+    const PAGES = { 1: 2, 2: 8, 3: 14, 4: 22, 5: 30, 6: 40, 7: 48, 8: 56, 9: 64, 10: 72, 11: 82, 12: 90, 13: 98, 14: 104, 15: 112 };
+    if (PAGES[s[0]]) $("settitle").append(el("span", "bookref", "Textbook p. " + PAGES[s[0]]));
+    if (s[0] === "C") $("settitle").append(el("span", "bookref", "From the class board, 10月5日"));
     $("addcard").hidden = s[0] !== "A";
   }
 

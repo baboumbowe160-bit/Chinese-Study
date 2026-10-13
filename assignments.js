@@ -7,8 +7,7 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
 
-  let list = store.get("assignments", null);
-  if (!list) { list = (window.ASSIGN_SEED || []).map(a => Object.assign({}, a)); store.set("assignments", list); }
+  let list = store.get("assignments", []) || [];
   let open = new Set(store.get("aOpen", []));
   let editing = null;
   const save = () => store.set("assignments", list);

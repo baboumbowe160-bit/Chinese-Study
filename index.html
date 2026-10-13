@@ -17,11 +17,13 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="1" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6"/></filter></svg>
 <div class="wrap">
   <header class="top">
-    <div class="seal" aria-hidden="true"><span>学</span></div>
-    <div class="hello">
-      <div class="hello-zh" id="hello">你好！</div>
-      <div class="hello-sub"><span id="today"></span><span class="appname">Chinese Study</span></div>
-    </div>
+    <button class="profile" id="profileBtn" aria-label="My profile and settings">
+      <span class="seal" aria-hidden="true"><span>学</span></span>
+      <span class="hello">
+        <span class="hello-zh" id="hello">你好！</span>
+        <span class="hello-sub"><span id="today"></span><span id="helloName"></span></span>
+      </span>
+    </button>
   </header>
 
 
@@ -157,12 +159,12 @@
   <button role="tab" id="tUse" aria-selected="false"><span class="stamp">用</span><span class="dl">Use</span></button>
   <button role="tab" id="tAssign" aria-selected="false"><span class="stamp">作</span><span class="dl">Homework</span></button>
 </nav>
+<div id="ob" class="ob" hidden role="dialog" aria-modal="true" aria-label="Welcome"><div class="ob-box" id="obBox"></div></div>
 <div id="bsheet" class="bsheet" hidden role="dialog" aria-modal="true" aria-label="Character"><div class="bsheet-in"><button id="bsheetClose" class="ghost bsheet-x" aria-label="Close">✕</button><div id="bsheetBody"></div></div></div>
 <div id="viewer" class="viewer" hidden><img id="viewerImg" alt="Assignment photo"><button id="viewerClose" class="ghost">Close</button></div>
 
 <script src="hanzi-writer.min.js"></script>
 <script src="data.js"></script>
-<script src="assignments-seed.js"></script>
 <script src="app.js"></script>
 <script src="assignments.js"></script>
 <script src="basics-data.js"></script>
@@ -170,5 +172,6 @@
 <script src="tools-data.js"></script>
 <script src="tools-audio.js"></script>
 <script src="tools.js"></script>
+<script src="welcome.js"></script>
 </body>
 </html>

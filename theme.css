@@ -171,3 +171,57 @@ body{font-size:15px;letter-spacing:-.003em}
 .hit.lesson .hz{font-family:var(--f-display)}
 .u-note{margin:6px 0 0;font-size:.85rem;color:var(--muted);padding-left:12px;border-left:2px solid var(--gold)}
 .recipe .rc-p{color:var(--ink)}
+
+/* header as profile button */
+.profile{display:flex;align-items:center;gap:14px;border:none;background:none;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;min-width:0}
+.profile .hello{display:flex;flex-direction:column;min-width:0}
+.profile:focus-visible{outline:2px solid var(--seal);outline-offset:4px;border-radius:8px}
+#helloName{font-family:var(--f-display)}
+.bookref{display:inline-block;margin-left:8px;font-size:.78rem;color:var(--jade);border:1px solid var(--line);border-radius:999px;padding:1px 8px;vertical-align:middle}
+
+/* welcome / profile overlay */
+.ob{position:fixed;inset:0;z-index:30;background:rgba(18,24,21,.55);display:flex;align-items:flex-end;justify-content:center}
+@media (min-height:700px) and (min-width:600px){.ob{align-items:center}}
+.ob-box{position:relative;width:100%;max-width:520px;max-height:94vh;overflow-y:auto;background-color:var(--paper);background-image:inherit;
+  border-radius:18px 18px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px;animation:up .22s ease-out}
+@media (min-height:700px) and (min-width:600px){.ob-box{border-radius:18px}}
+.ob-box h2{margin:0;font-size:1.35rem}
+.ob-box h3{margin:10px 0 0;font-size:1.05rem}
+.ob-box p{margin:0;line-height:1.55}
+.ob-dots{display:flex;gap:6px;justify-content:center}
+.ob-dots span{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.ob-dots span.on{background:var(--seal);width:20px;border-radius:4px}
+.ob-hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:6px 0}
+.seal.big{width:76px;height:76px}
+.seal.big span{font-size:3rem}
+.ob-zh{font-family:var(--f-brush);font-size:2.4rem;line-height:1.1;color:var(--seal)}
+.ob-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ob-list li{display:flex;gap:10px;align-items:center;line-height:1.45}
+.ob-list .stamp,.ob-tip .stamp{flex:0 0 auto;width:34px;height:34px;font-size:1.3rem}
+.ob-foot{display:flex;gap:8px;margin-top:6px}
+.ob-foot .primarybtn{flex:1;margin:0}
+.ob-style{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ob-style label{font-size:.85rem;color:var(--muted)}
+.ob-style select{font:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--sheet);color:var(--ink)}
+.ob-style .ghost{margin-left:auto;padding:8px 12px}
+.ob-names{display:flex;flex-direction:column;gap:8px}
+.ob-name{display:flex;align-items:center;gap:14px;border:1.5px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:12px;padding:10px 12px;font:inherit;text-align:left;cursor:pointer}
+.ob-name[aria-pressed="true"]{border-color:var(--seal);box-shadow:inset 0 0 0 1px var(--seal)}
+.obn-zh{font-family:var(--f-brush);font-size:2rem;line-height:1;min-width:3.2em}
+.obn-m{display:flex;flex-direction:column;min-width:0}
+.obn-py{font-family:var(--f-display);color:var(--seal);font-size:1.05rem}
+.obn-mean{font-size:.8rem;color:var(--muted)}
+.ob-tour{display:flex;flex-direction:column;gap:10px}
+.ob-tip{display:flex;gap:12px;align-items:flex-start;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.ob-tip b{font-family:var(--f-display);font-weight:400;font-size:1.05rem}
+.ob-tip p{font-size:.9rem;color:var(--muted)}
+.ob-say{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap}
+.ob-x{position:absolute;top:12px;right:12px;padding:6px 10px}
+.pf-cn{display:flex;flex-direction:column;gap:6px;background:var(--sheet);border:1px solid var(--line);border-radius:12px;padding:12px}
+.pf-cn .label{margin:0}
+.pf-name{display:flex;align-items:center;gap:14px}
+.pf-name .n-zh{font-size:2.2rem}
+.pf-cn .frow .primarybtn{flex:1}
+.refs{margin:4px 0 0;padding-left:18px;line-height:1.55;font-size:.92rem}
+.refs li{margin-bottom:6px}
+.refs a{color:var(--jade)}
