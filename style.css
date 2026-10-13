@@ -142,3 +142,10 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--seal);outline-o
 .viewer[hidden]{display:none}
 .viewer img{max-width:100%;max-height:82vh;border-radius:6px}
 .hit.lesson .hz{font-family:var(--f-body);font-weight:700;color:var(--seal);font-size:1.1rem;width:28px;text-align:center}
+
+.help{width:100%;max-width:340px;margin:8px auto 0;text-align:left;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:.86rem}
+.help summary{cursor:pointer;padding:9px 12px;font-weight:700;color:var(--muted);list-style-position:inside}
+.help[open] summary{color:var(--seal);border-bottom:1px solid var(--line)}
+.help p,.help ol{margin:8px 12px;line-height:1.5}
+.help ol{padding-left:18px}
+.help li{margin-bottom:5px}
