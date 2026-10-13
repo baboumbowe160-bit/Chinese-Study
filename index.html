@@ -19,6 +19,7 @@
   </header>
 
   <nav class="tabs" role="tablist">
+    <button role="tab" id="tBasics" aria-selected="false">Basics</button>
     <button role="tab" id="tPractice" aria-selected="true">Practice</button>
     <button role="tab" id="tAssign" aria-selected="false">Assignments</button>
   </nav>
@@ -111,6 +112,8 @@
 
   </div>
 
+  <div id="paneB" class="pane" hidden><div id="bpane" class="bpane"></div></div>
+
   <div id="paneA" class="pane" hidden>
     <div class="arow">
       <input id="aq" type="search" placeholder="Search assignments…" autocomplete="off">
@@ -137,10 +140,11 @@
     <p>A green dot means you passed the test for that word with 3 mistakes or fewer.</p>
     <p id="installtip">To install: open the Chrome menu ⋮ and tap <b>Install app</b> or <b>Add to Home screen</b>.</p>
     <button id="bInstall" class="primarybtn" hidden>Install app</button>
-    <p class="credits">Stroke animations by <a href="https://hanziwriter.org" target="_blank" rel="noopener">Hanzi Writer</a> (MIT). Recordings by Yue Tan and Chen Wang via <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a> (CC BY-SA). Stroke data from <a href="https://github.com/skishore/makemeahanzi" target="_blank" rel="noopener">Make Me a Hanzi</a>, Arphic Public License.</p>
+    <p class="credits">Stroke animations by <a href="https://hanziwriter.org" target="_blank" rel="noopener">Hanzi Writer</a> (MIT). Recordings by Yue Tan and Chen Wang via <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a> (CC BY-SA). Stroke data and character origins from <a href="https://github.com/skishore/makemeahanzi" target="_blank" rel="noopener">Make Me a Hanzi</a>, Arphic Public License / LGPL.</p>
   </section>
 </div>
 
+<div id="bsheet" class="bsheet" hidden role="dialog" aria-modal="true" aria-label="Character"><div class="bsheet-in"><button id="bsheetClose" class="ghost bsheet-x" aria-label="Close">✕</button><div id="bsheetBody"></div></div></div>
 <div id="viewer" class="viewer" hidden><img id="viewerImg" alt="Assignment photo"><button id="viewerClose" class="ghost">Close</button></div>
 
 <script src="hanzi-writer.min.js"></script>
@@ -148,5 +152,7 @@
 <script src="assignments-seed.js"></script>
 <script src="app.js"></script>
 <script src="assignments.js"></script>
+<script src="basics-data.js"></script>
+<script src="basics.js"></script>
 </body>
 </html>

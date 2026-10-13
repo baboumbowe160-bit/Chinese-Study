@@ -277,11 +277,13 @@
     store.set("tab", t);
     $("tPractice").setAttribute("aria-selected", String(t === "p"));
     $("tAssign").setAttribute("aria-selected", String(t === "a"));
-    $("paneP").hidden = t !== "p"; $("paneA").hidden = t !== "a"; $("tipsP").hidden = t !== "p";
+    $("tBasics").setAttribute("aria-selected", String(t === "b"));
+    $("paneP").hidden = t !== "p"; $("paneA").hidden = t !== "a"; $("paneB").hidden = t !== "b"; $("tipsP").hidden = t !== "p";
     if (t === "p" && writer) loadChar(cur());
   }
   $("tPractice").onclick = () => showTab("p");
   $("tAssign").onclick = () => showTab("a");
+  $("tBasics").onclick = () => showTab("b");
   window.CS = { say: (text, btn) => play(text, false, btn) };
 
   /* ---- Add your own words ---- */
@@ -348,5 +350,5 @@
   function renderAll() { renderSets(); renderWords(); renderWord(); }
   renderAll();
   lastW = $("box").clientWidth;
-  showTab(store.get("tab", "p") === "a" ? "a" : "p");
+  showTab(["a", "b"].includes(store.get("tab", "p")) ? store.get("tab", "p") : "p");
 })();
