@@ -225,3 +225,23 @@ body{font-size:15px;letter-spacing:-.003em}
 .refs{margin:4px 0 0;padding-left:18px;line-height:1.55;font-size:.92rem}
 .refs li{margin-bottom:6px}
 .refs a{color:var(--jade)}
+
+/* name picker */
+.n-modes{margin:4px 0 10px}
+.n-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.n-two span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.n-style{display:flex;align-items:center;gap:8px}
+.n-style select{width:auto}
+.traits{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:8px 0}
+.trait{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1px solid var(--line);background:var(--tile);color:var(--ink);border-radius:10px;padding:8px 10px;font:inherit;cursor:pointer}
+.trait b{font-size:.9rem}
+.trait span{font-size:.74rem;color:var(--muted);line-height:1.35}
+.trait[aria-pressed="true"]{background:var(--jade);border-color:var(--jade);color:#fff}
+.trait[aria-pressed="true"] span{color:#fff;opacity:.9}
+.n-area .primarybtn{width:100%;margin-top:6px}
+.n-desc{margin:0;line-height:1.5}
+.n-tag{display:inline-block;margin-left:8px;font-size:.74rem;color:var(--jade);border:1px solid var(--jade);border-radius:999px;padding:0 8px}
+.n-why{margin:0}
+.n-why summary{padding:0}
+.ob-picker .n-area .primarybtn{margin-top:4px}
+.ob-chosen{color:var(--seal)!important;font-weight:700}

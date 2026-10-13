@@ -1,5 +1,5 @@
 /* Offline support for Chinese Study. Bump VERSION when files change. */
-const VERSION = "chinese-study-v9";
+const VERSION = "chinese-study-v10";
 const FILES = [
   "./", "index.html", "style.css", "app.js", "assignments.js", "basics.js", "basics-data.js", "tools.js", "tools-data.js", "tools-audio.js", "welcome.js", "theme.css", "fonts/brush.woff", "fonts/display.woff", "fonts/body-Regular.woff", "fonts/body-Bold.woff", "data.js", "hanzi-writer.min.js",
   "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable.png", "apple-touch-icon.png"

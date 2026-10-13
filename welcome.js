@@ -62,33 +62,21 @@
 
   /* ---------- 3. Chinese name ---------- */
   function step3() {
-    const pr = store.get("profile", {}) || {};
     show(b => {
       b.append(dots(STEPS, 2), el("h2", null, "Choose a Chinese name"));
-      b.append(el("p", null, "In Chinese the surname comes first. These names sound a little like yours and every character has a good meaning. Tap one to choose it – you can change it any time."));
-      const row = el("div", "ob-style"); row.innerHTML = '<label for="obStyle">Style</label><select id="obStyle"><option value="n">Any</option><option value="m">Boy / man</option><option value="f">Girl / woman</option></select>';
-      const more = el("button", "ghost", "More ideas"); row.append(more); b.append(row);
-      const list = el("div", "ob-names"); b.append(list);
-      let chosen = store.get("myName", null);
-      function draw() {
-        list.innerHTML = "";
-        const sug = U().suggest ? U().suggest(pr.first, pr.last, $("obStyle").value, "") : [];
-        sug.forEach(n => {
-          const c = el("button", "ob-name"); c.setAttribute("aria-pressed", String(!!chosen && chosen.zh === n.zh));
-          c.append(el("span", "obn-zh", n.zh));
-          const m = el("span", "obn-m"); m.append(el("span", "obn-py", n.py), el("span", "obn-mean", n.parts.slice(1).map(p => p[2]).join(" · ")));
-          c.append(m);
-          c.onclick = () => { chosen = n; store.set("myName", n); greet(); list.querySelectorAll(".ob-name").forEach(x => x.setAttribute("aria-pressed", String(x === c))); if (U().say) U().say(n.zh); };
-          list.append(c);
-        });
-      }
-      $("obStyle").onchange = draw; more.onclick = draw; draw();
+      b.append(el("p", null, "In Chinese the surname comes first. Pick a name by the qualities you love – hardworking, honest in business, faithful… – or one that sounds like your own name. You can change it any time."));
+      const box = el("div", "ob-picker"), res = el("div", "ob-names");
+      b.append(box, res);
+      const chosenMsg = el("p", "hint ob-chosen");
+      const cur = store.get("myName", null); if (cur) chosenMsg.textContent = "Your Chinese name: " + cur.zh + (cur.py ? " (" + cur.py + ")" : "");
+      if (U().buildPicker) U().buildPicker(box, res, n => { store.set("myName", n); greet(); chosenMsg.textContent = "Chosen: " + n.zh + " (" + n.py + ") – " + n.meaning; }, true);
+      b.append(chosenMsg);
       const own = el("details", "help"); own.innerHTML = '<summary>I already have a Chinese name</summary><div class="n-form"><label for="obZh">Chinese characters</label><input id="obZh" lang="zh" maxlength="6" placeholder="e.g. 王明"><label for="obPy">Pinyin</label><input id="obPy" maxlength="40" placeholder="e.g. Wáng Míng"><button class="ghost" id="obOwn">Use this name</button><p class="hint" id="obMsg"></p></div>';
       b.append(own);
       $("obOwn").onclick = () => {
         const zh = $("obZh").value.replace(/\s+/g, ""), py = $("obPy").value.trim();
-        if (!/^[㐀-鿿]{1,6}$/.test(zh)) { $("obMsg").textContent = "Type your name in Chinese characters (1 to 6 characters)."; return; }
-        chosen = { zh, py, parts: [] }; store.set("myName", chosen); greet(); $("obMsg").textContent = "Saved: " + zh;
+        if (!/^[\u3400-\u9fff]{1,6}$/.test(zh)) { $("obMsg").textContent = "Type your name in Chinese characters (1 to 6 characters)."; return; }
+        store.set("myName", { zh, py, parts: [] }); greet(); $("obMsg").textContent = "Saved: " + zh;
       };
       b.append(foot(step4, "Next", () => { step4(); }, "Skip for now"));
     });

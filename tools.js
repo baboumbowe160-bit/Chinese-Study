@@ -124,79 +124,151 @@
     return s;
   }
   function best(list, c, n, filter) { return list.filter(filter || (() => true)).map(x => [x, score(x[1], c) + Math.random() * 0.4]).sort((a, b) => b[1] - a[1]).slice(0, n).map(x => x[0]); }
-  function suggest(fn, ln, st, q) {
-    const fc = chunks(fn || "").map(parse), lc = chunks(ln || "").map(parse);
-    st = st || "n";
-    const okStyle = x => st === "n" || x[3] === st || x[3] === "n";
-    const surs = lc.length ? best(T.surnames.filter(s => s[0].length === 1), lc[0], 4) : shuffleTake(T.surnames.filter(s => s[0].length === 1), 4);
-    let g1, g2;
-    if (q) {
-      const qs = T.qualities.find(x => x[0] === q)[1].split(" ");
-      const pool = T.given.filter(g => qs.includes(g[0]));
-      g1 = fc[0] ? best(pool, fc[0], 3) : pool.slice(0, 3);
-      g2 = fc[1] ? best(T.given, fc[1], 3, okStyle) : pool.slice(3);
-    } else {
-      g1 = fc[0] ? best(T.given, fc[0], 3, okStyle) : shuffleTake(T.given.filter(okStyle), 3);
-      g2 = fc[1] ? best(T.given, fc[1], 3, okStyle) : [];
-    }
+  /* opts: {first, last, style: n|m|f, mode: "sound"|"meaning", traits: [ids]} → list of names with descriptions */
+  function suggest(opts) {
+    const o = Object.assign({ first: "", last: "", style: "n", mode: "sound", traits: [] }, opts || {});
+    const fc = chunks(o.first).map(parse), lc = chunks(o.last).map(parse);
+    const okStyle = x => o.style === "n" || x[3] === o.style || x[3] === "n";
+    const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+    // surnames
+    let surs;
+    if (lc.length) surs = best(T.surnames.filter(s => s[0].length === 1), lc[0], 4).map(s => [s, s[0] + " " + s[1] + " sounds like your surname " + o.last + (/^an? (old|ancient)/.test(s[2]) ? " – it is a real Chinese surname (" + s[2] + ")" : " and means “" + s[2] + "”")]);
+    else if (o.mode === "meaning") surs = shuffleTake(T.meaningSurnames, 4).map(s => [s, "a real Chinese surname meaning “" + s[2] + "”"]);
+    else surs = shuffleTake(T.surnames.filter(s => s[0].length === 1), 4).map(s => [s, "a common Chinese surname"]);
     const out = [], seen = new Set();
-    surs.forEach((s, i) => {
-      const a = g1[i % g1.length], b = g2.length ? g2[(i + 1) % g2.length] : null;
-      [[a], b && b[0] !== a[0] && plainPy(b[1]) !== plainPy(a[1]) ? [a, b] : null].forEach(given => {
-        if (!given) return;
-        const key = s[0] + given.map(x => x[0]).join("");
-        if (seen.has(key)) return; seen.add(key);
-        out.push({ zh: s[0] + given.map(g => g[0]).join(""), py: s[1] + " " + (x => x[0].toUpperCase() + x.slice(1))(given.map(g => g[1]).join("")),
-          parts: [[s[0], s[1], "surname: " + s[2]]].concat(given.map(g => [g[0], g[1], g[2]])) });
+    const push = (sur, given, why, label) => {
+      if (!given.length || given.some((g, i) => given.findIndex(h => h[0] === g[0] || plainPy(h[1]) === plainPy(g[1])) !== i)) return;
+      if (given.some(g => g[0] === sur[0][0])) return;
+      const zh = sur[0][0] + given.map(g => g[0]).join("");
+      if (seen.has(zh)) return; seen.add(zh);
+      out.push({ zh, py: sur[0][1] + " " + cap(given.map(g => g[1]).reduce((s, p) => s + (s && /^[aoeāáǎàōóǒòēéěè]/.test(p) ? "'" : "") + p, "")),
+        parts: [[sur[0][0], sur[0][1], "surname – " + sur[0][2]]].concat(given.map(g => [g[0], g[1], g[2]])),
+        meaning: given.map(g => g[2]).join(" + "), why: [sur[1]].concat(why), label });
+    };
+    if (o.mode === "meaning") {
+      const picked = o.traits.length ? T.traits.filter(x => o.traits.includes(x[0])) : shuffleTake(T.traits, 2);
+      const pools = picked.map(tr => ({ tr, chars: tr[3].filter(okStyle) })).filter(p => p.chars.length);
+      if (!pools.length) return [];
+      const soundy = fc[0] ? c => score(c[1], fc[0]) : () => 0;
+      const label = picked.map(x => x[1]).join(" + ");
+      for (let i = 0; i < 12 && out.length < 6; i++) {
+        const sur = surs[i % surs.length];
+        const A = pools[i % pools.length], B = pools[(i + 1) % pools.length];
+        let ca = shuffleTake(A.chars, A.chars.length).sort((x, y) => soundy(y) - soundy(x) + (Math.random() - .5) * 2);
+        const c1 = ca[i % Math.min(3, ca.length)];
+        const cb = shuffleTake(B.chars.filter(c => c[0] !== c1[0]), 3);
+        const why = [];
+        why.push(c1[0] + " " + c1[1] + " – chosen for " + A.tr[1].toLowerCase());
+        if (fc[0] && soundy(c1) >= 3) why.push(c1[0] + " also sounds a little like " + o.first);
+        if (cb[0] && (i % 3 !== 2)) { why.push(cb[0][0] + " " + cb[0][1] + " – chosen for " + B.tr[1].toLowerCase()); push(sur, [c1, cb[0]], why, label); }
+        else push(sur, [c1], why, label);
+      }
+    } else {
+      const g1 = fc[0] ? best(T.given, fc[0], 3, okStyle) : shuffleTake(T.given.filter(okStyle), 3);
+      const g2 = fc[1] ? best(T.given, fc[1], 3, okStyle) : [];
+      surs.forEach((s, i) => {
+        const a = g1[i % g1.length], b = g2.length ? g2[(i + 1) % g2.length] : null;
+        const w1 = a[0] + " " + a[1] + " sounds like “" + (chunks(o.first)[0] || "") + "” in " + o.first;
+        push(s, [a], [w1], "Sounds like your name");
+        if (b) push(s, [a, b], [w1, b[0] + " " + b[1] + " sounds like “" + chunks(o.first)[1] + "”"], "Sounds like your name");
       });
-    });
+    }
     return out.slice(0, 6);
   }
   function name() {
     const p = $("upane"); p.append(header("My Chinese name", "名"));
     const c1 = card();
-    c1.innerHTML = "<p>A Chinese name has the <b>surname first</b> (usually one character), then the <b>given name</b> (one or two characters). 王明 = surname 王 Wáng + name 明 Míng.</p><p>Good foreign names in Chinese do two things: they <b>sound a little like your real name</b>, and every character has a <b>good meaning</b>. Type your name and choose the one you like.</p>";
+    c1.innerHTML = "<p>A Chinese name has the <b>surname first</b> (usually one character), then the <b>given name</b> (one or two characters). 王明 = surname 王 Wáng + name 明 Míng (“bright”).</p><p>Choose a name that <b>sounds like your own name</b>, or one that describes <b>who you are or want to be</b> – hardworking, honest in business, faithful, kind… Every character in these suggestions has a good meaning.</p>";
     p.append(c1);
     const saved = store.get("myName", null);
-    const f = card("Your name");
-    f.innerHTML += '<div class="n-form"><label for="nFirst">First name</label><input id="nFirst" autocomplete="given-name" placeholder="e.g. Awa"><label for="nLast">Surname</label><input id="nLast" autocomplete="family-name" placeholder="e.g. Ceesay"><label for="nStyle">Style</label><select id="nStyle"><option value="n">Any</option><option value="m">Boy / man</option><option value="f">Girl / woman</option></select><label for="nQual">Meaning (optional)</label><select id="nQual"><option value="">Match my sound</option></select><button id="nGo" class="primarybtn">Suggest names</button></div>';
-    p.append(f);
-    T.qualities.forEach(([q]) => { const o = el("option", null, q); o.value = q; $("nQual").append(o); });
-    const res = el("div", "n-res"); res.id = "nRes"; p.append(res);
+    if (saved) { const s = card("Your Chinese name"); s.append(nameCard(saved, true)); p.append(s); }
+    const f = card("Find a name");
+    const box = el("div"); f.append(box); p.append(f);
+    const res = el("div", "n-res"); p.append(res);
+    buildPicker(box, res, n => { store.set("myName", n); window.CSGreet && CSGreet(); go("name"); });
     const own = card("Already have a Chinese name?");
     own.innerHTML += '<p class="hint">Maybe your teacher gave you one. Type it here.</p><div class="n-form"><label for="oZh">Chinese characters</label><input id="oZh" lang="zh" maxlength="6" placeholder="e.g. 王明"><label for="oPy">Pinyin</label><input id="oPy" maxlength="40" placeholder="e.g. Wáng Míng"><button id="oSave" class="ghost">Save my Chinese name</button><p class="hint" id="oMsg"></p></div>';
     p.append(own);
-    const prof = store.get("profile", { first: "", last: "" });
-    $("nFirst").value = prof.first || ""; $("nLast").value = prof.last || "";
-    if (saved) { const s = card("Your Chinese name"); s.append(nameCard(saved, true)); p.insertBefore(s, f); }
     $("oSave").onclick = () => {
       const zh = $("oZh").value.replace(/\s+/g, ""), py = $("oPy").value.trim();
-      if (!/^[\u3400-\u9fff]{1,6}$/.test(zh)) { $("oMsg").textContent = "Type your name in Chinese characters (1 to 6 characters)."; return; }
+      if (!/^[㐀-鿿]{1,6}$/.test(zh)) { $("oMsg").textContent = "Type your name in Chinese characters (1 to 6 characters)."; return; }
       store.set("myName", { zh, py, parts: [] }); window.CSGreet && CSGreet(); go("name");
     };
-    $("nGo").onclick = () => {
-      const fn = $("nFirst").value.trim(), ln = $("nLast").value.trim();
-      store.set("profile", { first: fn, last: ln }); window.CSGreet && CSGreet();
+  }
+  /* shared picker used here and in the welcome tour */
+  function buildPicker(box, res, onChoose, compact) {
+    const pr = store.get("profile", { first: "", last: "" }) || {};
+    const st = { mode: store.get("nameMode", "meaning"), traits: store.get("nameTraits", []), style: "n" };
+    box.innerHTML = "";
+    const modes = el("div", "voices n-modes");
+    [["meaning", "By meaning"], ["sound", "Sounds like my name"]].forEach(([m, l]) => {
+      const b = el("button", null, l); b.setAttribute("aria-pressed", String(st.mode === m));
+      b.onclick = () => { st.mode = m; store.set("nameMode", m); modes.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); draw(); run(); };
+      modes.append(b);
+    });
+    box.append(modes);
+    const area = el("div", "n-area"); box.append(area);
+    function draw() {
+      area.innerHTML = "";
+      const f = el("div", "n-form");
+      if (!compact || st.mode === "sound") {
+        f.innerHTML = '<div class="n-two"><span><label for="pkFirst">First name</label><input id="pkFirst" autocomplete="given-name" placeholder="e.g. Awa"></span><span><label for="pkLast">Surname</label><input id="pkLast" autocomplete="family-name" placeholder="e.g. Ceesay"></span></div>';
+      }
+      const sty = el("div", "n-style"); sty.innerHTML = '<label for="pkStyle">Style</label><select id="pkStyle"><option value="n">Any</option><option value="m">Boy / man</option><option value="f">Girl / woman</option></select>';
+      f.append(sty); area.append(f);
+      if ($("pkFirst")) { $("pkFirst").value = pr.first || ""; $("pkLast").value = pr.last || ""; }
+      $("pkStyle").value = st.style; $("pkStyle").onchange = () => { st.style = $("pkStyle").value; run(); };
+      if (st.mode === "meaning") {
+        area.append(el("p", "hint", "Pick up to two qualities. Your name is optional here – if you type it, the app also tries to match its sound."));
+        const chips = el("div", "traits");
+        T.traits.forEach(tr => {
+          const c = el("button", "trait"); c.append(el("b", null, tr[1]), el("span", null, tr[2]));
+          c.setAttribute("aria-pressed", String(st.traits.includes(tr[0])));
+          c.onclick = () => {
+            if (st.traits.includes(tr[0])) st.traits = st.traits.filter(x => x !== tr[0]);
+            else { st.traits.push(tr[0]); if (st.traits.length > 2) st.traits.shift(); }
+            store.set("nameTraits", st.traits);
+            chips.querySelectorAll(".trait").forEach((x, i) => x.setAttribute("aria-pressed", String(st.traits.includes(T.traits[i][0]))));
+            run();
+          };
+          chips.append(c);
+        });
+        area.append(chips);
+      } else area.append(el("p", "hint", "Type your first name and surname. The suggestions sound a little like them."));
+      const go2 = el("button", "primarybtn", "Suggest names"); go2.onclick = run; area.append(go2);
+    }
+    function run() {
+      if ($("pkFirst")) { pr.first = $("pkFirst").value.trim(); pr.last = $("pkLast").value.trim(); store.set("profile", { first: pr.first, last: pr.last }); window.CSGreet && CSGreet(); }
       res.innerHTML = "";
-      if (!fn && !ln) { res.append(el("p", "hint", "Type your first name or surname first.")); return; }
-      res.append(el("p", "hint", "Tap Listen to hear it. Choose the one that feels like you."));
-      suggest(fn, ln, $("nStyle").value, $("nQual").value).forEach(n => {
-        const c = card(); c.classList.add("n-sug"); c.append(nameCard(n, false)); res.append(c);
-      });
-      res.append(el("p", "hint", "Tip: show your favourite to your Chinese teacher – teachers love giving students names."));
-    };
+      if (st.mode === "sound" && !pr.first && !pr.last) { res.append(el("p", "hint", "Type your first name or surname, or switch to “By meaning”.")); return; }
+      const list = suggest({ first: pr.first, last: pr.last, style: st.style, mode: st.mode, traits: st.traits });
+      if (!list.length) { res.append(el("p", "hint", "No names for that choice. Try another quality or style.")); return; }
+      list.forEach(n => res.append(compact ? miniName(n, onChoose) : (c => { c.classList.add("n-sug"); c.append(nameCard(n, false, onChoose)); return c; })(card())));
+    }
+    draw();
+    if (st.mode === "meaning" || pr.first || pr.last) run();
+  }
+  function miniName(n, onChoose) {
+    const c = el("button", "ob-name");
+    c.append(el("span", "obn-zh", n.zh));
+    const m = el("span", "obn-m"); m.append(el("span", "obn-py", n.py), el("span", "obn-mean", n.meaning + (n.label ? " · " + n.label : "")));
+    c.append(m);
+    c.onclick = () => { document.querySelectorAll(".ob-name").forEach(x => x.setAttribute("aria-pressed", String(x === c))); onChoose(n); say(n.zh); };
+    return c;
   }
   function shuffleTake(a, n) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, n); }
-  function nameCard(n, isMine) {
+  function nameCard(n, isMine, onChoose) {
     const w = el("div", "n-card");
     const top = el("div", "n-top");
     top.append(el("div", "n-zh", n.zh));
-    const meta = el("div", "n-meta"); meta.append(el("div", "n-py", n.py), sayBtn(n.zh, "Listen to the name", true)); top.append(meta);
+    const meta = el("div", "n-meta"); meta.append(el("div", "n-py", n.py || ""), sayBtn(n.zh, "Listen to the name", true)); top.append(meta);
     w.append(top);
+    if (n.meaning) { const d = el("p", "n-desc"); d.append(el("b", null, "Meaning: "), n.meaning); if (n.label) d.append(el("span", "n-tag", n.label)); w.append(d); }
     const ul = el("ul", "n-parts"); (n.parts || []).forEach(([c, py, m]) => { const li = el("li"); li.append(el("b", null, c), " " + py + " – " + m); ul.append(li); }); w.append(ul);
+    if (n.why && n.why.length) { const wy = el("details", "help n-why"); wy.append(el("summary", null, "Why this name?")); const l = el("ul", "n-parts"); n.why.forEach(x => l.append(el("li", null, x))); wy.append(l); w.append(wy); }
     const intro = el("p", "n-intro"); intro.textContent = "我叫" + n.zh + "。" + (n.py ? " (Wǒ jiào " + n.py + ".) – My name is " + n.py + "." : "");
     w.append(intro);
-    if (!isMine) { const b = el("button", "ghost", "Make this my name"); b.onclick = () => { store.set("myName", n); window.CSGreet && CSGreet(); go("name"); }; w.append(b); }
+    if (!isMine) { const b = el("button", "ghost", "Make this my name"); b.onclick = () => (onChoose ? onChoose(n) : (store.set("myName", n), window.CSGreet && CSGreet(), go("name"))); w.append(b); }
     else { const b = el("button", "ghost", "Remove my name"); b.onclick = () => { store.set("myName", null); window.CSGreet && CSGreet(); go("name"); }; w.append(b); }
     return w;
   }
@@ -402,6 +474,6 @@
     $("today").title = d.toDateString();
   };
   CSGreet();
-  window.CSUse = { go, suggest, nameCard, say, sayBtn };
+  window.CSUse = { go, suggest, nameCard, buildPicker, say, sayBtn };
   go(store.get("usec", "hub"));
 })();
