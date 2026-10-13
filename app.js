@@ -275,15 +275,16 @@
   /* ---- Tabs ---- */
   function showTab(t) {
     store.set("tab", t);
-    $("tPractice").setAttribute("aria-selected", String(t === "p"));
-    $("tAssign").setAttribute("aria-selected", String(t === "a"));
-    $("tBasics").setAttribute("aria-selected", String(t === "b"));
-    $("paneP").hidden = t !== "p"; $("paneA").hidden = t !== "a"; $("paneB").hidden = t !== "b"; $("tipsP").hidden = t !== "p";
+    const map = { b: ["tBasics", "paneB"], p: ["tPractice", "paneP"], u: ["tUse", "paneU"], a: ["tAssign", "paneA"] };
+    Object.entries(map).forEach(([k, [tab, pane]]) => { $(tab).setAttribute("aria-selected", String(k === t)); $(pane).hidden = k !== t; });
+    $("tipsP").hidden = t !== "p";
+    window.scrollTo(0, 0);
     if (t === "p" && writer) loadChar(cur());
   }
   $("tPractice").onclick = () => showTab("p");
   $("tAssign").onclick = () => showTab("a");
   $("tBasics").onclick = () => showTab("b");
+  $("tUse").onclick = () => showTab("u");
   window.CS = { say: (text, btn) => play(text, false, btn) };
 
   /* ---- Add your own words ---- */
@@ -350,5 +351,5 @@
   function renderAll() { renderSets(); renderWords(); renderWord(); }
   renderAll();
   lastW = $("box").clientWidth;
-  showTab(["a", "b"].includes(store.get("tab", "p")) ? store.get("tab", "p") : "p");
+  showTab(["a", "b", "u", "p"].includes(store.get("tab", "b")) ? store.get("tab", "b") : "b");
 })();

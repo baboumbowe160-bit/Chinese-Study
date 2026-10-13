@@ -5,26 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chinese Study</title>
 <meta name="description" content="Learn to write Chinese characters in the correct stroke order. Works offline.">
-<meta name="theme-color" content="#b3321f">
+<meta name="theme-color" content="#edf1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121815" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="theme.css">
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="1" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6"/></filter></svg>
 <div class="wrap">
-  <header>
-    <h1><span>写</span>Chinese Study</h1>
-    <div class="count" id="count"></div>
+  <header class="top">
+    <div class="seal" aria-hidden="true"><span>学</span></div>
+    <div class="hello">
+      <div class="hello-zh" id="hello">你好！</div>
+      <div class="hello-sub"><span id="today"></span><span class="appname">Chinese Study</span></div>
+    </div>
   </header>
 
-  <nav class="tabs" role="tablist">
-    <button role="tab" id="tBasics" aria-selected="false">Basics</button>
-    <button role="tab" id="tPractice" aria-selected="true">Practice</button>
-    <button role="tab" id="tAssign" aria-selected="false">Assignments</button>
-  </nav>
+
 
   <div id="paneP" class="pane">
+  <div class="count" id="count"></div>
   <section class="search" aria-label="Search words">
     <input id="q" type="search" placeholder="Search: 你好, nihao, hello…" autocomplete="off" enterkeyhint="search">
     <div class="results" id="results" hidden></div>
@@ -114,6 +117,8 @@
 
   <div id="paneB" class="pane" hidden><div id="bpane" class="bpane"></div></div>
 
+  <div id="paneU" class="pane" hidden><div id="upane" class="bpane"></div></div>
+
   <div id="paneA" class="pane" hidden>
     <div class="arow">
       <input id="aq" type="search" placeholder="Search assignments…" autocomplete="off">
@@ -144,6 +149,12 @@
   </section>
 </div>
 
+<nav class="dock" role="tablist" aria-label="Sections">
+  <button role="tab" id="tBasics" aria-selected="false"><span class="stamp">学</span><span class="dl">Learn</span></button>
+  <button role="tab" id="tPractice" aria-selected="false"><span class="stamp">写</span><span class="dl">Write</span></button>
+  <button role="tab" id="tUse" aria-selected="false"><span class="stamp">用</span><span class="dl">Use</span></button>
+  <button role="tab" id="tAssign" aria-selected="false"><span class="stamp">作</span><span class="dl">Homework</span></button>
+</nav>
 <div id="bsheet" class="bsheet" hidden role="dialog" aria-modal="true" aria-label="Character"><div class="bsheet-in"><button id="bsheetClose" class="ghost bsheet-x" aria-label="Close">✕</button><div id="bsheetBody"></div></div></div>
 <div id="viewer" class="viewer" hidden><img id="viewerImg" alt="Assignment photo"><button id="viewerClose" class="ghost">Close</button></div>
 
@@ -154,5 +165,8 @@
 <script src="assignments.js"></script>
 <script src="basics-data.js"></script>
 <script src="basics.js"></script>
+<script src="tools-data.js"></script>
+<script src="tools-audio.js"></script>
+<script src="tools.js"></script>
 </body>
 </html>
