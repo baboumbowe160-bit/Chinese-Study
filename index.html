@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chinese Study</title>
+<meta name="description" content="Learn to write Chinese characters in the correct stroke order. Works offline.">
+<meta name="theme-color" content="#b3321f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span>写</span>Chinese Study</h1>
+    <div class="count" id="count"></div>
+  </header>
+
+  <section aria-label="Lessons">
+    <p class="label">Lesson</p>
+    <div class="strip" id="sets"></div>
+    <p class="lessontitle" id="settitle"></p>
+  </section>
+
+  <section aria-label="Words">
+    <p class="label">Word</p>
+    <div class="words" id="words"></div>
+  </section>
+
+  <section class="card" id="practice" aria-label="Practice">
+    <div class="meta"><div class="py" id="py"></div><div class="mn" id="mn"></div></div>
+    <div class="chars" id="chars"></div>
+    <div class="box" id="box">
+      <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="50" y1="0" x2="50" y2="100"/><line x1="0" y1="50" x2="100" y2="50"/>
+        <line x1="0" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="0" y2="100"/>
+      </svg>
+      <div id="writer"></div>
+    </div>
+    <div class="status" id="status" aria-live="polite"></div>
+    <div class="modes">
+      <button id="bWatch" class="primary">▶ Watch<small>see the full order</small></button>
+      <button id="bStep">Next stroke<small>one stroke at a time</small></button>
+      <button id="bTrace">✍ Trace<small>write over the grey</small></button>
+      <button id="bTest">Test<small>write from memory</small></button>
+    </div>
+    <div class="nav">
+      <button id="bPrev">‹ Previous</button>
+      <button id="bDel" hidden>Remove this word</button>
+      <button id="bNext">Next ›</button>
+    </div>
+  </section>
+
+  <section class="card add" id="addcard" hidden aria-label="Add a word">
+    <p class="label">Add a new word from class</p>
+    <form id="addform" autocomplete="off">
+      <label for="fz">Characters</label>
+      <input id="fz" required maxlength="8" placeholder="e.g. 早饭" lang="zh">
+      <label for="fp">Pinyin</label>
+      <input id="fp" maxlength="40" placeholder="e.g. zǎofàn">
+      <label for="fm">Meaning</label>
+      <input id="fm" maxlength="60" placeholder="e.g. breakfast">
+      <button type="submit" class="primarybtn">Add word</button>
+    </form>
+    <p class="hint" id="addmsg">New characters need internet once. After that they work offline.</p>
+  </section>
+
+  <section class="tips">
+    <p><b>How to practise:</b> Watch first. Then use Next stroke and copy each stroke on paper. Trace with your finger, then Test without help.</p>
+    <p>A green dot means you passed the test for that word with 3 mistakes or fewer.</p>
+    <p id="installtip">To install: open the Chrome menu ⋮ and tap <b>Install app</b> or <b>Add to Home screen</b>.</p>
+    <button id="bInstall" class="primarybtn" hidden>Install app</button>
+    <p class="credits">Stroke animations by <a href="https://hanziwriter.org" target="_blank" rel="noopener">Hanzi Writer</a> (MIT). Stroke data from <a href="https://github.com/skishore/makemeahanzi" target="_blank" rel="noopener">Make Me a Hanzi</a>, Arphic Public License.</p>
+  </section>
+</div>
+
+<script src="hanzi-writer.min.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
