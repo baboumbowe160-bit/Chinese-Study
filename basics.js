@@ -122,12 +122,13 @@
   const SECTIONS = [
     ["sounds", "拼", "Sounds", "Pinyin letters & the 4 tones"],
     ["numbers", "数", "Numbers", "零 to 万 – and how to say any number"],
+    ["lucky", "吉", "Numbers with meaning", "520 = I love you · lucky 8 · red envelopes 🧧"],
     ["strokes", "笔", "Strokes", "The basic strokes & the order rules"],
     ["radicals", "部", "Radicals", "All 214 building blocks, with origins"],
     ["pictures", "象", "Picture characters", B.picto.length + " drawings that became characters"],
     ["phrases", "说", "Useful phrases", "Classroom and everyday sentences"],
     ["qwords", "问", "Question & measure words", "什么, 谁, 哪儿, 几 … and 个, 本, 口"],
-    ["games", "玩", "Games", "5 games: tones, numbers, radicals, pictures"],
+    ["games", "玩", "Games", "6 games: tones, numbers, codes, radicals, pictures"],
   ];
   function hub() {
     const p = $("bpane"); p.innerHTML = "";
@@ -162,7 +163,7 @@
     curSec = id;
     store.set("bsec", id); seqToken++;
     const p = $("bpane"); p.innerHTML = "";
-    ({ hub, sounds, numbers, strokes, radicals, pictures, phrases, qwords, games }[id] || hub)();
+    ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, games }[id] || hub)();
     window.scrollTo(0, 0);
   }
 
@@ -278,9 +279,150 @@
     const c3 = el("div", "b-card"); c3.append(el("h3", null, "Fun: Chinese hand numbers"), el("p", "hint", "In markets, people show numbers with ONE hand. 1–5 are like ours; 6–10 are special:"));
     const ul = el("ul"); B.hands.forEach(([n, how]) => { const li = el("li"); li.innerHTML = "<b></b> – "; li.firstChild.textContent = n + " " + toZh(n); li.append(how); ul.append(li); });
     c3.append(ul);
-    c3.append(el("p", "hint", "Lucky and unlucky: 8 八 bā sounds like 发 fā “get rich” – very lucky. 4 四 sì sounds like 死 sǐ “death”, so many buildings skip the 4th floor."));
     p.append(c3);
+    const lk = el("button", "b-link"); lk.innerHTML = "<span>🧧</span><span><b>Numbers with meaning</b><br>Why 8 is lucky, 4 is avoided, and 520 means “I love you”</span><span>›</span>"; lk.onclick = () => go("lucky"); p.append(lk);
     const play = el("button", "primarybtn", "🎮 Play Number Match"); play.onclick = () => { go("games"); startGame("num"); }; p.append(play);
+  }
+
+
+  /* ---------- 2b. Numbers with meaning ---------- */
+  const L = window.LUCKY || { digits: [], codes: [], occasions: [], etiquette: [] };
+  const codeMap = {};
+  L.codes.forEach(c => (codeMap[c[0]] = codeMap[c[0]] || []).push(c));
+  const DIGZH = "零一二三四五六七八九";
+  // ¥13.14 → 十三块一毛四 (two before 块/毛 is 两)
+  function moneyZh(str) {
+    const m = /^(\d+)(?:\.(\d)(\d)?)?$/.exec(str); if (!m) return "";
+    const n = parseInt(m[1], 10), d1 = +(m[2] || 0), d2 = +(m[3] || 0);
+    if (n > 99999999) return "";
+    let s = n ? (n === 2 ? "两" : toZh(n)) + "块" : "";
+    if (d1 && !d2 && n) s += DIGZH[d1];                       // 13.1 → 十三块一
+    else if (d1) s += (d1 === 2 && !n ? "两" : DIGZH[d1]) + "毛"; // 0.2 → 两毛
+    if (d2) s += (d1 ? "" : (n ? "零" : "")) + DIGZH[d2] + (d1 ? "" : "分");
+    return s || "零";
+  }
+  // split the digits into the biggest known codes, single digits otherwise
+  function segment(d) {
+    const best = [[]];
+    for (let i = 1; i <= d.length; i++) {
+      let pick = null;
+      for (let j = Math.max(0, i - 7); j < i; j++) {
+        const piece = d.slice(j, i), known = i - j > 1 && codeMap[piece];
+        if (!known && i - j > 1) continue;
+        const cand = best[j] && best[j].concat([piece]);
+        if (cand && (!pick || cand.length < pick.length)) pick = cand;
+      }
+      best[i] = pick;
+    }
+    return best[d.length];
+  }
+  function decode(raw, out) {
+    out.innerHTML = "";
+    const clean = String(raw).replace(/[¥￥元,\s]/g, "");
+    // for money, a leading 0 (¥0.88) is not part of the message
+    const digits = clean.replace(/^0+(?=\.)/, "").replace(/\D/g, "").replace(/^0+(?=\d)/, /\./.test(clean) ? "" : "$&");
+    if (!digits) return;
+    if (digits.length > 14) { out.append(el("p", "hint", "That's a very long number – try one up to 14 digits.")); return; }
+    const big = el("div", "lk-big"); big.textContent = (/\./.test(clean) ? "¥" : "") + clean; out.append(big);
+    const read = [...digits].map(c => DIGZH[c]).join("");
+    const rd = el("div", "lk-read"); rd.append(el("span", "lk-zh", read), el("span", "lk-py", [...digits].map(c => L.digits[c][2].split(" / ")[0]).join(" ")));
+    out.append(rd);
+    const money = /^\d+(\.\d{1,2})?$/.test(clean) && /\./.test(clean) ? moneyZh(clean) : "";
+    if (money) out.append(el("p", "hint", "As money you say: ¥" + clean + " = " + money + ". As a code you read it digit by digit: " + read + "."));
+    const segs = segment(digits) || [...digits];
+    const whole = codeMap[digits];
+    const list = el("div", "lk-segs");
+    const shown = whole ? [digits] : segs;
+    let bad = false, good = 0;
+    shown.forEach(s => {
+      if (codeMap[s]) codeMap[s].forEach(c => {
+        const r = el("div", "lk-seg " + c[8]);
+        r.append(el("span", "lk-emo", c[7]));
+        const t = el("div"); const h = el("div", "lk-segh"); h.append(el("b", null, c[0]), " → ", el("span", "lk-zh", c[3]), " ", el("span", "lk-py", c[4]));
+        t.append(h, el("div", null, c[5] + (c[6] ? " – " + c[6] : "")));
+        r.append(t, sayBtn(btn => window.CSSay && CSSay(c[1] + "，" + c[3], btn), "Listen"));
+        list.append(r);
+        if (c[8] === "warn") bad = true; else good++;
+      });
+      else {
+        const dg = L.digits[+s]; const r = el("div", "lk-seg " + dg[6]);
+        r.append(el("span", "lk-emo", dg[7]));
+        const t = el("div"); const h = el("div", "lk-segh"); h.append(el("b", null, s), " " + dg[1] + " " + dg[2] + " ~ ", el("span", "lk-zh", dg[3]), " ", el("span", "lk-py", dg[4]));
+        t.append(h, el("div", null, dg[5]));
+        r.append(t); list.append(r);
+        if (dg[6] === "bad") bad = true; if (dg[6] === "good") good++;
+      }
+    });
+    out.append(list);
+    const v = el("p", "g-fb " + (bad ? "bad" : good ? "good" : ""));
+    v.textContent = bad ? "⚠️ Careful – this number has an unlucky or rude meaning. Don't use it for a gift." : whole ? "✨ This is a well-known code – people will understand your message!" : good ? "👍 A friendly number with good meanings." : "A neutral number – no special message.";
+    out.append(v);
+  }
+  function lucky() {
+    const p = $("bpane"); p.append(header("Numbers with meaning", "吉"));
+    const c0 = el("div", "b-card");
+    c0.innerHTML = "<p>Many Chinese numbers <b>sound like other words</b>. 8 (bā) sounds like 发 (fā, “get rich”), and 5-2-0 (wǔ èr líng) sounds a bit like 我爱你 (wǒ ài nǐ, “I love you”).</p><p>So numbers become secret messages – in chats, phone numbers, prices and especially <b>money gifts</b>. A friend who sends you ¥13.14 is saying 一生一世, “for my whole life”. 🧧</p>";
+    p.append(c0);
+    // decoder
+    const c1 = el("div", "b-card lk-dec"); c1.append(el("h3", null, "🔍 Number decoder"), el("p", "hint", "Got a strange amount or number? Type it to see what it says."));
+    const row = el("div", "arow"); const inp = el("input"); inp.id = "lkIn"; inp.inputMode = "decimal"; inp.placeholder = "e.g. 13.14 or 520"; inp.setAttribute("aria-label", "Number or amount");
+    const out = el("div", "lk-out");
+    const sb = sayBtn(btn => { const d = inp.value.replace(/\D/g, ""); if (d) { const segs = codeMap[d] ? [d] : segment(d) || []; const meanings = segs.filter(s => codeMap[s]).map(s => codeMap[s][0][3]).join("，"); window.CSSay && CSSay([...d].map(c => DIGZH[c]).join("") + (meanings ? "，" + meanings : ""), btn); } }, "Listen");
+    row.append(inp, sb); c1.append(row);
+    const ex = el("div", "lk-chips");
+    ["520", "13.14", "168", "666", "8.88", "250"].forEach(n => { const b = el("button", "chip", n); b.onclick = () => { inp.value = n; decode(n, out); }; ex.append(b); });
+    c1.append(ex, out);
+    inp.addEventListener("input", () => decode(inp.value, out));
+    p.append(c1);
+    // digits
+    const c2 = el("div", "b-card"); c2.append(el("h3", null, "What each digit says"), el("p", "hint", "Green = lucky · gold = it depends · red = avoid. Tap to hear."));
+    const g = el("div", "lk-digits");
+    L.digits.forEach(([d, zh, py, sl, slpy, mean, mood, emo]) => {
+      const b = el("button", "lk-d " + mood);
+      b.append(el("span", "lk-demo", emo), el("span", "lk-dn", d), el("span", "lk-dz", zh + " " + py.split(" / ")[0]), el("span", "lk-ds", "≈ " + sl.split(" / ")[0] + " " + slpy.split(" / ")[0]));
+      b.setAttribute("aria-label", d + " " + zh + " sounds like " + sl + ": " + mean);
+      b.onclick = () => { g.querySelectorAll(".on").forEach(x => x.classList.remove("on")); b.classList.add("on"); dtip.textContent = emo + " " + d + " " + zh + " (" + py + ") sounds like " + sl + " (" + slpy + "): " + mean + "."; window.CSSay && CSSay(zh + "，" + sl.split(" / ")[0], b); };
+      g.append(b);
+    });
+    const dtip = el("p", "lk-dtip", "Tap a digit.");
+    c2.append(g, dtip); p.append(c2);
+    // codes by kind
+    const c3 = el("div", "b-card"); c3.append(el("h3", null, "Number codes"));
+    const tabs = el("div", "lk-tabs"), list = el("div", "lk-list");
+    const KINDS = [["love", "❤️ Love"], ["luck", "🍀 Luck"], ["chat", "💬 Chat"], ["warn", "⚠️ Avoid"]];
+    const showKind = k => {
+      tabs.querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.k === k));
+      list.innerHTML = "";
+      L.codes.filter(c => c[8] === k).forEach(c => {
+        const r = el("div", "lk-row " + k);
+        const n = el("div", "lk-n"); n.append(el("span", "lk-emo", c[7]), el("b", null, c[0]));
+        const t = el("div", "lk-t");
+        const h = el("div", "lk-segh"); h.append(el("span", "lk-zh", c[3]), " ", el("span", "lk-py", c[4]));
+        t.append(h, el("div", "lk-en", c[5]));
+        if (c[6]) t.append(el("div", "lk-tip", c[6]));
+        r.append(n, t, sayBtn(btn => window.CSSay && CSSay(c[1] + "，" + c[3], btn), "Listen: " + c[0]));
+        list.append(r);
+      });
+      store.set("lkKind", k);
+    };
+    KINDS.forEach(([k, name]) => { const b = el("button", "chip", name); b.dataset.k = k; b.onclick = () => showKind(k); tabs.append(b); });
+    c3.append(tabs, list); p.append(c3); showKind(store.get("lkKind", "love"));
+    // red envelopes
+    const c4 = el("div", "b-card lk-hb"); c4.append(el("h3", null, "🧧 Send a feeling with a red envelope"), el("p", "hint", "Pick the occasion – the app suggests amounts with a good message. Tap an envelope to see what it says."));
+    const occ = el("div", "lk-chips"), env = el("div", "lk-envs"), etip = el("p", "hint"), eout = el("div", "lk-out");
+    const showOcc = o => {
+      occ.querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.o === o[0]));
+      env.innerHTML = ""; eout.innerHTML = "";
+      o[3].forEach(a => { const b = el("button", "lk-env"); b.append(el("span", "lk-envt", "福"), el("span", "lk-enva", "¥" + a)); b.onclick = () => { env.querySelectorAll(".on").forEach(x => x.classList.remove("on")); b.classList.add("on"); decode(a, eout); }; env.append(b); });
+      etip.textContent = o[2] + " " + o[4];
+    };
+    L.occasions.forEach(o => { const b = el("button", "chip", o[2] + " " + o[1]); b.dataset.o = o[0]; b.onclick = () => showOcc(o); occ.append(b); });
+    c4.append(occ, etip, env, eout); p.append(c4); if (L.occasions[0]) showOcc(L.occasions[0]);
+    // manners
+    const c5 = el("div", "b-card"); c5.append(el("h3", null, "Red envelope manners"));
+    const ul = el("div", "lk-man"); L.etiquette.forEach(([e, t]) => { const r = el("div", "lk-manr"); r.append(el("span", "lk-emo", e), el("span", null, t)); ul.append(r); });
+    c5.append(ul); p.append(c5);
+    const play = el("button", "primarybtn", "🎮 Play Number Codes"); play.onclick = () => { go("games"); startGame("code"); }; p.append(play);
   }
 
   /* ---------- 3. Strokes ---------- */
@@ -496,6 +638,7 @@
   const GAMES = [
     ["tone", "Tone Detective", "Listen and pick the tone"],
     ["num", "Number Match", "Match numbers and characters"],
+    ["code", "Number Codes", "520, 1314, 888 … what do they say?"],
     ["rad", "Radical Quiz", "What does this radical mean?"],
     ["pic", "Picture Match", "Which character is the picture?"],
     ["idea", "Make a Character", "Put two pictures together"],
@@ -506,7 +649,7 @@
     const g = el("div", "b-hub");
     GAMES.forEach(([id, name, sub], i) => {
       const b = el("button", "b-tile t" + (i + 1));
-      const s = el("span", "b-tch", ["声", "数", "部", "象", "明"][i]); const t = el("span", "b-tname", name); const d = el("span", "b-tsub", sub + (best[id] ? " · best streak " + best[id] : ""));
+      const s = el("span", "b-tch", ["声", "数", "吉", "部", "象", "明"][i]); const t = el("span", "b-tname", name); const d = el("span", "b-tsub", sub + (best[id] ? " · best streak " + best[id] : ""));
       b.append(s, t, d); b.onclick = () => startGame(id); g.append(b);
     });
     const area = el("div"); area.id = "gameArea"; p.append(g, area);
@@ -542,6 +685,13 @@
       if (flip) { q.append(el("p", null, "Which number is this?"), el("div", "g-big", toZh(n))); options = shuffle([n, ...wrong]); label = x => String(x); }
       else { q.append(el("p", null, "How do you write this in Chinese?"), el("div", "g-big num", String(n))); options = shuffle([n, ...wrong]); label = x => toZh(x); }
       correct = n; onShow = null;
+    } else if (gameId === "code") {
+      const uniq = []; const seen = new Set(); L.codes.forEach(c => { const k = c[0] + c[5]; if (!seen.has(c[0]) && c[0].length > 1) { seen.add(c[0]); uniq.push(c); } });
+      const it = uniq[Math.floor(Math.random() * uniq.length)];
+      const wrongs = pickN(uniq.filter(c => c[5] !== it[5]), 3, it);
+      if (Math.random() < 0.6) { q.append(el("p", null, "Your friend sends you this number. What does it mean?"), el("div", "g-big num", it[0])); label = x => x[7] + " " + x[5]; }
+      else { q.append(el("p", null, "Which number says this?"), el("div", "g-big lk-gq", it[7] + " " + it[3]), el("p", "hint", it[4] + " – " + it[5])); label = x => x[0]; }
+      options = shuffle([it, ...wrongs]); correct = it;
     } else if (gameId === "rad") {
       const pool = B.radicals.filter(r => r.common && r.n > 6);
       const r = pool[Math.floor(Math.random() * pool.length)];
@@ -574,6 +724,7 @@
         }
         if (gameId === "pic") { sayChar(correct[0]); fb.textContent += " " + correct[0] + " " + correct[1] + ": " + correct[4]; }
         if (gameId === "num") saySeq([...toZh(correct)]);
+        if (gameId === "code") { fb.textContent += " " + correct[0] + " → " + correct[3] + " (" + correct[4] + ")" + (correct[6] ? ". " + correct[6] : ""); window.CSSay && CSSay(correct[1] + "，" + correct[3]); }
         if (gameId === "rad") fb.textContent += " " + (correct.o || "");
         if (gameId === "idea") { sayChar(correct[0]); fb.textContent += " " + correct[0] + " " + correct[1] + " – " + correct[4]; }
         const nx = el("button", "primarybtn", "Next ›"); nx.onclick = nextQ; box.append(nx); nx.focus();

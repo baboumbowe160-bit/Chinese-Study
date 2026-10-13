@@ -378,3 +378,51 @@ body{font-size:15px;letter-spacing:-.003em}
 .ck-cand{font-family:var(--f-han);font-size:1.5rem;padding:0 8px;border-radius:8px;border:1px solid var(--line);background:var(--paper)}
 .ck-cand.me{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,#fff)}
 .ck-tips{margin:0;padding-left:1.2em;line-height:1.5}
+/* numbers with meaning */
+.b-link{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--gold);background:linear-gradient(135deg,#fff6e0,var(--sheet));border-radius:14px;padding:12px 14px;margin:0 0 12px;font:inherit;color:var(--ink);cursor:pointer;line-height:1.4}
+.b-link span:first-child{font-size:1.8rem}.b-link span:last-child{margin-left:auto;font-size:1.5rem;color:var(--seal)}
+.lk-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.lk-chips .chip.on,.lk-tabs .chip.on{background:var(--seal);border-color:var(--seal);color:#fff}
+.lk-out{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.lk-big{font-family:var(--f-display,inherit);font-size:2.2rem;font-weight:700;text-align:center;color:var(--seal);letter-spacing:.04em}
+.lk-read{display:flex;flex-direction:column;align-items:center}
+.lk-zh{font-family:var(--f-han);font-size:1.15em}
+.lk-read .lk-zh{font-size:1.5rem}
+.lk-py{color:var(--jade)}
+.lk-segs,.lk-list,.lk-man{display:flex;flex-direction:column;gap:8px}
+.lk-seg,.lk-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--paper);line-height:1.45}
+.lk-seg>div,.lk-row .lk-t{flex:1;min-width:0}
+.lk-seg.love,.lk-row.love{border-left:4px solid #e0457b}
+.lk-seg.luck,.lk-row.luck,.lk-seg.good{border-left:4px solid var(--ok)}
+.lk-seg.chat,.lk-row.chat{border-left:4px solid #3b7bbf}
+.lk-seg.warn,.lk-row.warn,.lk-seg.bad{border-left:4px solid var(--seal);background:var(--seal-soft)}
+.lk-seg.mixed{border-left:4px solid var(--gold)}
+.lk-emo{font-size:1.5rem;line-height:1;flex:0 0 auto}
+.lk-segh b{font-size:1.1rem}
+.lk-n{display:flex;flex-direction:column;align-items:center;min-width:68px}
+.lk-n b{font-size:1.25rem;color:var(--seal);letter-spacing:.03em}
+.lk-en{font-weight:700}
+.lk-tip{font-size:.85rem;color:var(--muted)}
+.lk-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.lk-digits{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.lk-d{display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 2px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font:inherit;color:var(--ink);cursor:pointer}
+.lk-d.good{border-color:color-mix(in srgb,var(--ok) 55%,#fff);background:color-mix(in srgb,var(--ok) 8%,#fff)}
+.lk-d.bad{border-color:color-mix(in srgb,var(--seal) 55%,#fff);background:var(--seal-soft)}
+.lk-d.mixed{border-color:color-mix(in srgb,var(--gold) 60%,#fff);background:#fff9ea}
+.lk-d.on{outline:3px solid var(--gold);outline-offset:1px}
+.lk-demo{font-size:1.2rem}.lk-dn{font-size:1.6rem;font-weight:700;line-height:1.1}
+.lk-dz{font-size:.78rem;font-family:var(--f-han)}.lk-ds{font-size:.72rem;color:var(--muted);font-family:var(--f-han)}
+.lk-dtip{margin:8px 0 0;min-height:2.6em;line-height:1.45}
+.lk-envs{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:10px;margin:6px 0}
+.lk-env{position:relative;aspect-ratio:3/4;border:none;border-radius:10px;background:linear-gradient(160deg,#e02a2f,#a80f15);color:#ffe7a8;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px 4px 8px;box-shadow:0 2px 6px rgba(120,10,10,.3);overflow:hidden}
+.lk-env::before{content:"";position:absolute;left:-10%;right:-10%;top:-40%;height:70%;border-radius:0 0 50% 50%;background:rgba(0,0,0,.12)}
+.lk-envt{position:relative;width:38px;height:38px;border-radius:50%;background:#e9b440;color:#a80f15;display:grid;place-items:center;font-family:var(--f-brush);font-size:1.5rem}
+.lk-enva{position:relative;font-weight:700;font-size:1rem}
+.lk-env.on{outline:3px solid var(--gold);outline-offset:2px;transform:translateY(-2px)}
+.lk-manr{display:flex;gap:10px;align-items:flex-start;line-height:1.5}
+.lk-gq{font-size:2rem}
+.lk-chips .chip,.lk-tabs .chip{font:inherit;font-size:.88rem;padding:6px 12px;border-radius:999px;line-height:1.3}
+.lk-envs{grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:8px}
+.lk-env{aspect-ratio:4/5;padding:8px 2px 6px}
+.lk-envt{width:30px;height:30px;font-size:1.15rem}
+.lk-enva{font-size:.88rem}
