@@ -10,4 +10,4 @@ Audio: native-speaker recordings from audio-cmn (https://github.com/hugolpz/audi
 
 Basics tab: radical list from the Unicode Kangxi Radicals block; meanings, pinyin and origin notes partly from the Make Me a Hanzi dictionary (LGPL, https://github.com/skishore/makemeahanzi); beginner explanations written for this app.
 
-Fonts (SIL Open Font License, see fonts/): Ma Shan Zheng (brush), Young Serif, Atkinson Hyperlegible – subset for this app.
+Fonts (SIL Open Font License, see fonts/): Ma Shan Zheng (brush), Young Serif, Lexend – subset for this app.

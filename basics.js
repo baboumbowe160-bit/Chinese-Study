@@ -152,7 +152,7 @@
       const b = el("button", "tone t" + t);
       b.innerHTML = toneSvg(t) + '<span class="tpy"></span><span class="tzh"></span><span class="tm"></span><span class="thow"></span>';
       b.querySelector(".tpy").textContent = py; b.querySelector(".tzh").textContent = c; b.querySelector(".tm").textContent = m; b.querySelector(".thow").textContent = how;
-      b.onclick = () => (t === 5 ? sayChar("吗", b) : playSrc(clip("@ma" + t), b));
+      b.onclick = () => { tg.querySelectorAll(".on").forEach(x => x.classList.remove("on")); b.classList.add("on"); t === 5 ? sayChar("吗", b) : playSrc(clip("@ma" + t), b); };
       tg.append(b);
     });
     tc.append(tg);
@@ -162,7 +162,7 @@
     [["Initials – the start sounds", B.initials, "21 initials, plus y and w. Tap each to hear it with a vowel (the way Chinese children learn: bō pō mō fō…)."],
      ["Finals – the end sounds", B.finals, "Finals are the vowel part. Tap to hear each one."]].forEach(([title, list, note]) => {
       const c = el("div", "b-card"); c.append(el("h3", null, title), el("p", "hint", note));
-      const g = el("div", "letters"); const tip = el("p", "lettertip", "Tap a letter.");
+      const g = el("div", "letters"); const tip = el("p", "lettertip", "Tap a letter to hear it.");
       list.forEach(([l, syl, py, how]) => {
         const b = el("button", "letter"); b.innerHTML = '<span class="ll"></span><span class="lp"></span>';
         b.firstChild.textContent = l; b.lastChild.textContent = py;
@@ -174,7 +174,7 @@
     const rules = el("div", "b-card");
     rules.innerHTML = "<h3>Tone changes to remember</h3><ul><li><b>3rd + 3rd → 2nd + 3rd.</b> 你好 is written nǐ hǎo but said <b>ní hǎo</b>.</li><li><b>不 bù → bú</b> before a 4th tone: 不是 bú shì, 不客气 bú kèqi.</li><li><b>一 yī → yí</b> before a 4th tone (一个 yí ge), <b>yì</b> before tones 1–3 (一本 yì běn). When counting, just yī.</li></ul><h3>Spelling rules</h3><ul><li>The tone mark goes on <b>a</b> or <b>e</b> if there is one; in <b>ou</b> on the o; otherwise on the last vowel: duì, liù.</li><li>After j, q, x and y, ü is written as u: 去 qù, 学 xué. After n and l it keeps the dots: 女 nǚ.</li></ul>";
     p.append(rules);
-    const play = el("button", "primarybtn", "🎮 Play Tone Detective"); play.onclick = () => go("games"); p.append(play);
+    const play = el("button", "primarybtn", "Play Tone Detective"); play.onclick = () => go("games"); p.append(play);
   }
 
   /* ---------- 2. Numbers ---------- */
@@ -248,7 +248,7 @@
     c3.append(ul);
     c3.append(el("p", "hint", "Lucky and unlucky: 8 八 bā sounds like 发 fā “get rich” – very lucky. 4 四 sì sounds like 死 sǐ “death”, so many buildings skip the 4th floor."));
     p.append(c3);
-    const play = el("button", "primarybtn", "🎮 Play Number Match"); play.onclick = () => { go("games"); startGame("num"); }; p.append(play);
+    const play = el("button", "primarybtn", "Play Number Match"); play.onclick = () => { go("games"); startGame("num"); }; p.append(play);
   }
 
   /* ---------- 3. Strokes ---------- */
@@ -367,7 +367,7 @@
       g3.append(b);
     });
     p.append(g3);
-    const play = el("button", "primarybtn", "🎮 Play Picture Match"); play.onclick = () => { go("games"); startGame("pic"); }; p.append(play);
+    const play = el("button", "primarybtn", "Play Picture Match"); play.onclick = () => { go("games"); startGame("pic"); }; p.append(play);
   }
 
   /* ---------- 6. Games ---------- */

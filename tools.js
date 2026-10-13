@@ -19,7 +19,7 @@
     return r ? "audio/" + r + ".mp3" : null;
   }
   function segment(text) {
-    const s = [...text.replace(/[，。！？、：；,.!?\s·]/g, "")], out = [];
+    const s = [...text.replace(/〇/g, "零").replace(/[，。！？、：；,.!?\s·]/g, "")], out = [];
     let i = 0;
     while (i < s.length) {
       let done = false;
@@ -65,7 +65,7 @@
     return (t === 1 ? "" : DIG[t]) + "十" + (o ? DIG[o] : "");
   }
   const numPy = s => [...s].map(c => PY[c] || c).join("");
-  const yearZh = y => [...String(y)].map(d => DIG[+d]).join("") + "年";
+  const yearZh = y => [...String(y)].map(d => "〇一二三四五六七八九"[+d]).join("") + "年";
   const yearPy = y => [...String(y)].map(d => PY[DIG[+d]]).join(" ") + " nián";
   const WD = ["日", "一", "二", "三", "四", "五", "六"], WDPY = ["rì", "yī", "èr", "sān", "sì", "wǔ", "liù"];
   function dateZh(d) { return yearZh(d.getFullYear()) + small(d.getMonth() + 1) + "月" + small(d.getDate()) + "日"; }
@@ -196,8 +196,8 @@
     const now = new Date();
     // today
     const c0 = card("Today");
-    const tz = dateZh(now) + "，" + wdZh(now);
-    c0.append(line(tz, datePy(now) + ", " + wdPy(now), now.toDateString()));
+    c0.append(line(dateZh(now), datePy(now), now.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })));
+    c0.append(line(wdZh(now), wdPy(now), T.weekdays[(now.getDay() + 6) % 7][2]));
     c0.append(el("p", "hint", "Chinese dates go from big to small: year 年 → month 月 → day 日 (or 号 when speaking) → weekday."));
     p.append(c0);
     // calendar
@@ -208,7 +208,8 @@
       sel.innerHTML = "";
       const diff = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 864e5);
       const rel = T.dayWords.find(x => x[3] === diff);
-      sel.append(line(dateZh(d) + "，" + wdZh(d), datePy(d) + ", " + wdPy(d), d.toDateString()));
+      sel.append(line(dateZh(d), datePy(d), d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })));
+      sel.append(line(wdZh(d), wdPy(d), T.weekdays[(d.getDay() + 6) % 7][2]));
       const spoken = small(d.getMonth() + 1) + "月" + small(d.getDate()) + "号";
       sel.append(line(spoken, numPy(small(d.getMonth() + 1)) + " yuè " + numPy(small(d.getDate())) + " hào", "Spoken: people usually say 号 hào instead of 日 rì"));
       if (rel) sel.append(line(rel[0] + "是" + small(d.getMonth() + 1) + "月" + small(d.getDate()) + "号", rel[1] + " shì …", rel[2][0].toUpperCase() + rel[2].slice(1) + " is " + d.toDateString().slice(4, 10)));
@@ -375,7 +376,7 @@
       const copy = el("button", "ghost", "Copy"); copy.onclick = () => { try { navigator.clipboard.writeText(zh).then(() => copy.textContent = "Copied", () => copy.textContent = "Select and copy"); } catch (e) { copy.textContent = "Select and copy"; } };
       ctl.append(copy); big.append(ctl);
       out.append(big);
-      notes.forEach(n => out.append(el("p", "hint", "💡 " + n)));
+      notes.forEach(n => out.append(el("p", "u-note", n)));
     }
     build();
   }

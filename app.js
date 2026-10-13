@@ -248,7 +248,7 @@
       if (!hit) return;
       const b = document.createElement("button"); b.className = "hit lesson";
       b.innerHTML = '<span class="hz"></span><span class="hp"></span><span class="hm"></span><span class="hl"></span>';
-      b.children[0].textContent = s[0] === "C" || s[0] === "M" ? "★" : s[0];
+      b.children[0].textContent = s[0] === "C" || s[0] === "M" ? "课" : s[0];
       b.children[1].textContent = s[1]; b.children[2].textContent = s[2]; b.children[3].textContent = "Lesson";
       b.onclick = () => { setIdx = si; wordIdx = 0; charIdx = 0; store.set("set", si); $("q").value = ""; box.hidden = true; renderAll(); };
       box.appendChild(b);
