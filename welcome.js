@@ -167,7 +167,7 @@
         "The pinyin tables (initials, finals, tones) follow the 拼音 sections of the lessons, mainly Lessons 1–5; the stroke and radical notes follow the 汉字 sections.",
       ]);
       sec("Class notes", [
-        "<b>Class</b> word list: characters written on the board in class on 10月5日 (Lessons 8–9), with meanings as taught by the teacher.",
+        "<b>Class</b> word lists: characters written on the board in class, with meanings as taught by the teacher.",
       ]);
       sec("Characters, strokes and origins", [
         'Stroke-order animations: <a href="https://hanziwriter.org" target="_blank" rel="noopener">Hanzi Writer</a> by David Chanin (MIT licence).',
