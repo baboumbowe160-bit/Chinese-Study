@@ -71,6 +71,7 @@
   }
 
   function renderWord() {
+    setTimeout(() => { try { prefetchNear(); } catch (e) {} }, 0);
     // a new word starts fresh on the writing grid – close Type it / Paper so they don't follow you around
     if ($("ppanel") && !$("ppanel").hidden) closePanel();
     const W = words();
@@ -458,6 +459,7 @@
   }
   function stopAll() {
     try { player.pause(); } catch (e) {}
+    if (window.CSAudio) CSAudio.stop();
     if (synth) synth.cancel();
     document.querySelectorAll(".say.playing").forEach(b => b.classList.remove("playing"));
   }
@@ -486,7 +488,13 @@
       return ttsSpeak(text, slow ? 0.5 : 0.85, btn);
     }
     note(pick !== voice ? "Voice " + voice.slice(1) + " has no recording of this word, so Voice " + pick.slice(1) + " is playing." : "");
-    player.src = "audio/" + pick + "/" + a[0] + ".mp3";
+    const url = "audio/" + pick + "/" + a[0] + ".mp3";
+    // normal speed: the instant Web Audio engine; slow: the phone player (it can slow down without changing the pitch)
+    if (!slow && window.CSAudio) {
+      CSAudio.play(url, { btn }).then(ok => { if (ok === null) ttsSpeak(text, 0.85, btn); });
+      return;
+    }
+    player.src = url;
     player.playbackRate = slow ? 0.65 : 1;
     try { player.preservesPitch = true; player.mozPreservesPitch = true; player.webkitPreservesPitch = true; } catch (e) {}
     btn.classList.add("playing");
@@ -495,6 +503,17 @@
     if (p && p.catch) p.catch(() => { btn.classList.remove("playing"); ttsSpeak(text, slow ? 0.5 : 0.85, btn); });
   }
   const curWord = () => words()[wordIdx] && words()[wordIdx][0];
+  // get the next sounds ready before they are tapped
+  function urlFor(text) {
+    const a = (typeof AUDIO !== "undefined") && AUDIO[text]; if (!a) return null;
+    const v = voice === "v2" ? (a[2] ? "v2" : a[1] ? "v1" : null) : (a[1] ? "v1" : a[2] ? "v2" : null);
+    return v ? "audio/" + v + "/" + a[0] + ".mp3" : null;
+  }
+  function prefetchNear() {
+    if (!window.CSAudio) return;
+    const W = words(); if (!W.length) return;
+    CSAudio.prefetch([W[wordIdx], W[wordIdx + 1], W[wordIdx - 1]].filter(Boolean).map(w => urlFor(w[0])));
+  }
   $("bSay").onclick = () => { const w = curWord(); if (w) play(w, false, $("bSay")); };
   $("bSlow").onclick = () => { const w = curWord(); if (w) play(w, true, $("bSlow")); };
   document.querySelectorAll(".voices button").forEach(b => b.onclick = () => {

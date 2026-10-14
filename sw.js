@@ -1,7 +1,7 @@
 /* Offline support for Chinese Study. Bump VERSION when files change. */
-const VERSION = "chinese-study-v20";
+const VERSION = "chinese-study-v21";
 const FILES = [
-  "./", "index.html", "style.css", "app.js", "photo-check.js", "assignments.js", "class-assignments.js", "basics.js", "basics-data.js", "basics-plus.js", "lucky-data.js", "rhymes-data.js", "rhymes-audio.js", "riddles-data.js", "tools.js", "tools-data.js", "tools-audio.js", "welcome.js", "theme.css", "nav.js", "fonts/brush.woff", "fonts/display.woff", "fonts/body-Regular.woff", "fonts/body-Bold.woff", "data.js", "hanzi-writer.min.js",
+  "./", "index.html", "audio.js", "style.css", "app.js", "photo-check.js", "assignments.js", "class-assignments.js", "basics.js", "basics-data.js", "basics-plus.js", "lucky-data.js", "rhymes-data.js", "rhymes-audio.js", "riddles-data.js", "tools.js", "tools-data.js", "tools-audio.js", "welcome.js", "theme.css", "nav.js", "fonts/brush.woff", "fonts/display.woff", "fonts/body-Regular.woff", "fonts/body-Bold.woff", "data.js", "hanzi-writer.min.js",
   "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable.png", "apple-touch-icon.png"
 ];
 
@@ -22,7 +22,15 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== self.location.origin) return;
-  // Cache first, then update the cache in the background when online.
+  // Sounds and fonts never change: serve them straight from the phone, no re-download.
+  if (/\/(audio|fonts)\//.test(url.pathname)) {
+    e.respondWith(caches.open(VERSION).then(cache => cache.match(e.request, { ignoreSearch: true, ignoreVary: true }).then(hit => hit || fetch(e.request).then(res => {
+      if (res && res.status === 200) cache.put(e.request, res.clone());
+      return res;
+    }))));
+    return;
+  }
+  // Everything else: cache first, then update the cache in the background when online.
   e.respondWith(
     caches.open(VERSION).then(cache =>
       cache.match(e.request, { ignoreSearch: true }).then(hit => {

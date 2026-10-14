@@ -29,8 +29,9 @@
   let seqToken = 0;
   function clip(key) { const r = B.audio[key]; return r ? "audio/" + r + ".mp3" : null; }
   function playSrc(src, btn) {
+    if (!src) return Promise.resolve(false);
+    if (window.CSAudio) return CSAudio.play(src, { btn }).then(ok => ok === true);
     return new Promise(res => {
-      if (!src) return res(false);
       player.src = src; player.playbackRate = 1;
       if (btn) btn.classList.add("playing");
       const done = ok => { if (btn) btn.classList.remove("playing"); res(ok); };
@@ -50,13 +51,11 @@
   }
   async function saySeq(chars, btn) {
     const my = ++seqToken;
+    const srcs = chars.map(clip);
+    if (srcs.some(s => !s)) { ttsSay(chars.join("")); return; }
+    if (window.CSAudio) { await CSAudio.playSeq(srcs, { btn, gap: 0.04 }); return; }
     if (btn) btn.classList.add("playing");
-    for (const c of chars) {
-      if (my !== seqToken) break;
-      const src = clip(c);
-      if (!src) { ttsSay(chars.join("")); break; }
-      await playSrc(src);
-    }
+    for (const src of srcs) { if (my !== seqToken) break; await playSrc(src); }
     if (btn) btn.classList.remove("playing");
   }
   const sayIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke-width="2" stroke-linecap="round"/></svg>';
@@ -485,46 +484,45 @@
   const RH = window.RHYMES || [];
   const PUNCT = /[，。！？、；：,.!?]/;
   // one shared player for the chants (voice + music), with characters lighting up as they are sung
-  const chant = { audio: null, item: null, raf: 0, seg: null, loop: false };
+  const chant = { item: null, raf: 0, seg: null, loop: false, t0: 0, token: 0 };
   function chantStop() {
-    if (chant.audio) { try { chant.audio.pause(); } catch (e) {} }
+    chant.token++;
     cancelAnimationFrame(chant.raf);
+    if (chant.item && window.CSAudio) CSAudio.stop();
     if (chant.item) { chant.item.classList.remove("playing"); chant.item.querySelectorAll(".sing,.now").forEach(x => x.classList.remove("sing", "now")); const pb = chant.item.querySelector(".rh-play"); if (pb) pb.innerHTML = "▶ <b>Chant along</b>"; }
     chant.item = null; chant.seg = null;
   }
   function chantPlay(item, info, seg) {
-    const same = chant.item === item && !seg && !chant.seg && chant.audio && !chant.audio.paused;
+    const same = chant.item === item && !seg && !chant.seg;
     chantStop(); if (same) return;
-    if (window.CSStopAll) try { CSStopAll(); } catch (e) {}
-    if (!chant.audio) { chant.audio = new Audio(); chant.audio.preload = "auto"; }
-    const a = chant.audio;
-    if (!a.src.endsWith(info.src)) a.src = info.src;
+    const my = chant.token;
     chant.item = item; chant.seg = seg || null; item.classList.add("playing");
     const pb = item.querySelector(".rh-play"); if (pb && !seg) pb.innerHTML = "❚❚ <b>Pause</b>";
     const spans = item.querySelectorAll(".rh-c"), rows = item.querySelectorAll(".rh-row");
     const bar = item.querySelector(".rh-prog span");
-    const startAt = seg ? Math.max(0, seg[0]) : 0;
-    const go = () => {
-      a.currentTime = startAt;
-      a.play().catch(() => { chantStop(); });
+    const run = () => {
+      if (my !== chant.token) return;
+      let started = false;
+      CSAudio.play(info.src, { offset: seg ? Math.max(0, seg[0]) : 0, until: seg ? seg[1] : null, onstart: t0 => { chant.t0 = t0; started = true; } }).then(ok => {
+        if (my !== chant.token) return;
+        if (ok === true && !seg && chant.loop) return run();
+        chantStop();
+      });
       const tick = () => {
-        if (chant.item !== item) return;
-        const t = a.currentTime;
-        if (bar) bar.style.width = Math.min(100, t / info.dur * 100) + "%";
-        let cur = null;
-        for (const e of info.t) { if (e[3] <= t + 0.03 && t < e[4] + 0.12) cur = e; }
-        spans.forEach(s => s.classList.toggle("sing", !!cur && +s.dataset.l === cur[1] && +s.dataset.c === cur[2]));
-        rows.forEach((r, i) => r.classList.toggle("now", !!cur && i === cur[1]));
-        if (seg && t >= seg[1]) { a.pause(); chantStop(); return; }
-        if (a.ended || (a.paused && a.currentTime > 0)) {
-          if (!seg && chant.loop && a.ended) { a.currentTime = 0; a.play(); }
-          else { chantStop(); return; }
+        if (my !== chant.token) return;
+        if (started) {
+          const t = CSAudio.now() - chant.t0;
+          if (bar) bar.style.width = Math.min(100, t / info.dur * 100) + "%";
+          let cur = null;
+          for (const e of info.t) { if (e[3] <= t + 0.03 && t < e[4] + 0.12) cur = e; }
+          spans.forEach(s => s.classList.toggle("sing", !!cur && +s.dataset.l === cur[1] && +s.dataset.c === cur[2]));
+          rows.forEach((r, i) => r.classList.toggle("now", !!cur && i === cur[1]));
         }
         chant.raf = requestAnimationFrame(tick);
       };
       chant.raf = requestAnimationFrame(tick);
     };
-    if (a.readyState >= 1) go(); else a.addEventListener("loadedmetadata", go, { once: true });
+    run();
   }
   // the time window of one line (first round), for tap-a-line
   function lineSeg(info, li) {
@@ -572,7 +570,7 @@
     });
     box.append(body);
     box.addEventListener("toggle", () => {
-      if (box.open) box.parentElement.querySelectorAll("details[open]").forEach(d => d !== box && (d.open = false));
+      if (box.open) { box.parentElement.querySelectorAll("details[open]").forEach(d => d !== box && (d.open = false)); if (info && window.CSAudio) CSAudio.prefetch(info.src); }
       else if (chant.item === box) chantStop();
     });
     return box;

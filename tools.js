@@ -45,7 +45,8 @@
   async function say(text, btn) {
     const my = ++tokn; try { player.pause(); } catch (e) {}
     const segs = segment(text);
-    if (!segs) return tts(text, btn);
+    if (!segs) { if (window.CSAudio) CSAudio.stop(); return tts(text, btn); }
+    if (window.CSAudio) { const ok = await CSAudio.playSeq(segs, { btn, gap: 0.05 }); if (ok === null) tts(text, btn); return; }
     if (btn) btn.classList.add("playing");
     for (const s of segs) { if (my !== tokn) break; if (!(await playOne(s))) { tts(text); break; } }
     if (btn) btn.classList.remove("playing");
