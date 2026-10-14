@@ -182,6 +182,9 @@
         "Phone voice: your phone's own text-to-speech.",
         'Rhyme chants: syllables recorded by a native speaker from <a href="https://github.com/davinfifield/mp3-chinese-pinyin-sound" target="_blank" rel="noopener">mp3-chinese-pinyin-sound</a> (public domain), chanted on a steady beat for this app (voice only).',
       ]);
+      sec("Handwriting checker", [
+        'Reads photos of your writing with <a href="https://github.com/pavlo-melnyk/offline-HCCR" target="_blank" rel="noopener">Melnyk-Net</a> by Pavlo Melnyk (MIT licence): a neural network trained on the CASIA-HWDB handwriting collection (Institute of Automation, Chinese Academy of Sciences; 2.6 million characters by 720 writers), 97.6 % correct on the ICDAR-2013 test. Here it is limited to the ~740 characters the app teaches and runs on your phone.',
+      ]);
       sec("Word lists", [
         "HSK levels 1–3 word lists (HSK 2012) are used to pick example characters for each radical.",
       ]);

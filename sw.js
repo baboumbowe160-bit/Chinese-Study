@@ -2,10 +2,11 @@
    App code (pages, scripts, word lists, homework) is fetched fresh whenever the phone is online,
    so every student gets new class assignments right away; the saved copy is used offline.
    Sounds live in their own long-lasting store (they never change), so updates stay small. */
-const VERSION = "chinese-study-v28";
+const VERSION = "chinese-study-v29";
 const AUDIO_CACHE = "chinese-study-audio-2";
+const MODEL_CACHE = "chinese-study-model-1";   // handwriting reader (5 MB) – downloaded the first time it is used, then kept
 const FILES = [
-  "./", "index.html", "audio.js", "camera.js", "style.css", "app.js", "photo-check.js", "checker-ui.js", "assignments.js", "class-assignments.js", "basics.js", "basics-data.js", "basics-plus.js", "lucky-data.js", "rhymes-data.js", "rhymes-audio.js", "riddles-data.js", "tools.js", "tools-data.js", "tools-audio.js", "welcome.js", "theme.css", "nav.js", "fonts/brush.woff", "fonts/display.woff", "fonts/body-Regular.woff", "fonts/body-Bold.woff", "data.js", "hanzi-writer.min.js",
+  "./", "index.html", "audio.js", "camera.js", "style.css", "app.js", "hccr-net.js", "hccr-scan.js", "checker-ui.js", "assignments.js", "class-assignments.js", "basics.js", "basics-data.js", "basics-plus.js", "lucky-data.js", "rhymes-data.js", "rhymes-audio.js", "riddles-data.js", "tools.js", "tools-data.js", "tools-audio.js", "welcome.js", "theme.css", "nav.js", "fonts/brush.woff", "fonts/display.woff", "fonts/body-Regular.woff", "fonts/body-Bold.woff", "data.js", "hanzi-writer.min.js",
   "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable.png", "apple-touch-icon.png"
 ];
 
@@ -18,7 +19,7 @@ self.addEventListener("install", e => {
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== AUDIO_CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== AUDIO_CACHE && k !== MODEL_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
   // fill the sound store in the background (only what is missing)
@@ -33,6 +34,14 @@ self.addEventListener("fetch", e => {
   if (/\/audio\//.test(url.pathname)) {
     e.respondWith(fromCache(AUDIO_CACHE, e.request).then(hit => hit || fetch(e.request).then(res => {
       if (res && res.status === 200) { const copy = res.clone(); caches.open(AUDIO_CACHE).then(c => c.put(e.request, copy)); }
+      return res;
+    })));
+    return;
+  }
+  // handwriting reader: from the phone first
+  if (/\/models\//.test(url.pathname)) {
+    e.respondWith(fromCache(MODEL_CACHE, e.request).then(hit => hit || fetch(e.request).then(res => {
+      if (res && res.status === 200) { const copy = res.clone(); caches.open(MODEL_CACHE).then(c => c.put(e.request, copy)); }
       return res;
     })));
     return;

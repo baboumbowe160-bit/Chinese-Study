@@ -308,7 +308,7 @@
   function shrink(file) {
     return new Promise(res => {
       const img = new Image(), url = URL.createObjectURL(file);
-      img.onload = () => { const k = Math.min(1, 1600 / Math.max(img.width, img.height)); const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); c.toBlob(b => res(b || file), "image/jpeg", 0.82); };
+      img.onload = () => { const k = Math.min(1, 2400 / Math.max(img.width, img.height)); const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); c.toBlob(b => res(b || file), "image/jpeg", 0.86); };
       img.onerror = () => { URL.revokeObjectURL(url); res(file); }; img.src = url;
     });
   }
