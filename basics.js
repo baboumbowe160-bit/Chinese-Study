@@ -129,6 +129,7 @@
     ["phrases", "说", "Useful phrases", "Classroom and everyday sentences"],
     ["qwords", "问", "Question & measure words", "什么, 谁, 哪儿, 几 … and 个, 本, 口"],
     ["rhymes", "诗", "Rhymes & poems", "Famous children's rhymes, poems 🎵 and tongue twisters"],
+    ["riddles", "谜", "Riddles", "Guess the thing – or the character 🤔"],
     ["games", "玩", "Games", "6 games: tones, numbers, codes, radicals, pictures"],
   ];
   function hub() {
@@ -152,7 +153,7 @@
     });
     p.append(g);
   }
-  const SHORT = { sounds: "Sounds", numbers: "Numbers", lucky: "Lucky numbers", strokes: "Strokes", radicals: "Radicals", pictures: "Pictures", phrases: "Phrases", qwords: "Questions", rhymes: "Rhymes", games: "Games" };
+  const SHORT = { sounds: "Sounds", numbers: "Numbers", lucky: "Lucky numbers", strokes: "Strokes", radicals: "Radicals", pictures: "Pictures", phrases: "Phrases", qwords: "Questions", rhymes: "Rhymes", riddles: "Riddles", games: "Games" };
   function header(title, zh) {
     const wrap = el("div", "b-head");
     const h = el("div", "b-headrow");
@@ -189,7 +190,7 @@
     curSec = id; if (typeof chantStop === "function") chantStop();
     store.set("bsec", id); seqToken++;
     const p = $("bpane"); p.innerHTML = "";
-    ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, rhymes, games }[id] || hub)();
+    ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, rhymes, riddles, games }[id] || hub)();
     if (id !== "hub") footer(id);
     window.scrollTo(0, 0);
   }
@@ -488,7 +489,7 @@
   function chantStop() {
     if (chant.audio) { try { chant.audio.pause(); } catch (e) {} }
     cancelAnimationFrame(chant.raf);
-    if (chant.item) { chant.item.classList.remove("playing"); chant.item.querySelectorAll(".sing,.now").forEach(x => x.classList.remove("sing", "now")); const pb = chant.item.querySelector(".rh-play"); if (pb) pb.innerHTML = "▶ <b>Play with music</b>"; }
+    if (chant.item) { chant.item.classList.remove("playing"); chant.item.querySelectorAll(".sing,.now").forEach(x => x.classList.remove("sing", "now")); const pb = chant.item.querySelector(".rh-play"); if (pb) pb.innerHTML = "▶ <b>Chant along</b>"; }
     chant.item = null; chant.seg = null;
   }
   function chantPlay(item, info, seg) {
@@ -540,7 +541,7 @@
     body.append(el("p", "rh-by", r.by), el("p", "hint", r.note));
     if (info) {
       const player = el("div", "rh-player");
-      const play = el("button", "primarybtn rh-play"); play.innerHTML = "▶ <b>Play with music</b>";
+      const play = el("button", "primarybtn rh-play"); play.innerHTML = "▶ <b>Chant along</b>";
       play.onclick = () => chantPlay(box, info);
       const loop = el("button", "ghost rh-loop", "🔁"); loop.title = "Repeat"; loop.setAttribute("aria-label", "Repeat"); loop.setAttribute("aria-pressed", "false");
       loop.onclick = () => { chant.loop = !chant.loop; document.querySelectorAll(".rh-loop").forEach(x => { x.classList.toggle("on", chant.loop); x.setAttribute("aria-pressed", String(chant.loop)); }); };
@@ -595,6 +596,74 @@
     const c1 = el("div", "b-card"); c1.append(tabs, list); p.append(c1);
     show(store.get("rhCat", "kids"));
     p.append(el("p", "hint", "All rhymes here are traditional folk rhymes or classical poems (Han, Tang and Song dynasties). Translations are simple learner versions."));
+  }
+
+
+  /* ---------- Riddles ---------- */
+  const RD = window.RIDDLES || [];
+  function riddles() {
+    const p = $("bpane"); p.append(header("Riddles", "谜"));
+    const c0 = el("div", "b-card");
+    c0.innerHTML = "<p>Chinese children love <b>谜语 míyǔ</b> – riddles. There are two kinds: <b>things</b> (guess the object from a little rhyme) and <b>字谜 character riddles</b> (guess the character from its parts – a brilliant way to remember how characters are built!).</p>";
+    p.append(c0);
+    const solved = new Set(store.get("rdSolved", []));
+    const tabs = el("div", "lk-tabs"), stage = el("div", "rd-stage");
+    const CATS = [["thing", "🧩 Things"], ["char", "字 Character riddles"]];
+    let cat = store.get("rdCat", "thing"), idx = 0;
+    const list = () => RD.map((r, i) => [r, i]).filter(([r]) => r.cat === cat);
+    function show() {
+      tabs.querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.k === cat));
+      const L2 = list(); if (idx >= L2.length) idx = 0; if (idx < 0) idx = L2.length - 1;
+      const [r, gi] = L2[idx]; const done = solved.has(gi);
+      stage.innerHTML = "";
+      const top = el("div", "rd-top");
+      const prev = el("button", "ghost rd-nav", "‹"); prev.setAttribute("aria-label", "Previous riddle"); prev.onclick = () => { idx--; show(); };
+      const next = el("button", "ghost rd-nav", "›"); next.setAttribute("aria-label", "Next riddle"); next.onclick = () => { idx++; show(); };
+      const count = el("div", "rd-count"); count.append(el("b", null, (idx + 1) + " / " + L2.length), el("span", null, " · solved " + L2.filter(([, i]) => solved.has(i)).length));
+      top.append(prev, count, next); stage.append(top);
+      const dots = el("div", "rd-dots"); L2.forEach(([, i], k) => { const d = el("button", "rd-dot" + (solved.has(i) ? " ok" : "") + (k === idx ? " on" : "")); d.setAttribute("aria-label", "Riddle " + (k + 1)); d.onclick = () => { idx = k; show(); }; dots.append(d); }); stage.append(dots);
+      const card = el("div", "rd-card");
+      const mark = el("div", "rd-mark" + (done ? " ok" : ""), done ? r.emo : "?");
+      card.append(mark);
+      const qbox = el("div", "rd-q");
+      r.q.forEach(([zh, py, en]) => { const row = el("div", "u-line"); const t = el("div", "u-txt"); t.append(el("div", "u-zh", zh), el("div", "u-py", py), el("div", "u-en", en)); row.append(t, sayBtn(btn => window.CSSay && CSSay(zh, btn), "Listen")); qbox.append(row); });
+      card.append(qbox);
+      const all = el("button", "ghost rd-listen", "▶ Listen to the riddle"); all.onclick = () => window.CSSay && CSSay(r.q.map(l => l[0]).join(""), all);
+      const hintB = el("button", "ghost", "💡 Hint"); const hint = el("p", "rd-hint"); hint.hidden = true; hint.textContent = r.hint;
+      hintB.onclick = () => { hint.hidden = false; hintB.disabled = true; };
+      const tools = el("div", "frow"); tools.append(all, hintB); card.append(tools, hint);
+      card.append(el("p", "rd-ask", r.cat === "char" ? "Which character is it?" : "What is it?"));
+      const opts = el("div", "g-opts rd-opts");
+      const pool = RD.filter(x => x.cat === cat && x !== r);
+      const options = shuffle([r, ...shuffle(pool).slice(0, 3)]);
+      const fb = el("div", "rd-ans");
+      const reveal = (ok) => {
+        opts.dataset.done = "1";
+        [...opts.children].forEach((b, i) => { if (options[i] === r) b.classList.add("right"); });
+        mark.textContent = r.emo; mark.classList.add("ok");
+        fb.innerHTML = "";
+        const big = el("div", "rd-big"); big.append(el("span", "rd-az", r.a[0]), el("span", "rd-ap", r.a[1] + " · " + r.a[2]));
+        fb.append(el("p", "g-fb " + (ok ? "good" : "bad"), ok ? ["对了！ Correct!", "太好了！ Great!", "真聪明！ So clever!"][Math.floor(Math.random() * 3)] : "Not quite – here's the answer:"), big, el("p", "rd-why", r.why));
+        if (ok) { solved.add(gi); store.set("rdSolved", [...solved]); count.lastChild.textContent = " · solved " + L2.filter(([, i]) => solved.has(i)).length; dots.children[idx].classList.add("ok"); }
+        const nx = el("button", "primarybtn", idx + 1 < L2.length ? "Next riddle ›" : "Start again ›"); nx.onclick = () => { idx++; show(); window.scrollTo({ top: stage.offsetTop - 120, behavior: "smooth" }); };
+        fb.append(nx);
+        window.CSSay && CSSay(r.a[0]);
+      };
+      options.forEach(o => {
+        const b = el("button", "g-opt rd-opt" + (r.cat === "char" ? " zh" : ""));
+        if (r.cat === "char") b.textContent = o.a[0]; else { b.append(el("span", "rd-oz", o.a[0]), el("span", "rd-oe", o.a[2])); }
+        b.onclick = () => { if (opts.dataset.done) return; const ok = o === r; if (!ok) b.classList.add("wrong"); reveal(ok); };
+        opts.append(b);
+      });
+      card.append(opts, fb);
+      if (done) { const again = el("p", "hint", "✓ You solved this one. Try it again, or go to the next."); card.insertBefore(again, opts); }
+      stage.append(card);
+      store.set("rdCat", cat);
+    }
+    CATS.forEach(([k, n]) => { const b = el("button", "chip", n); b.dataset.k = k; b.onclick = () => { cat = k; idx = 0; show(); }; tabs.append(b); });
+    const c1 = el("div", "b-card"); c1.append(tabs, stage); p.append(c1);
+    show();
+    p.append(el("p", "hint", "All riddles are traditional Chinese folk riddles. Translations are simple learner versions."));
   }
 
   /* ---------- 3. Strokes ---------- */
