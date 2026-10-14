@@ -104,7 +104,25 @@
         if (del.dataset.c !== "1") { del.dataset.c = "1"; del.textContent = "Remove?"; setTimeout(() => { del.dataset.c = ""; del.textContent = "×"; }, 3000); return; }
         await delPhoto(p.id); renderPhotos(a, wrap);
       };
-      f.append(img, del); wrap.appendChild(f);
+      // check the handwriting in this photo (whole page: every copy, one by one)
+      const sum = ((classState[a.id] || {}).checks || {})[p.id];
+      const chk = document.createElement("button"); chk.className = "pp-tag"; chk.textContent = sum ? "✓ " + sum.good + "/" + sum.total + " good" : "Check ✓";
+      chk.onclick = () => window.CSChecker && window.CSPool && CSChecker.open({
+        blob: p.blob, pool: CSPool, targets: a.chars ? a.chars.map(c => c[0]) : [], times: a.times || 0, title: "Check: " + a.title,
+        onDone: s2 => {
+          classState = store.get("classState", {});
+          const st = classState[a.id] = Object.assign({}, classState[a.id]);
+          st.checks = Object.assign({}, st.checks, { [p.id]: { good: s2.good, total: s2.total, avg: s2.avg } });
+          // a character written enough times, almost all good, gets ticked automatically
+          if (a.chars) {
+            const t = new Set(st.ticks || []);
+            Object.entries(s2.perChar).forEach(([c, v]) => { if (v.n >= (a.times || 1) && v.good >= Math.ceil(v.n * 0.8)) t.add(c); });
+            st.ticks = [...t];
+          }
+          store.set("classState", classState); render();
+        }
+      });
+      f.append(img, del, chk); wrap.appendChild(f);
     }
     const save = async (files, btn) => {
       const sp = btn.querySelector("span"); sp.textContent = "Saving…";

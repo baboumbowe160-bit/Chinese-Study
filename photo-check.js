@@ -6,6 +6,7 @@
 (function () {
   "use strict";
   const N = 96, PAD = 8; let TOL = 0.15 * N;
+  const OPT = { fine: 0, cross: 0, strokeW: 0.5 };   // finer re-ranking measured worse overall – kept off
 
   /* ---------- 1. ink ---------- */
   function inkMask(img) {
@@ -17,6 +18,8 @@
       const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
       // coloured grid lines / printed boxes (red, pink, green, light blue) are not ink
       if (mx - mn > 55 && l > 85) skip[i] = 1;
+      else if (r - Math.max(g, b) > 38 && l > 60) skip[i] = 1;          // red / pink printed grids (and teacher's red pen)
+      else if (b - r > 22 && l > 115) skip[i] = 1;                       // light blue ruled lines
     }
     // paper brightness = 90th percentile
     const sorted = Float32Array.from(lum).sort();
@@ -92,14 +95,14 @@
     if (MODE === 1) { const s0 = Math.max(sx, sy); sx = Math.max(sx, s0 * 0.45); sy = Math.max(sy, s0 * 0.45); const k = Math.sqrt(sx * sy); sx = sy = k; }
     else if (MODE === 2) { sx = Math.max(sx, sy * 0.3); sy = Math.max(sy, sx * 0.3); }
     const w = sx, h = sy, T = N / 5.2;
-    const g = new Uint8Array(N * N), gb = Array.from({ length: NB }, () => new Uint8Array(N * N)), out = [], ob = [];
-    for (const [x, y, a] of pts) {
+    const g = new Uint8Array(N * N), gb = Array.from({ length: NB }, () => new Uint8Array(N * N)), out = [], ob = [], os = [];
+    for (const [x, y, a, si] of pts) {
       const gx = Math.round(N / 2 + (x - cx) / sx * T), gy = Math.round(N / 2 + (y - cy) / sy * T);
       if (gx < 0 || gy < 0 || gx >= N || gy >= N) continue;
       const i = gy * N + gx, b = bin(a);
-      if (!gb[b][i]) { gb[b][i] = 1; if (!g[i]) { g[i] = 1; } out.push(i); ob.push(b); }
+      if (!gb[b][i]) { gb[b][i] = 1; if (!g[i]) { g[i] = 1; } out.push(i); ob.push(b); os.push(si); }
     }
-    return { grid: g, idx: out, ob, gb, aspect: w / Math.max(h, 1e-6) };
+    return { grid: g, idx: out, ob, os, gb, aspect: w / Math.max(h, 1e-6) };
   }
   function prep(r) { r.dt = distance(r.grid); r.dtb = r.gb.map(distance); return r; }
   // distance from a point with direction b to the nearest point of the other shape going the same way
@@ -109,11 +112,11 @@
   function model(c, d) {
     if (modelCache.has(c)) return modelCache.get(c);
     const pts = [];
-    (d.medians || []).forEach(line => {
+    (d.medians || []).forEach((line, si) => {
       for (let i = 0; i < line.length; i++) {
         const [xa, ya] = line[i];
-        if (i + 1 < line.length) { const [xb, yb] = line[i + 1]; const a = Math.atan2(yb - ya, xb - xa); const L = Math.hypot(xb - xa, yb - ya), k = Math.max(1, Math.ceil(L / 4)); for (let j = 0; j < k; j++) pts.push([xa + (xb - xa) * j / k, 900 - (ya + (yb - ya) * j / k), a]); }
-        else if (line.length > 1) { const [xp, yp] = line[i - 1]; pts.push([xa, 900 - ya, Math.atan2(ya - yp, xa - xp)]); }
+        if (i + 1 < line.length) { const [xb, yb] = line[i + 1]; const a = Math.atan2(yb - ya, xb - xa); const L = Math.hypot(xb - xa, yb - ya), k = Math.max(1, Math.ceil(L / 4)); for (let j = 0; j < k; j++) pts.push([xa + (xb - xa) * j / k, 900 - (ya + (yb - ya) * j / k), a, si]); }
+        else if (line.length > 1) { const [xp, yp] = line[i - 1]; pts.push([xa, 900 - ya, Math.atan2(ya - yp, xa - xp), si]); }
       }
     });
     const r = pts.length ? normalise(pts) : null;
@@ -138,11 +141,41 @@
     }
     return D;
   }
+  // how many horizontal strokes does a vertical line through the middle cross? (and vertical strokes, across)
+  function crossings(r) {
+    if (r.cx) return r.cx;
+    const count = (grid, vertical, pos) => {
+      let runs = 0, gap = 99;
+      for (let t = 0; t < N; t++) {
+        let on = false;
+        for (let d = -2; d <= 2 && !on; d++) { const a = pos + d; if (a < 0 || a >= N) continue; on = vertical ? grid[t * N + a] : grid[a * N + t]; }
+        if (on) { if (gap > 3) runs++; gap = 0; } else gap++;
+      }
+      return runs;
+    };
+    const med = a => a.sort((x, y) => x - y)[Math.floor(a.length / 2)];
+    const H = r.gb[0], V = r.gb[2];
+    const cols = [0.38, 0.5, 0.62].map(f => count(H, true, Math.round(N * f)));
+    const rows = [0.38, 0.5, 0.62].map(f => count(V, false, Math.round(N * f)));
+    return (r.cx = [med(cols), med(rows)]);
+  }
+  // finer comparison used only to tell look-alikes apart (天 / 太, 王 / 玉 …)
+  function compareFine(u, m) {
+    const T2 = TOL * 0.5; let p = 0, r = 0;
+    u.idx.forEach((i, k) => { p += Math.max(0, 1 - dirDist(m, i, u.ob[k]) / T2); });
+    m.idx.forEach((i, k) => { r += Math.max(0, 1 - dirDist(u, i, m.ob[k]) / T2); });
+    p /= u.idx.length; r /= m.idx.length;
+    return p + r ? 2 * p * r / (p + r) : 0;
+  }
   function compare(u, m) {
     let p = 0, r = 0;
     u.idx.forEach((i, k) => { p += Math.max(0, 1 - dirDist(m, i, u.ob[k]) / TOL); });
-    m.idx.forEach((i, k) => { r += Math.max(0, 1 - dirDist(u, i, m.ob[k]) / TOL); });
+    // recall: how much of each textbook stroke is there? (every stroke counts the same, so a missing dot matters)
+    const sr = {}, sn = {};
+    m.idx.forEach((i, k) => { const v = Math.max(0, 1 - dirDist(u, i, m.ob[k]) / TOL); r += v; const si = m.os[k]; if (si != null) { sr[si] = (sr[si] || 0) + v; sn[si] = (sn[si] || 0) + 1; } });
     p /= u.idx.length; r /= m.idx.length;
+    const keys = Object.keys(sn);
+    if (OPT.strokeW && keys.length) { const rs = keys.reduce((a, k) => a + sr[k] / sn[k], 0) / keys.length; r = r * (1 - OPT.strokeW) + rs * OPT.strokeW; }
     // very different overall shape (e.g. tall vs flat) costs a little
     const ar = Math.abs(Math.log((u.aspect + 0.05) / (m.aspect + 0.05)));
     const f = p + r ? 2 * p * r / (p + r) : 0;
@@ -166,14 +199,32 @@
     const u = prep(normalise(pts));
     return { u, mask: m, W, H };
   }
-  function check(img, target, pool) {
+  // which of these characters does the ink look like most? (best first)
+  function rankAmong(u, list, pool) {
+    const out = [];
+    list.forEach(c => { const d = pool(c); const md = d && model(c, d); if (md) out.push([c, compare(u, md).f, md]); });
+    out.sort((a, b) => b[1] - a[1]);
+    // close calls: re-rank the leaders with the finer comparison
+    const lead = out.filter(x => x[1] >= out[0][1] - 0.06).slice(0, 6);
+    if (lead.length > 1) {
+      const uc = crossings(u);
+      lead.forEach(x => { const mc = crossings(x[2]); const pen = OPT.cross * (Math.abs(uc[0] - mc[0]) + Math.abs(uc[1] - mc[1])); x[3] = x[1] * (1 - OPT.fine) + (OPT.fine ? compareFine(u, x[2]) * OPT.fine : 0) - pen; });
+      lead.sort((a, b) => b[3] - a[3]);
+      out.splice(0, lead.length, ...lead);
+    }
+    return out.map(x => [x[0], x[1]]);
+  }
+  /* check one cropped character. opts.among = characters to rank against (default: every character the app knows);
+     opts.target = null → the best match among opts.among is taken as the target */
+  function check(img, target, pool, opts) {
+    opts = opts || {};
     const res = readInk(img); if (res.error) return res;
-    const u = res.u, tm = model(target, pool(target));
+    const u = res.u;
+    const ranked = rankAmong(u, opts.among || pool.all(), pool);
+    if (!target) target = ranked.length ? ranked[0][0] : null;
+    const tm = target && model(target, pool(target));
     if (!tm) return { error: "nodata" };
     const mine = compare(u, tm);
-    const ranked = [];
-    pool.all().forEach(c => { const md = model(c, pool(c)); if (md) ranked.push([c, compare(u, md).f]); });
-    ranked.sort((a, b) => b[1] - a[1]);
     // where does it differ? (3×3 zones)
     const zones = [];
     const names = [["top-left", "top", "top-right"], ["left side", "middle", "right side"], ["bottom-left", "bottom", "bottom-right"]];
@@ -185,13 +236,22 @@
       if (mn >= 6 && ms / mn < 0.45) zones.push({ kind: "missing", where: names[zy][zx], v: ms / mn });
       else if (un >= 6 && us / un < 0.4) zones.push({ kind: "extra", where: names[zy][zx], v: us / un });
     }
-    return { score: mine.f, p: mine.p, r: mine.r, ranked: ranked.slice(0, 5), rank: ranked.findIndex(x => x[0] === target) + 1, of: ranked.length, zones, u, tm, mask: res.mask, W: res.W, H: res.H };
+    return { target, score: mine.f, p: mine.p, r: mine.r, ranked: ranked.slice(0, 8), rank: ranked.findIndex(x => x[0] === target) + 1, of: ranked.length, zones, u, tm, mask: res.mask, W: res.W, H: res.H };
   }
+  // verdict used everywhere: good / close / poor
+  function verdict(r) {
+    if (!r || r.error) return "none";
+    const top = r.ranked && r.ranked[0] && r.ranked[0][0] === r.target;
+    if (r.score >= 0.68 && (top || r.rank <= 3)) return "good";
+    if (r.score >= 0.58) return "close";
+    return "poor";
+  }
+
   /* ---------- find the separate characters on a page (for tap-to-check) ---------- */
-  function findBoxes(img) {
+  function findBoxes(img, opts) {
     const W = img.width, H = img.height, m = inkMask(img);
     // grow the ink so the strokes of one character join into one blob
-    const r = Math.max(2, Math.round(Math.min(W, H) / 45)), g = new Uint8Array(W * H);
+    const r = Math.max(2, Math.round(Math.min(W, H) / (opts && opts.dense ? 110 : 45))), g = new Uint8Array(W * H);
     const rowRun = new Uint8Array(W * H);
     for (let y = 0; y < H; y++) { let last = -1e9; for (let x = 0; x < W; x++) { if (m[y * W + x]) last = x; if (x - last <= r) rowRun[y * W + x] = 1; } last = 1e9; for (let x = W - 1; x >= 0; x--) { if (m[y * W + x]) last = x; if (last - x <= r) rowRun[y * W + x] = 1; } }
     for (let x = 0; x < W; x++) { let last = -1e9; for (let y = 0; y < H; y++) { if (rowRun[y * W + x]) last = y; if (y - last <= r) g[y * W + x] = 1; } last = 1e9; for (let y = H - 1; y >= 0; y--) { if (rowRun[y * W + x]) last = y; if (last - y <= r) g[y * W + x] = 1; } }
@@ -201,14 +261,14 @@
       let x0 = W, y0 = H, x1 = 0, y1 = 0, ink = 0; q.length = 0; q.push(s0); lab[s0] = 1;
       while (q.length) {
         const i = q.pop(), x = i % W, y = (i - x) / W; ink += m[i];
-        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        if (m[i]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }   // size of the real ink, not the thickened blob
         if (x > 0 && g[i - 1] && !lab[i - 1]) { lab[i - 1] = 1; q.push(i - 1); }
         if (x < W - 1 && g[i + 1] && !lab[i + 1]) { lab[i + 1] = 1; q.push(i + 1); }
         if (y > 0 && g[i - W] && !lab[i - W]) { lab[i - W] = 1; q.push(i - W); }
         if (y < H - 1 && g[i + W] && !lab[i + W]) { lab[i + W] = 1; q.push(i + W); }
       }
       const w = x1 - x0, h = y1 - y0;
-      if (w * h < W * H * 0.004 || w * h > W * H * 0.7 || ink < 20) continue;
+      if (ink < 20 || x1 < x0 || w * h < W * H * (opts && opts.dense ? 0.0004 : 0.003) || w * h > W * H * 0.7) continue;
       boxes.push({ x0, y0, x1, y1, w, h });
     }
     // merge pieces that belong to one character (e.g. left and right parts side by side)
@@ -220,13 +280,19 @@
         const a = boxes[i], b = boxes[j];
         const X0 = Math.min(a.x0, b.x0), Y0 = Math.min(a.y0, b.y0), X1 = Math.max(a.x1, b.x1), Y1 = Math.max(a.y1, b.y1);
         const gap = Math.max(0, Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1)) + Math.max(0, Math.max(a.y0, b.y0) - Math.min(a.y1, b.y1));
-        if (gap < r * 2 && Math.max(X1 - X0, Y1 - Y0) <= med * 1.25) { boxes.splice(j, 1); boxes[i] = { x0: X0, y0: Y0, x1: X1, y1: Y1, w: X1 - X0, h: Y1 - Y0 }; merged = true; }
+        if (gap < r * 3 && Math.max(X1 - X0, Y1 - Y0) <= med * 1.25) { boxes.splice(j, 1); boxes[i] = { x0: X0, y0: Y0, x1: X1, y1: Y1, w: X1 - X0, h: Y1 - Y0 }; merged = true; }
       }
     }
     // square them up with a little margin
-    return boxes.map(b => { const s = Math.max(b.w, b.h) * 1.25, cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2; return { x: cx - s / 2, y: cy - s / 2, s }; })
-      .filter(b => b.s > Math.min(W, H) * 0.08)
-      .sort((a, b) => (Math.abs(a.y - b.y) < a.s * 0.5 ? a.x - b.x : a.y - b.y)).slice(0, 40);
+    let out = boxes.map(b => { const s = Math.max(b.w, b.h) * 1.18 + 4, cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2; return { x: cx - s / 2, y: cy - s / 2, s, cx, cy }; });
+    // drop specks much smaller than a typical character
+    const sizes = out.map(b => b.s).sort((a, b) => a - b), mid = sizes[Math.floor(sizes.length / 2)] || 0;
+    out = out.filter(b => b.s > mid * 0.4 && b.s > Math.min(W, H) * (opts && opts.dense ? 0.025 : 0.08));
+    // reading order: rows top to bottom, left to right within a row
+    out.sort((a, b) => a.cy - b.cy);
+    const rows = [];
+    out.forEach(b => { const row = rows.find(rw => Math.abs(rw.cy - b.cy) < mid * 0.55); if (row) { row.items.push(b); row.cy = (row.cy * (row.items.length - 1) + b.cy) / row.items.length; } else rows.push({ cy: b.cy, items: [b] }); });
+    return rows.flatMap(rw => rw.items.sort((a, b) => a.cx - b.cx)).slice(0, opts && opts.dense ? 200 : 40);
   }
   // picture of the comparison: grey = textbook model, red = your writing, gold = missing parts
   function overlay(canvas, r) {
@@ -238,5 +304,5 @@
     r.tm.idx.forEach(i => dot(i, r.u.dt[i] > TOL * 0.6 ? "#d9a521" : "#d8cfc9", S * 1.6));
     r.u.idx.forEach(i => dot(i, r.tm.dt[i] > TOL * 0.6 ? "#7a0b10" : "#c8161d", S * 0.9));
   }
-  window.CSInk = { check, readInk, overlay, model, findBoxes, N, setTol: t => { TOL = t * N; } };
+  window.CSInk = { OPT, check, verdict, rankAmong, readInk, overlay, model, findBoxes, N, setTol: t => { TOL = t * N; } };
 })();

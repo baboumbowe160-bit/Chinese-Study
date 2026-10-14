@@ -2,10 +2,10 @@
    App code (pages, scripts, word lists, homework) is fetched fresh whenever the phone is online,
    so every student gets new class assignments right away; the saved copy is used offline.
    Sounds live in their own long-lasting store (they never change), so updates stay small. */
-const VERSION = "chinese-study-v27";
+const VERSION = "chinese-study-v28";
 const AUDIO_CACHE = "chinese-study-audio-2";
 const FILES = [
-  "./", "index.html", "audio.js", "camera.js", "style.css", "app.js", "photo-check.js", "assignments.js", "class-assignments.js", "basics.js", "basics-data.js", "basics-plus.js", "lucky-data.js", "rhymes-data.js", "rhymes-audio.js", "riddles-data.js", "tools.js", "tools-data.js", "tools-audio.js", "welcome.js", "theme.css", "nav.js", "fonts/brush.woff", "fonts/display.woff", "fonts/body-Regular.woff", "fonts/body-Bold.woff", "data.js", "hanzi-writer.min.js",
+  "./", "index.html", "audio.js", "camera.js", "style.css", "app.js", "photo-check.js", "checker-ui.js", "assignments.js", "class-assignments.js", "basics.js", "basics-data.js", "basics-plus.js", "lucky-data.js", "rhymes-data.js", "rhymes-audio.js", "riddles-data.js", "tools.js", "tools-data.js", "tools-audio.js", "welcome.js", "theme.css", "nav.js", "fonts/brush.woff", "fonts/display.woff", "fonts/body-Regular.woff", "fonts/body-Bold.woff", "data.js", "hanzi-writer.min.js",
   "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable.png", "apple-touch-icon.png"
 ];
 
