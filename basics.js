@@ -918,15 +918,40 @@
       ["多少钱？", "Duōshao qián?", "How much is it?"], ["太贵了！", "Tài guì le!", "Too expensive!"], ["我想喝水。", "Wǒ xiǎng hē shuǐ.", "I'd like some water."],
       ["厕所在哪儿？", "Cèsuǒ zài nǎr?", "Where is the toilet?"], ["现在几点？", "Xiànzài jǐ diǎn?", "What time is it?"],
       ["我饿了。", "Wǒ è le.", "I'm hungry."], ["我累了。", "Wǒ lèi le.", "I'm tired."], ["加油！", "Jiāyóu!", "You can do it! / Keep going!"]]],
+    // Quick-Start series – kept in the order of the original card (pinyin with the tone changes you hear when people speak)
+    ["Quick-Start series · 24 everyday phrases", [
+      ["为什么？", "Wèi shénme?", "Why?"], ["什么？", "Shénme?", "What?"], ["你多大了？", "Nǐ duō dà le?", "How old (are you)?"],
+      ["我累了。", "Wǒ lèi le.", "I'm tired."], ["进来！", "Jìnlái!", "Come in!"], ["我怀疑。", "Wǒ huáiyí.", "I doubt it."],
+      ["等一下。", "Děng yíxià.", "Hold on."], ["我爱你。", "Wǒ ài nǐ.", "I love you."], ["什么时候？", "Shénme shíhou?", "What time? / When?"],
+      ["打扰一下。", "Dǎrǎo yíxià.", "Excuse me."], ["多少钱？", "Duōshao qián?", "How much?"], ["我饿了。", "Wǒ è le.", "I'm hungry."],
+      ["别担心。", "Bié dānxīn.", "Don't worry."], ["你疯了！", "Nǐ fēng le!", "You're crazy!"], ["我的荣幸。", "Wǒ de róngxìng.", "My pleasure."],
+      ["你告诉我。", "Nǐ gàosu wǒ.", "You tell me."], ["不介意。", "Bú jièyì.", "Don't mind. / I don't mind."], ["马上到！", "Mǎshàng dào!", "Be right there!"],
+      ["你肯定？", "Nǐ kěndìng?", "Are you sure?"], ["该你了。", "Gāi nǐ le.", "It's your turn."], ["我的错。", "Wǒ de cuò.", "It's my fault."],
+      ["怎么了？", "Zěnme le?", "What's wrong?"], ["你在哪儿？", "Nǐ zài nǎr?", "Where are you?"], ["我在路上。", "Wǒ zài lùshang.", "On my way."]], true],
   ];
   function phrases() {
     const p = $("bpane"); p.append(header("Useful phrases", "说"));
     p.append(el("p", "hint", "Tap the speaker to hear each sentence. Say it out loud three times – speaking is the fastest way to remember."));
-    PHRASES.forEach(([title, list]) => {
+    PHRASES.forEach(([title, list, numbered]) => {
       const c = el("div", "b-card"); c.append(el("h3", null, title));
-      list.forEach(([zh, py, en]) => {
+      if (numbered) {
+        const all = el("button", "ghost", "▶ Play all in order");
+        all.onclick = async () => {
+          if (all.dataset.on) { all.dataset.on = ""; return; } all.dataset.on = "1"; all.textContent = "■ Stop";
+          const rows = c.querySelectorAll(".u-line");
+          for (let i = 0; i < list.length && all.dataset.on && all.isConnected; i++) {
+            rows[i].classList.add("hl"); rows[i].scrollIntoView({ block: "nearest", behavior: "smooth" });
+            const t0 = Date.now(); if (window.CSSay) await CSSay(list[i][0], rows[i].querySelector(".say"));
+            await new Promise(r => setTimeout(r, Math.max(700, 500 + list[i][0].length * 380 - (Date.now() - t0))));
+            rows[i].classList.remove("hl");
+          }
+          all.dataset.on = ""; all.textContent = "▶ Play all in order";
+        };
+        c.append(all);
+      }
+      list.forEach(([zh, py, en], i) => {
         const r = el("div", "u-line"); const t = el("div", "u-txt");
-        t.append(el("div", "u-zh", zh), el("div", "u-py", py), el("div", "u-en", en));
+        t.append(el("div", "u-zh", (numbered ? (i + 1) + ". " : "") + zh), el("div", "u-py", py), el("div", "u-en", en));
         r.append(t, sayBtn(btn => (window.CSSay ? CSSay(zh, btn) : null), "Listen: " + en));
         c.append(r);
       });

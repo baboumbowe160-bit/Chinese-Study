@@ -618,3 +618,5 @@ button.padd{font:inherit;background:transparent;cursor:pointer}
 .chk-runh{display:flex;align-items:center;gap:8px}
 .chk-runh .hint{margin:0}
 .chk-body>*{flex-shrink:0}
+
+.u-line.hl{background:#fff3d6;border-radius:10px}
