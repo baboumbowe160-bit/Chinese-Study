@@ -218,6 +218,8 @@
     tc.append(tg);
     tc.append(el("p", "hint", "Tip: draw the tone shape in the air with your hand while you say it."));
     p.append(tc);
+    // tone chart – like the classroom poster: 6 vowels × 4 tones
+    p.append(toneChart());
     // initials & finals
     [["Initials – the start sounds", B.initials, "21 initials, plus y and w. Tap each to hear it with a vowel (the way Chinese children learn: bō pō mō fō…)."],
      ["Finals – the end sounds", B.finals, "Finals are the vowel part. Tap to hear each one."]].forEach(([title, list, note]) => {
@@ -662,6 +664,77 @@
     const c1 = el("div", "b-card"); c1.append(tabs, stage); p.append(c1);
     show();
     p.append(el("p", "hint", "All riddles are traditional Chinese folk riddles. Translations are simple learner versions."));
+  }
+
+
+  /* ---------- Tone chart (6 simple vowels × 4 tones) ---------- */
+  const TC_ROWS = [["a", "a", "a"], ["o", "o", "o"], ["e", "e", "e"], ["i", "ı", "yi"], ["u", "u", "wu"], ["ü", "ü", "yu"]];
+  const TC_MARK = ["ˉ", "ˊ", "ˇ", "ˋ"];
+  const TC_PY = { a: "āáǎà", o: "ōóǒò", e: "ēéěè", i: "īíǐì", u: "ūúǔù", ü: "ǖǘǚǜ" };
+  const TC_ALONE = { i: ["yī", "yí", "yǐ", "yì"], u: ["wū", "wú", "wǔ", "wù"], "ü": ["yū", "yú", "yǔ", "yù"] };
+  const tcSrc = (row, t) => "audio/tc/" + row[2] + t + ".mp3";
+  function toneChart() {
+    const card = el("div", "b-card tc-card");
+    card.append(el("h3", null, "Tone chart 声调表"), el("p", "hint", "The 6 simple vowels with the 4 tone marks – just like the chart on the classroom wall. Tap any square to hear it. Tap a tone at the top to hear the whole column."));
+    const grid = el("div", "tc-grid");
+    const corner = el("div", "tc-head tc-corner"); grid.append(corner);
+    [1, 2, 3, 4].forEach(t => {
+      const h = el("button", "tc-head tc-t" + t); h.innerHTML = toneSvg(t) + "<span>" + ["1st", "2nd", "3rd", "4th"][t - 1] + "</span>";
+      h.setAttribute("aria-label", "Play all " + ["first", "second", "third", "fourth"][t - 1] + " tones");
+      h.onclick = () => window.CSAudio && CSAudio.playSeq(TC_ROWS.map(r => tcSrc(r, t)), { btn: h, gap: 0.25 });
+      grid.append(h);
+    });
+    const cells = [];
+    TC_ROWS.forEach(row => {
+      const rb = el("button", "tc-row"); rb.textContent = "▶"; rb.setAttribute("aria-label", "Play " + row[0] + " in all four tones");
+      rb.onclick = () => window.CSAudio && CSAudio.playSeq([1, 2, 3, 4].map(t => tcSrc(row, t)), { btn: rb, gap: 0.25 });
+      grid.append(rb);
+      [1, 2, 3, 4].forEach(t => {
+        const c = el("button", "tc-cell tc-t" + t);
+        c.append(el("span", "tc-m", TC_MARK[t - 1]), el("span", "tc-b", row[1]));
+        if (TC_ALONE[row[0]]) c.append(el("span", "tc-sp", TC_ALONE[row[0]][t - 1]));
+        c.setAttribute("aria-label", [...TC_PY[row[0]]][t - 1]);
+        c.dataset.k = row[0] + t;
+        c.onclick = () => { if (quiz.on) return quizPick(c); window.CSAudio && CSAudio.play(tcSrc(row, t), { btn: c }); };
+        cells.push(c); grid.append(c);
+      });
+    });
+    card.append(grid);
+    // listening game
+    const quiz = { on: false, ans: null, score: 0, total: 0 };
+    const qrow = el("div", "frow"); const qbtn = el("button", "primarybtn", "🎧 Listening game: which square?");
+    const qfb = el("p", "g-fb");
+    const nextQ = () => {
+      const row = TC_ROWS[Math.floor(Math.random() * 6)], t = 1 + Math.floor(Math.random() * 4);
+      quiz.ans = row[0] + t; cells.forEach(c => c.classList.remove("right", "wrong"));
+      qfb.className = "g-fb"; qfb.textContent = "Listen… then tap the square you heard. (Score " + quiz.score + "/" + quiz.total + ")";
+      quiz.src = tcSrc(row, t); CSAudio.play(quiz.src);
+    };
+    function quizPick(c) {
+      if (!quiz.ans) return;
+      quiz.total++;
+      const right = cells.find(x => x.dataset.k === quiz.ans);
+      if (c === right) { quiz.score++; c.classList.add("right"); qfb.className = "g-fb good"; qfb.textContent = ["对了！", "很好！", "太好了！"][quiz.score % 3] + " " + right.getAttribute("aria-label") + " (Score " + quiz.score + "/" + quiz.total + ")"; }
+      else { c.classList.add("wrong"); right.classList.add("right"); qfb.className = "g-fb bad"; qfb.textContent = "It was " + right.getAttribute("aria-label") + ". (Score " + quiz.score + "/" + quiz.total + ")"; }
+      quiz.ans = null; setTimeout(() => quiz.on && nextQ(), 1600);
+    }
+    const again = el("button", "ghost", "🔁 Hear it again"); again.hidden = true; again.onclick = () => quiz.src && CSAudio.play(quiz.src);
+    qbtn.onclick = () => {
+      quiz.on = !quiz.on; card.classList.toggle("quiz", quiz.on);
+      qbtn.textContent = quiz.on ? "■ Stop the game" : "🎧 Listening game: which square?"; again.hidden = !quiz.on;
+      if (quiz.on) { quiz.score = 0; quiz.total = 0; nextQ(); } else { qfb.textContent = ""; cells.forEach(c => c.classList.remove("right", "wrong")); }
+    };
+    qrow.append(qbtn, again); card.append(qrow, qfb);
+    const rules = el("div", "tc-rules");
+    rules.innerHTML = "<p><b>Where does the tone mark go?</b></p><ul>" +
+      "<li>On <b>a</b> or <b>e</b> if there is one: h<b>ǎ</b>o, x<b>iè</b>, m<b>éi</b>.</li>" +
+      "<li>In <b>ou</b>, on the o: d<b>ǒ</b>u.</li>" +
+      "<li>Otherwise on the <b>last</b> vowel: l<b>iú</b>, gu<b>ì</b>.</li>" +
+      "<li>On <b>i</b>, the mark replaces the dot: <b>ī í ǐ ì</b>. On <b>ü</b>, the dots stay: <b>lǜ</b> 绿.</li>" +
+      "<li>Alone, i, u and ü are written <b>yi</b>, <b>wu</b> and <b>yu</b> (shown small under the squares).</li></ul>";
+    card.append(rules);
+    if (window.CSAudio) setTimeout(() => CSAudio.prefetch(TC_ROWS.flatMap(r => [1, 2, 3, 4].map(t => tcSrc(r, t)))), 300);
+    return card;
   }
 
   /* ---------- 3. Strokes ---------- */
