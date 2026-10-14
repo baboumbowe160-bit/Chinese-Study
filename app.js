@@ -564,6 +564,7 @@
     Object.entries(map).forEach(([k, [tab, pane]]) => { $(tab).setAttribute("aria-selected", String(k === t)); $(pane).hidden = k !== t; });
     $("tipsP").hidden = t !== "p";
     window.scrollTo(0, 0);
+    if (t !== "b" && window.CSBasics && CSBasics.stop) CSBasics.stop();
     if (t === "p" && writer) loadChar(cur());
   }
   let curTab = null;

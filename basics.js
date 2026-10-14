@@ -186,7 +186,7 @@
       if (id === "hub") { if (CSNav.done(secTok)) return; }
       else secTok = CSNav.push(() => go("hub"), "bsec");
     }
-    curSec = id;
+    curSec = id; if (typeof chantStop === "function") chantStop();
     store.set("bsec", id); seqToken++;
     const p = $("bpane"); p.innerHTML = "";
     ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, rhymes, games }[id] || hub)();
@@ -483,28 +483,97 @@
   /* ---------- Rhymes & poems ---------- */
   const RH = window.RHYMES || [];
   const PUNCT = /[，。！？、；：,.!?]/;
+  // one shared player for the chants (voice + music), with characters lighting up as they are sung
+  const chant = { audio: null, item: null, raf: 0, seg: null, loop: false };
+  function chantStop() {
+    if (chant.audio) { try { chant.audio.pause(); } catch (e) {} }
+    cancelAnimationFrame(chant.raf);
+    if (chant.item) { chant.item.classList.remove("playing"); chant.item.querySelectorAll(".sing,.now").forEach(x => x.classList.remove("sing", "now")); const pb = chant.item.querySelector(".rh-play"); if (pb) pb.innerHTML = "▶ <b>Play with music</b>"; }
+    chant.item = null; chant.seg = null;
+  }
+  function chantPlay(item, info, seg) {
+    const same = chant.item === item && !seg && !chant.seg && chant.audio && !chant.audio.paused;
+    chantStop(); if (same) return;
+    if (window.CSStopAll) try { CSStopAll(); } catch (e) {}
+    if (!chant.audio) { chant.audio = new Audio(); chant.audio.preload = "auto"; }
+    const a = chant.audio;
+    if (!a.src.endsWith(info.src)) a.src = info.src;
+    chant.item = item; chant.seg = seg || null; item.classList.add("playing");
+    const pb = item.querySelector(".rh-play"); if (pb && !seg) pb.innerHTML = "❚❚ <b>Pause</b>";
+    const spans = item.querySelectorAll(".rh-c"), rows = item.querySelectorAll(".rh-row");
+    const bar = item.querySelector(".rh-prog span");
+    const startAt = seg ? Math.max(0, seg[0]) : 0;
+    const go = () => {
+      a.currentTime = startAt;
+      a.play().catch(() => { chantStop(); });
+      const tick = () => {
+        if (chant.item !== item) return;
+        const t = a.currentTime;
+        if (bar) bar.style.width = Math.min(100, t / info.dur * 100) + "%";
+        let cur = null;
+        for (const e of info.t) { if (e[3] <= t + 0.03 && t < e[4] + 0.12) cur = e; }
+        spans.forEach(s => s.classList.toggle("sing", !!cur && +s.dataset.l === cur[1] && +s.dataset.c === cur[2]));
+        rows.forEach((r, i) => r.classList.toggle("now", !!cur && i === cur[1]));
+        if (seg && t >= seg[1]) { a.pause(); chantStop(); return; }
+        if (a.ended || (a.paused && a.currentTime > 0)) {
+          if (!seg && chant.loop && a.ended) { a.currentTime = 0; a.play(); }
+          else { chantStop(); return; }
+        }
+        chant.raf = requestAnimationFrame(tick);
+      };
+      chant.raf = requestAnimationFrame(tick);
+    };
+    if (a.readyState >= 1) go(); else a.addEventListener("loadedmetadata", go, { once: true });
+  }
+  // the time window of one line (first round), for tap-a-line
+  function lineSeg(info, li) {
+    const ev = info.t.filter(e => e[0] === 0 && e[1] === li); if (!ev.length) return null;
+    return [ev[0][3] - 0.25, ev[ev.length - 1][4] + 0.5];
+  }
   function rhymeItem(r, open) {
+    const info = window.RHAUDIO && RHAUDIO[r.id];
     const box = el("details", "rh-item"); if (open) box.open = true;
     const sum = el("summary"); const st = el("span", "rh-t");
     st.append(el("span", "rh-zh", r.t), el("span", "rh-en", r.py + " · " + r.en));
     sum.append(st); box.append(sum);
     const body = el("div", "rh-body");
     body.append(el("p", "rh-by", r.by), el("p", "hint", r.note));
+    if (info) {
+      const player = el("div", "rh-player");
+      const play = el("button", "primarybtn rh-play"); play.innerHTML = "▶ <b>Play with music</b>";
+      play.onclick = () => chantPlay(box, info);
+      const loop = el("button", "ghost rh-loop", "🔁"); loop.title = "Repeat"; loop.setAttribute("aria-label", "Repeat"); loop.setAttribute("aria-pressed", "false");
+      loop.onclick = () => { chant.loop = !chant.loop; document.querySelectorAll(".rh-loop").forEach(x => { x.classList.toggle("on", chant.loop); x.setAttribute("aria-pressed", String(chant.loop)); }); };
+      if (chant.loop) loop.classList.add("on");
+      const prog = el("div", "rh-prog"); prog.append(el("span"));
+      player.append(play, loop, prog);
+      body.append(player);
+    }
     const tools = el("div", "frow");
-    const all = el("button", "ghost", "▶ Listen to all"); all.onclick = () => window.CSSay && CSSay(r.lines.map(l => l[0]).join(""), all);
     const hide = el("button", "ghost", "Hide pinyin & English");
     hide.onclick = () => { const h = body.classList.toggle("memo"); hide.textContent = h ? "Show pinyin & English" : "Hide pinyin & English"; };
-    tools.append(all, hide); body.append(tools);
-    r.lines.forEach(([zh, py, en]) => {
-      const row = el("div", "u-line"); const t = el("div", "u-txt"); const z = el("div", "u-zh rh-line");
+    const slow = el("button", "ghost", "🐢 Say it slowly"); slow.onclick = () => { chantStop(); window.CSSay && CSSay(r.lines.map(l => l[0]).join(""), slow); };
+    tools.append(hide, slow); body.append(tools);
+    r.lines.forEach(([zh, py, en], li) => {
+      const row = el("div", "u-line rh-row"); const t = el("div", "u-txt"); const z = el("div", "u-zh rh-line");
       const chars = [...zh];
-      chars.forEach((ch, i) => z.append(r.rhyme.includes(ch) && (i === chars.length - 1 || PUNCT.test(chars[i + 1])) ? el("span", "lk-rhy", ch) : document.createTextNode(ch)));
+      chars.forEach((ch, i) => {
+        const isHan = /[一-鿿]/.test(ch);
+        const rhy = r.rhyme.includes(ch) && (i === chars.length - 1 || PUNCT.test(chars[i + 1]));
+        const s = el("span", (isHan ? "rh-c" : "") + (rhy ? " lk-rhy" : ""), ch);
+        s.dataset.l = li; s.dataset.c = i; z.append(s);
+      });
       t.append(z, el("div", "u-py", py), el("div", "u-en", en));
       t.onclick = () => body.classList.contains("memo") && row.classList.toggle("peek");
-      row.append(t, sayBtn(btn => window.CSSay && CSSay(zh, btn), "Listen")); body.append(row);
+      const seg = info && lineSeg(info, li);
+      row.append(t, sayBtn(btn => seg ? chantPlay(box, info, seg) : window.CSSay && CSSay(zh, btn), "Listen to this line"));
+      body.append(row);
     });
     box.append(body);
-    box.addEventListener("toggle", () => { if (box.open) box.parentElement.querySelectorAll("details[open]").forEach(d => d !== box && (d.open = false)); });
+    box.addEventListener("toggle", () => {
+      if (box.open) box.parentElement.querySelectorAll("details[open]").forEach(d => d !== box && (d.open = false));
+      else if (chant.item === box) chantStop();
+    });
     return box;
   }
   function rhymes() {
@@ -839,6 +908,6 @@
   }
 
   /* ---------- init ---------- */
-  window.CSBasics = { go, home: () => { if (curSec !== "hub") go("hub"); else window.scrollTo({ top: 0, behavior: "smooth" }); } };
+  window.CSBasics = { go, stop: () => chantStop(), home: () => { if (curSec !== "hub") go("hub"); else window.scrollTo({ top: 0, behavior: "smooth" }); } };
   go(store.get("bsec", "hub"));
 })();

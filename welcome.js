@@ -180,6 +180,7 @@
       sec("Voices", [
         'Native-speaker recordings from <a href="https://github.com/hugolpz/audio-cmn" target="_blank" rel="noopener">audio-cmn</a> (CC BY-SA): HSK words read by Yue Tan, syllables read by Chen Wang (Shtooka project). Volume-adjusted and joined for this app.',
         "Phone voice: your phone's own text-to-speech.",
+        'Rhyme chants: syllables recorded by a native speaker from <a href="https://github.com/davinfifield/mp3-chinese-pinyin-sound" target="_blank" rel="noopener">mp3-chinese-pinyin-sound</a> (public domain), set to a beat with music composed for this app.',
       ]);
       sec("Word lists", [
         "HSK levels 1–3 word lists (HSK 2012) are used to pick example characters for each radical.",

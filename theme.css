@@ -467,3 +467,16 @@ body{font-size:15px;letter-spacing:-.003em}
 .rh-body.memo .u-py,.rh-body.memo .u-en{visibility:hidden}
 .rh-body.memo .u-line.peek .u-py,.rh-body.memo .u-line.peek .u-en{visibility:visible}
 .rh-body.memo .u-txt{cursor:pointer}
+/* chant player */
+.rh-player{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:4px 0 8px}
+.rh-play{margin:0;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--seal),#e0452f)}
+.rh-loop{width:48px;height:44px;padding:0;font-size:1.1rem}
+.rh-loop.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.rh-prog{grid-column:1/-1;height:6px;border-radius:999px;background:var(--outline);overflow:hidden}
+.rh-prog span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--seal));border-radius:999px}
+.rh-c{display:inline-block;border-radius:6px;transition:transform .15s,background .15s,color .15s}
+.rh-c.sing{background:var(--seal);color:#fff;transform:scale(1.18) translateY(-2px);box-shadow:0 3px 8px rgba(200,22,29,.3)}
+.rh-c.lk-rhy.sing{background:#d9a521;color:#fff}
+.rh-row.now{background:linear-gradient(90deg,#fff3d6,transparent);border-radius:10px}
+.rh-item.playing summary .rh-zh::after{content:" ♪";color:var(--seal);animation:rhbob .6s ease-in-out infinite alternate}
+@keyframes rhbob{to{opacity:.3}}
