@@ -138,7 +138,8 @@
     head.querySelector(".anum").textContent = a.n || "•";
     head.querySelector(".atitle").textContent = a.title;
     head.querySelector(".adate").textContent = (a.fromClass ? "From class" : "My assignment") + (course === "all" ? " · " + courseName(a.course) : "") + (a.date ? " · " + niceDate(a.date) : "");
-    head.querySelector(".astate").textContent = a.done ? "Done" : "To do";
+    const tk = a.chars ? ((classState[a.id] || {}).ticks || []).length : 0;
+    head.querySelector(".astate").textContent = a.done ? "Done" : a.chars && tk ? tk + "/" + a.chars.length : "To do";
     head.onclick = () => { open.has(a.id) ? open.delete(a.id) : open.add(a.id); store.set("aOpen", [...open]); render(); };
     card.appendChild(head);
     if (!open.has(a.id)) return card;
@@ -148,7 +149,39 @@
       const l = document.createElement("p"); l.className = "label"; l.textContent = "Instructions";
       t.appendChild(l); a.task.split("\n").forEach(x => t.appendChild(lineEl(x))); body.appendChild(t);
     }
-    if (a.fromClass) {
+    if (a.chars) {
+      // characters to write: tap to practise, tick when written N times
+      const ticks = new Set((classState[a.id] || {}).ticks || []);
+      const box = document.createElement("div"); box.className = "hw";
+      const top = document.createElement("div"); top.className = "hw-top";
+      const cnt = document.createElement("b");
+      const bar = document.createElement("div"); bar.className = "hw-bar"; const fill = document.createElement("span"); bar.appendChild(fill);
+      const upd = () => {
+        cnt.textContent = ticks.size + " / " + a.chars.length + " written " + (a.times || 18) + "×"; fill.style.width = (ticks.size / a.chars.length * 100) + "%";
+        const st = card.querySelector(".astate"); if (st && !a.done) st.textContent = ticks.size ? ticks.size + "/" + a.chars.length : "To do";
+      };
+      top.append(cnt);
+      const tools = document.createElement("div"); tools.className = "frow";
+      if (a.set) { const go = document.createElement("button"); go.className = "primarybtn"; go.textContent = "✍ Practise in Write"; go.onclick = () => window.CSWrite && CSWrite.open(a.set); tools.append(go); }
+      if (a.sheet) { const sh = document.createElement("a"); sh.className = "ghost hw-sheet"; sh.href = a.sheet; sh.target = "_blank"; sh.rel = "noopener"; sh.textContent = "🖨 Practice sheet (PDF)"; tools.append(sh); }
+      const hint = document.createElement("p"); hint.className = "hint"; hint.textContent = "Tap a character to watch its stroke order and practise it. Tap ○ when you have written it " + (a.times || 18) + " times in your book.";
+      const grid = document.createElement("div"); grid.className = "hw-grid";
+      a.chars.forEach(([c, py, m], i) => {
+        const cell = document.createElement("div"); cell.className = "hw-c" + (ticks.has(c) ? " ok" : "");
+        const b = document.createElement("button"); b.className = "hw-ch"; b.title = py + " – " + m;
+        b.innerHTML = '<span class="hw-n"></span><span class="hw-z"></span><span class="hw-p"></span>';
+        b.children[0].textContent = i + 1; b.children[1].textContent = c; b.children[2].textContent = py;
+        b.onclick = () => window.CSWrite && CSWrite.open(a.set, c);
+        const t = document.createElement("button"); t.className = "hw-t"; t.setAttribute("aria-label", "Written " + c + " " + (a.times || 18) + " times"); t.textContent = ticks.has(c) ? "✓" : "○";
+        t.onclick = () => {
+          ticks.has(c) ? ticks.delete(c) : ticks.add(c);
+          classState[a.id] = Object.assign({}, classState[a.id], { ticks: [...ticks] }); store.set("classState", classState);
+          cell.classList.toggle("ok", ticks.has(c)); t.textContent = ticks.has(c) ? "✓" : "○"; upd();
+        };
+        cell.append(b, t); grid.appendChild(cell);
+      });
+      upd(); box.append(top, bar, tools, hint, grid); body.appendChild(box);
+    } else if (a.fromClass) {
       const l = document.createElement("label"); l.className = "label"; l.textContent = "My answers"; l.htmlFor = "w-" + a.id;
       const ta = document.createElement("textarea"); ta.id = "w-" + a.id; ta.className = "awork-in"; ta.rows = 6; ta.value = a.work || "";
       ta.placeholder = "Write your answers here, one per line. Lines with Chinese get a speaker button.";
