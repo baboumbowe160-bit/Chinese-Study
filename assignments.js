@@ -174,6 +174,7 @@
         b.onclick = () => window.CSWrite && CSWrite.open(a.set, c);
         const t = document.createElement("button"); t.className = "hw-t"; t.setAttribute("aria-label", "Written " + c + " " + (a.times || 18) + " times"); t.textContent = ticks.has(c) ? "✓" : "○";
         t.onclick = () => {
+          classState = store.get("classState", {});
           ticks.has(c) ? ticks.delete(c) : ticks.add(c);
           classState[a.id] = Object.assign({}, classState[a.id], { ticks: [...ticks] }); store.set("classState", classState);
           cell.classList.toggle("ok", ticks.has(c)); t.textContent = ticks.has(c) ? "✓" : "○"; upd();
@@ -211,6 +212,7 @@
     return card;
   }
   function render() {
+    classState = store.get("classState", {});   // the Write tab may have ticked characters
     const q = $("aq").value.trim().toLowerCase();
     const box = $("aList"); box.innerHTML = "";
     const match = a => !q || [a.title, a.task, a.work, "assignment " + a.n, courseName(a.course)].join(" ").toLowerCase().includes(q);
@@ -274,4 +276,5 @@
   $("viewer").addEventListener("click", e => { if (e.target === $("viewer")) userHideViewer(); });
 
   render();
+  window.CSAssign = { render: () => render() };
 })();

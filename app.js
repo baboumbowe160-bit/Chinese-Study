@@ -72,6 +72,7 @@
   }
 
   function renderWord() {
+    if (typeof repStop === "function") repStop(true);
     setTimeout(() => { try { prefetchNear(); } catch (e) {} }, 0);
     // a new word starts fresh on the writing grid – close Type it / Paper so they don't follow you around
     if ($("ppanel") && !$("ppanel").hidden) closePanel();
@@ -170,6 +171,86 @@
       }
     });
   }
+  /* ---- Homework mode: write each character N times (default 18) ---- */
+  const REP_N = 18;
+  var rep = null;   // { char, n, timer }  (var: renderWord may run before this line)
+  const repCounts = () => store.get("repCount", {});
+  function repTarget() {
+    const s = ALL[setIdx]; const A = (window.CLASS_ASSIGNMENTS || []).find(x => x.set === s[0]);
+    return (A && A.times) || REP_N;
+  }
+  function repShow() {
+    const rc = $("repcount"); if (!rep) { rc.hidden = true; return; }
+    const n = repCounts()[rep.char] || 0, N = repTarget();
+    rc.hidden = false; rc.innerHTML = "<b></b><span></span>"; rc.firstChild.textContent = n + " / " + N; rc.lastChild.textContent = n < 3 ? "trace" : "from memory";
+  }
+  function repStop(silent) {
+    if (!rep) return;
+    clearTimeout(rep.timer); rep = null;
+    const b = $("bRep"); b.classList.remove("on"); b.innerHTML = "✍ Write it " + repTarget() + " times<small>homework mode – counts every clean copy</small>";
+    $("repcount").hidden = true;
+    if (writer && !silent) { try { writer.cancelQuiz(); writer.showCharacter(); writer.showOutline(); } catch (e) {} }
+  }
+  function tickHomework(c) {
+    const s = ALL[setIdx]; const cs = store.get("classState", {});
+    (window.CLASS_ASSIGNMENTS || []).forEach(A => {
+      if (A.set !== s[0] || !A.chars || !A.chars.some(x => x[0] === c)) return;
+      const st = cs[A.id] = Object.assign({}, cs[A.id]); const t = new Set(st.ticks || []); t.add(c); st.ticks = [...t];
+    });
+    store.set("classState", cs);
+  }
+  function repGo() {
+    if (!rep || !writer) return;
+    const c = cur(); if (c !== rep.char) { rep.char = c; }
+    const counts = repCounts(), n = counts[c] || 0, N = repTarget();
+    repShow();
+    if (n >= N) return repFinished();
+    const trace = n < 3, total = charData(c).strokes.length, w = writer;
+    w.hideCharacter(); trace ? w.showOutline() : w.hideOutline();
+    say((trace ? "Trace " : "Write from memory – ") + c + ": copy " + (n + 1) + " of " + N + ". " + total + " strokes.");
+    let mistakes = 0;
+    w.quiz({
+      leniency: 1.0, showHintAfterMisses: trace ? 2 : 3, markStrokeCorrectAfterMisses: 5,
+      onMistake: () => { mistakes++; if (w === writer && rep) say("Check the stroke order and direction", "bad"); },
+      onCorrectStroke: d => { if (w === writer && rep && d.strokesRemaining) say("Stroke " + (d.strokeNum + 2) + " of " + total, "good"); },
+      onComplete: d => {
+        if (w !== writer || !rep) return;
+        const clean = d.totalMistakes <= 2;
+        if (clean) { const k = repCounts(); k[c] = (k[c] || 0) + 1; store.set("repCount", k); }
+        const now = repCounts()[c] || 0;
+        say(clean ? "✓ " + now + " of " + N + (now >= N ? "" : " – again!") : d.totalMistakes + " mistakes – that copy doesn't count. Again, slowly.", clean ? "good" : "bad");
+        repShow(); $("repcount").classList.remove("pop"); void $("repcount").offsetWidth; $("repcount").classList.add("pop");
+        rep.timer = setTimeout(repGo, clean ? 700 : 1400);
+      }
+    });
+  }
+  function repFinished() {
+    const c = rep.char, N = repTarget();
+    tickHomework(c); passed.add(c); store.set("passed", [...passed]); renderWordsKeep();
+    say("🎉 " + c + " written " + N + " times! Ticked in your homework.", "good");
+    if (writer) { writer.showCharacter(); writer.hideOutline(); }
+    // go on to the next character automatically
+    rep.timer = setTimeout(() => {
+      if (!rep) return;
+      const W = words(), hc = hanChars(W[wordIdx][0]);
+      const keep = rep;
+      if (charIdx < hc.length - 1) { charIdx++; renderWord(); }
+      else if (wordIdx < W.length - 1) { wordIdx++; charIdx = 0; renderAll(); }
+      else { say("🏆 You finished every character in this list!", "good"); return repStop(true); }
+      rep = keep; rep.char = cur();
+      const b = $("bRep"); b.classList.add("on"); b.innerHTML = "■ Stop<small>your count is saved – continue any time</small>";
+      setTimeout(repGo, 400);
+    }, 1800);
+  }
+  function renderWordsKeep() { try { renderWords(); } catch (e) {} }
+  $("bRep").onclick = () => {
+    if (rep) return repStop();
+    closePanel();
+    rep = { char: cur(), timer: 0 };
+    const b = $("bRep"); b.classList.add("on"); b.innerHTML = "■ Stop<small>your count is saved – continue any time</small>";
+    $("box").scrollIntoView({ behavior: "smooth", block: "center" });
+    repGo();
+  };
   /* ---- extra practice panels ---- */
   function closePanel() { const p = $("ppanel"); p.hidden = true; p.innerHTML = ""; }
   const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
@@ -428,6 +509,7 @@
   }
   $("bType").onclick = () => { if ($("ppanel").dataset.mode === "type" && !$("ppanel").hidden) return closePanel(); $("ppanel").dataset.mode = "type"; typePanel(); };
   $("bPaper").onclick = () => { if ($("ppanel").dataset.mode === "paper" && !$("ppanel").hidden) return closePanel(); $("ppanel").dataset.mode = "paper"; paperPanel(); };
+  ["bWatch", "bStep", "bTrace", "bTest", "bType", "bPaper"].forEach(id => $(id).addEventListener("click", () => repStop(true), true));
   $("bTrace").onclick = () => quiz(true);
   $("bTest").onclick = () => quiz(false);
 
@@ -585,6 +667,8 @@
     $("tipsP").hidden = t !== "p";
     window.scrollTo(0, 0);
     if (t !== "b" && window.CSBasics && CSBasics.stop) CSBasics.stop();
+    if (t === "a" && window.CSAssign) try { CSAssign.render(); } catch (e) {}
+    if (t !== "p" && typeof repStop === "function") repStop(true);
     if (t === "p" && writer) loadChar(cur());
   }
   let curTab = null;
@@ -686,7 +770,15 @@
   $("bInstall").onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred = null; $("bInstall").hidden = true; };
   if (window.matchMedia("(display-mode: standalone)").matches) $("installtip").hidden = true;
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    // when a new version arrives, switch to it at once (so new homework shows for everyone)
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").then(reg => {
+      const check = () => reg.update().catch(() => {});
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
+      setInterval(check, 30 * 60 * 1000);
+    }).catch(() => {}));
   }
 
   function renderAll() { renderSets(); renderWords(); renderWord(); }
