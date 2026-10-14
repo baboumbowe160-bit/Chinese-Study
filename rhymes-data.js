@@ -3,6 +3,16 @@
    rhyme: the characters that rhyme – highlighted when they end a line.
    lines: [Chinese, pinyin, English]                                                                     */
 var RHYMES = [
+  /* ---- from our class board ---- */
+  { id: "sisheng", cat: "class", t: "黑鹰飞，黄鱼游", py: "Hēi yīng fēi, huáng yú yóu", en: "The four-tone chant", by: "Tone-practice chant · from our class board",
+    note: "We chant this every class! Each line uses ONE tone only, in order: 1st – 2nd – 3rd – 4th. Every line is a colour + an animal + what it does. Draw the tone shape in the air as you say each line.", rhyme: [], tones: true,
+    lines: [["黑鹰飞，", "Hēi yīng fēi,", "1st tone ˉ – the black eagle flies,"],
+            ["黄鱼游，", "huáng yú yóu,", "2nd tone ˊ – the yellow fish swims,"],
+            ["紫马跑，", "zǐ mǎ pǎo,", "3rd tone ˇ – the purple horse runs,"],
+            ["绿兔跳。", "lǜ tù tiào.", "4th tone ˋ – the green rabbit jumps."]] },
+  { id: "piqiu", cat: "class", t: "小皮球，香蕉梨", py: "Xiǎo píqiú, xiāngjiāo lí", en: "Little rubber ball – skipping chant", by: "Traditional skipping-rope (跳皮筋) chant · from our class board",
+    note: "Children chant this while jumping over an elastic rope (跳皮筋). After 马兰开花二十一 the count keeps climbing: 二八二五六, 二八二五七, 二八二九三十一 … all the way to 一百零一 (101)! 香蕉梨 is a sweet pear, and 马兰 is a little wild iris flower. Great practice for numbers.", rhyme: ["梨", "一", "七"],
+    lines: [["小皮球，香蕉梨，", "Xiǎo píqiú, xiāngjiāo lí,", "Little rubber ball, banana-pear,"], ["马兰开花二十一。", "mǎlán kāihuā èrshíyī.", "the malan flower blooms – twenty-one!"], ["二八二五六，二八二五七，", "Èr bā èr wǔ liù, èr bā èr wǔ qī,", "2-8-2-5-6, 2-8-2-5-7,"], ["二八二九三十一。", "èr bā èr jiǔ sānshíyī.", "2-8-2-9 – 31!"], ["三八三五六，三八三五七，", "Sān bā sān wǔ liù, sān bā sān wǔ qī,", "3-8-3-5-6, 3-8-3-5-7,"], ["三八三九四十一。", "sān bā sān jiǔ sìshíyī.", "3-8-3-9 – 41!"], ["四八四五六，四八四五七，", "Sì bā sì wǔ liù, sì bā sì wǔ qī,", "4-8-4-5-6, 4-8-4-5-7,"], ["四八四九五十一。", "sì bā sì jiǔ wǔshíyī.", "4-8-4-9 – 51!"], ["五八五五六，五八五五七，", "Wǔ bā wǔ wǔ liù, wǔ bā wǔ wǔ qī,", "5-8-5-5-6, 5-8-5-5-7,"], ["五八五九六十一。", "wǔ bā wǔ jiǔ liùshíyī.", "5-8-5-9 – 61!"], ["六八六五六，六八六五七，", "Liù bā liù wǔ liù, liù bā liù wǔ qī,", "6-8-6-5-6, 6-8-6-5-7,"], ["六八六九七十一。", "liù bā liù jiǔ qīshíyī.", "6-8-6-9 – 71!"], ["七八七五六，七八七五七，", "Qī bā qī wǔ liù, qī bā qī wǔ qī,", "7-8-7-5-6, 7-8-7-5-7,"], ["七八七九八十一。", "qī bā qī jiǔ bāshíyī.", "7-8-7-9 – 81!"], ["八八八五六，八八八五七，", "Bā bā bā wǔ liù, bā bā bā wǔ qī,", "8-8-8-5-6, 8-8-8-5-7,"], ["八八八九九十一。", "bā bā bā jiǔ jiǔshíyī.", "8-8-8-9 – 91!"], ["九八九五六，九八九五七，", "Jiǔ bā jiǔ wǔ liù, jiǔ bā jiǔ wǔ qī,", "9-8-9-5-6, 9-8-9-5-7,"], ["九八九九一百零一。", "jiǔ bā jiǔ jiǔ yìbǎi líng yī.", "9-8-9-9 – 101!"]] },
   /* ---- number rhymes ---- */
   { id: "laohu", cat: "num", t: "上山打老虎", py: "Shàng shān dǎ lǎohǔ", en: "Up the hill to hunt a tiger", by: "Traditional children's counting rhyme",
     note: "The rhyme every Chinese child counts with. Every line ends in -u: wǔ, hǔ, shǔ. Clap on each number!", rhyme: ["五", "虎", "鼠", "数"],

@@ -37,7 +37,7 @@
     const strip = $("sets"); strip.innerHTML = "";
     ALL.forEach((s, i) => {
       const b = document.createElement("button");
-      b.textContent = s[0] === "C" ? "Class" : s[0] === "M" ? "Mine" : s[0] === "A" ? "＋ Added" : "L" + s[0];
+      b.textContent = s[0][0] === "C" ? "Class " + (/\(([^)]+)\)/.exec(s[2]) || ["", ""])[1] : s[0] === "M" ? "Mine" : s[0] === "A" ? "＋ Added" : "L" + s[0];
       b.setAttribute("aria-pressed", String(i === setIdx));
       b.onclick = () => { setIdx = i; wordIdx = 0; charIdx = 0; store.set("set", i); renderAll(); };
       strip.appendChild(b);
@@ -48,7 +48,7 @@
     $("settitle").append(b, document.createTextNode(s[2]));
     const PAGES = { 1: 2, 2: 8, 3: 14, 4: 22, 5: 30, 6: 40, 7: 48, 8: 56, 9: 64, 10: 72, 11: 82, 12: 90, 13: 98, 14: 104, 15: 112 };
     if (PAGES[s[0]]) $("settitle").append(el("span", "bookref", "Textbook p. " + PAGES[s[0]]));
-    if (s[0] === "C") $("settitle").append(el("span", "bookref", "From the class board, 10月5日"));
+    if (s[0][0] === "C") $("settitle").append(el("span", "bookref", "From the class board, " + s[1].replace("课堂 ", "")));
     $("addcard").hidden = s[0] !== "A";
   }
 
@@ -525,7 +525,7 @@
 
   /* ---- Search across every lesson ---- */
   const plain = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/ü/g, "v").replace(/[\s'’·-]/g, "");
-  function setName(s) { return s[0] === "C" ? "Class" : s[0] === "M" ? "Mine" : s[0] === "A" ? "Added" : "L" + s[0]; }
+  function setName(s) { return s[0][0] === "C" ? "Class" : s[0] === "M" ? "Mine" : s[0] === "A" ? "Added" : "L" + s[0]; }
   function doSearch() {
     const raw = $("q").value.trim(), box = $("results");
     if (!raw) { box.hidden = true; box.innerHTML = ""; return; }
@@ -551,7 +551,7 @@
       if (!hit) return;
       const b = document.createElement("button"); b.className = "hit lesson";
       b.innerHTML = '<span class="hz"></span><span class="hp"></span><span class="hm"></span><span class="hl"></span>';
-      b.children[0].textContent = s[0] === "C" || s[0] === "M" ? "课" : s[0];
+      b.children[0].textContent = s[0][0] === "C" || s[0] === "M" ? "课" : s[0];
       b.children[1].textContent = s[1]; b.children[2].textContent = s[2]; b.children[3].textContent = "Lesson";
       b.onclick = () => { setIdx = si; wordIdx = 0; charIdx = 0; store.set("set", si); $("q").value = ""; box.hidden = true; renderAll(); };
       box.appendChild(b);

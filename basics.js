@@ -220,6 +220,24 @@
     p.append(tc);
     // tone chart – like the classroom poster: 6 vowels × 4 tones
     p.append(toneChart());
+    // the four-tone chant from our class board
+    const sc = window.RHAUDIO && RHAUDIO.sisheng, rs = (window.RHYMES || []).find(r => r.id === "sisheng");
+    if (sc && rs) {
+      const card = el("div", "b-card cc-card");
+      card.append(el("h3", null, "🏫 Our class tone chant"), el("p", "hint", "We chant this every class. Each line is one tone – tap a line to hear it, or chant the whole thing."));
+      rs.lines.forEach(([zh, py, en], li) => {
+        const ev = sc.t.filter(e => e[1] === li);
+        const btn = el("button", "cc-line tc-t" + (li + 1));
+        btn.innerHTML = toneSvg(li + 1);
+        btn.append(el("span", "cc-zh", zh.replace(/[，。]/g, "")), el("span", "cc-py", py.replace(/[,.]/g, "")), el("span", "cc-en", en.replace(/^.*– /, "").replace(/[,.]$/, "")));
+        btn.onclick = () => window.CSAudio && CSAudio.play(sc.src, { btn, offset: Math.max(0, ev[0][3] - 0.05), until: ev[ev.length - 1][4] + 0.35 });
+        card.append(btn);
+      });
+      const all = el("button", "primarybtn", "▶ Chant all four lines"); all.onclick = () => window.CSAudio && CSAudio.play(sc.src, { btn: all });
+      const more = el("button", "ghost", "More class chants ›"); more.onclick = () => { store.set("rhCat", "class"); go("rhymes"); };
+      const row = el("div", "frow"); row.append(all, more); card.append(row);
+      p.append(card);
+    }
     // initials & finals
     [["Initials – the start sounds", B.initials, "21 initials, plus y and w. Tap each to hear it with a vowel (the way Chinese children learn: bō pō mō fō…)."],
      ["Finals – the end sounds", B.finals, "Finals are the vowel part. Tap to hear each one."]].forEach(([title, list, note]) => {
@@ -582,7 +600,7 @@
     const c0 = el("div", "b-card");
     c0.innerHTML = "<p>Chinese children learn thousands of characters by <b>chanting rhymes and short poems</b>. The rhythm and the rhyme help words stick. Rhyming sounds are in <span class='lk-rhy'>gold</span>.</p><p class='hint'>Tip: open a rhyme, listen, then tap “Hide pinyin & English” and try to say it from memory. Tap a line to peek.</p>";
     p.append(c0);
-    const CATS = [["kids", "🧸 Children's rhymes", "儿歌"], ["poem", "📜 Classic poems", "古诗"], ["twist", "👅 Tongue twisters", "绕口令"], ["num", "🔢 Number rhymes", "数字"]];
+    const CATS = [["class", "🏫 Our class", "课堂 – the chants from our class board"], ["kids", "🧸 Children's rhymes", "儿歌"], ["poem", "📜 Classic poems", "古诗"], ["twist", "👅 Tongue twisters", "绕口令"], ["num", "🔢 Number rhymes", "数字"]];
     const tabs = el("div", "lk-tabs"), list = el("div", "rh-list");
     const show = k => {
       tabs.querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.k === k));
@@ -594,7 +612,7 @@
     };
     CATS.forEach(([k, n]) => { const b = el("button", "chip", n); b.dataset.k = k; b.onclick = () => show(k); tabs.append(b); });
     const c1 = el("div", "b-card"); c1.append(tabs, list); p.append(c1);
-    show(store.get("rhCat", "kids"));
+    show(store.get("rhCat", "class"));
     p.append(el("p", "hint", "All rhymes here are traditional folk rhymes or classical poems (Han, Tang and Song dynasties). Translations are simple learner versions."));
   }
 
