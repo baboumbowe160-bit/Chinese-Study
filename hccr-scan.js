@@ -325,7 +325,7 @@
     const sq = new Float64Array(L * L).fill(255), oy = (L - ch) >> 1, ox = (L - cw) >> 1;
     for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) sq[(oy + y) * L + ox + x] = N[(my0 + y) * w + mx0 + x];
     const r = resample(sq, L, L, 88, 88), out = new Float32Array(96 * 96);
-    for (let y = 0; y < 88; y++) for (let x = 0; x < 88; x++) out[(y + 4) * 96 + x + 4] = 255 - r[y * 88 + x];
+    for (let y = 0; y < 88; y++) for (let x = 0; x < 88; x++) out[(y + 4) * 96 + x + 4] = (255 - r[y * 88 + x]) * 0.8;   // 80 % ink strength reads clean pen strokes much better
     return out;
   }
 
