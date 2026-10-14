@@ -1,12 +1,12 @@
 /* Handwritten character recogniser (runs on the phone).
    Network: Melnyk-Net, a CNN trained on 2.6 million handwritten characters (CASIA-HWDB 1.0/1.1),
    97.6 % on the ICDAR-2013 benchmark. Weights: github.com/pavlo-melnyk/offline-HCCR (MIT licence).
-   The app keeps only the ~740 characters it teaches (HSK 1–3 + app words), stored as 8-bit numbers (5 MB).
+   Knows the 3755 most common characters; the ~740 the app teaches (HSK 1–3 + app words) get a small head start. 8-bit numbers, 6.5 MB.
    Uses the phone's graphics chip (WebGL2) when it can; otherwise the processor.
    CSNet.load() → Promise; CSNet.classify([Float32Array(96*96), …]) → Promise<[Float32Array logits]>; CSNet.chars */
 (function () {
   "use strict";
-  const URL_ = "models/hccr.bin";
+  const URL_ = "models/hccr2.bin";
   let M = null, loading = null, engine = null;
 
   function parse(buf) {
@@ -25,7 +25,10 @@
     });
     const fq = i8(hdr.fc.w), fs = f32(hdr.fc.s), V = hdr.fc.n, fw = new Float32Array(fq.length);
     for (let i = 0; i < fq.length; i++) fw[i] = fq[i] * fs[i % V];
-    return { layers, gwap: f16(hdr.gwap), fcW: fw, fcB: f32(hdr.fc.b), V, chars: [...hdr.chars], plan: hdr.plan };
+    const fcB = f32(hdr.fc.b);
+    // the characters the app teaches come first; they get a small head start (the reader knows all 3755 common characters)
+    for (let k = 0; k < (hdr.core || 0); k++) fcB[k] += hdr.prior || 0;
+    return { layers, gwap: f16(hdr.gwap), fcW: fw, fcB, V, chars: [...hdr.chars], plan: hdr.plan, core: hdr.core };
   }
   function half(h) {
     const s = (h & 0x8000) ? -1 : 1, e = (h >> 10) & 31, f = h & 1023;

@@ -106,7 +106,7 @@
 
       // 1. the reader (downloaded once, then kept on the phone)
       info.textContent = "Getting the handwriting reader ready…"; setProg(0);
-      try { await CSNet.load(f => { info.textContent = "Downloading the handwriting reader (5 MB, only once)… " + pct(f); setProg(f); }); }
+      try { await CSNet.load(f => { info.textContent = "Downloading the handwriting reader (6.5 MB, only once)… " + pct(f); setProg(f); }); }
       catch (e) { setProg(null); info.textContent = "The handwriting reader needs the internet the first time. Connect and try again."; return; }
       const VOC = CSNet.chars, idxOf = c => VOC.indexOf(c);
       const targets = [...new Set(o.targets || [])].filter(c => idxOf(c) >= 0);

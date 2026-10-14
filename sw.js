@@ -2,9 +2,9 @@
    App code (pages, scripts, word lists, homework) is fetched fresh whenever the phone is online,
    so every student gets new class assignments right away; the saved copy is used offline.
    Sounds live in their own long-lasting store (they never change), so updates stay small. */
-const VERSION = "chinese-study-v29";
+const VERSION = "chinese-study-v30";
 const AUDIO_CACHE = "chinese-study-audio-2";
-const MODEL_CACHE = "chinese-study-model-1";   // handwriting reader (5 MB) – downloaded the first time it is used, then kept
+const MODEL_CACHE = "chinese-study-model-1";   // handwriting reader (6.5 MB) – downloaded the first time it is used, then kept
 const FILES = [
   "./", "index.html", "audio.js", "camera.js", "style.css", "app.js", "hccr-net.js", "hccr-scan.js", "checker-ui.js", "assignments.js", "class-assignments.js", "basics.js", "basics-data.js", "basics-plus.js", "lucky-data.js", "rhymes-data.js", "rhymes-audio.js", "riddles-data.js", "tools.js", "tools-data.js", "tools-audio.js", "welcome.js", "theme.css", "nav.js", "fonts/brush.woff", "fonts/display.woff", "fonts/body-Regular.woff", "fonts/body-Bold.woff", "data.js", "hanzi-writer.min.js",
   "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable.png", "apple-touch-icon.png"
