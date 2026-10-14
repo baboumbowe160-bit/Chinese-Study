@@ -357,15 +357,15 @@
         tag.onclick = () => openCheck(ph);
         f.append(img, del, tag); gal.append(f);
       });
-      const add = mk("label", "padd"); add.innerHTML = '<input type="file" accept="image/*" capture="environment" hidden><span>＋ Take photo</span>';
-      const onPick = async e => {
-        add.querySelector("span").textContent = "Saving…"; let last = null;
-        try { for (const f of e.target.files) { await savePhoto(key, await shrink(f)); } } catch (err) { add.querySelector("span").textContent = "Couldn't save photo"; return; }
-        await draw(); const l = await wordPhotos(key); last = l[l.length - 1]; if (last) openCheck(last);
+      const saveFiles = async (files, btn) => {
+        const sp = btn.querySelector("span"); sp.textContent = "Saving…";
+        try { for (const f of files) { await savePhoto(key, await shrink(f)); } } catch (err) { sp.textContent = "Couldn't save photo"; return; }
+        await draw(); const l = await wordPhotos(key); const last = l[l.length - 1]; if (last) openCheck(last);
       };
-      add.querySelector("input").onchange = onPick;
-      const pick = mk("label", "padd"); pick.innerHTML = '<input type="file" accept="image/*" hidden><span>＋ From gallery</span>';
-      pick.querySelector("input").onchange = onPick;
+      const add = mk("button", "padd"); add.innerHTML = "<span>📷 Take photo</span>";
+      add.onclick = async () => { const b = window.CSCamera ? await CSCamera.take({ hint: "Fit one or more characters in the picture, straight from above" }) : null; if (b) saveFiles([b], add); };
+      const pick = mk("label", "padd"); pick.innerHTML = '<input type="file" accept="image/*" multiple hidden><span>🖼 From gallery</span>';
+      pick.querySelector("input").onchange = e => saveFiles([...e.target.files], pick);
       gal.append(add, pick);
     }
 

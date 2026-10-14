@@ -106,15 +106,18 @@
       };
       f.append(img, del); wrap.appendChild(f);
     }
-    const add = document.createElement("label"); add.className = "padd";
-    add.innerHTML = '<input type="file" accept="image/*" multiple hidden><span>＋ Add photo</span>';
-    add.querySelector("input").onchange = async e => {
-      add.querySelector("span").textContent = "Saving…";
-      try { for (const f of e.target.files) await addPhoto(a.id, await shrink(f)); }
-      catch (err) { add.querySelector("span").textContent = "Couldn't save photo"; return; }
+    const save = async (files, btn) => {
+      const sp = btn.querySelector("span"); sp.textContent = "Saving…";
+      try { for (const f of files) await addPhoto(a.id, await shrink(f)); }
+      catch (err) { sp.textContent = "Couldn't save photo"; return; }
       renderPhotos(a, wrap);
     };
-    wrap.appendChild(add);
+    const cam = document.createElement("button"); cam.className = "padd"; cam.innerHTML = "<span>📷 Take photo</span>";
+    cam.onclick = async () => { const b = window.CSCamera ? await CSCamera.take() : null; if (b) save([b], cam); };
+    const add = document.createElement("label"); add.className = "padd";
+    add.innerHTML = '<input type="file" accept="image/*" multiple hidden><span>🖼 From gallery</span>';
+    add.querySelector("input").onchange = e => save([...e.target.files], add);
+    wrap.append(cam, add);
   }
   function chips() {
     const box = $("aCourses"); box.innerHTML = "";
