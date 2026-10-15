@@ -785,3 +785,5 @@ button.padd{font:inherit;background:transparent;cursor:pointer}
 .apapers-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .apaper{display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--muted);font-size:.78rem;text-align:center}
 .apaper img{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);background:#fff}
+.aq-hintb{font:inherit;font-size:.8rem;margin:6px 0 0 36px;padding:3px 10px;border-radius:999px;border:1px solid var(--gold);background:#fff;color:var(--seal-deep);cursor:pointer}
+.aq-hint{margin:4px 0 0 36px;padding:6px 10px;border-radius:10px;background:var(--gold-soft);font-size:.9rem}

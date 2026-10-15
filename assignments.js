@@ -166,11 +166,11 @@
     const top = mk("div", "aq-top"); const cnt = mk("b"); top.append(cnt); box.append(top);
     const upd = () => { cnt.textContent = got.size + " / " + total + " correct"; const s2 = card.querySelector(".astate"); if (s2 && !a.done) s2.textContent = got.size ? got.size + "/" + total : "To do"; };
     const save = () => { classState = store.get("classState", {}); classState[a.id] = Object.assign({}, classState[a.id], { got: [...got], typed }); store.set("classState", classState); };
-    const kb = mk("p", "hint aq-kb"); kb.textContent = "Type in Chinese characters with a Chinese keyboard (on Android: Gboard → Settings → Languages → Add keyboard → Chinese (Pinyin) or Chinese handwriting). The app checks your answer – it never shows the answers.";
+    const kb = mk("p", "hint aq-kb"); kb.textContent = "Type in Chinese characters with a Chinese keyboard (on Android: Gboard → Settings → Languages → Add keyboard → Chinese (Pinyin) or Chinese handwriting). The app checks your answer – it never shows the answers. Stuck? Tap 💡 Hint.";
     box.append(kb);
     a.qs.forEach((g, gi) => {
       box.append(mk("h4", "aq-h", g.h)); if (g.sub) box.append(mk("p", "hint", g.sub));
-      g.items.forEach(([n, q, py, c], i) => {
+      g.items.forEach(([n, q, py, c, hint], i) => {
         const key = a.id + ":" + gi + ":" + i, sk = gi + ":" + i;
         const r = mk("div", "aq" + (got.has(sk) ? " got" : ""));
         const qh = mk("div", "aq-q");
@@ -198,7 +198,13 @@
         btn.onclick = run; inp.onkeydown = e => { if (e.key === "Enter") run(); };
         inp.oninput = () => { fb.textContent = ""; fb.className = "aq-fb"; };
         if (got.has(sk)) show("right");
-        row.append(inp, btn); r.append(qh, row, fb); box.append(r);
+        row.append(inp, btn); r.append(qh, row);
+        if (hint) {
+          const hb = mk("button", "aq-hintb", "💡 Hint"), ht = mk("p", "aq-hint", hint); ht.hidden = true;
+          hb.onclick = () => { ht.hidden = !ht.hidden; hb.textContent = ht.hidden ? "💡 Hint" : "💡 Hide hint"; };
+          r.append(hb, ht);
+        }
+        r.append(fb); box.append(r);
       });
     });
     upd(); return box;
