@@ -194,8 +194,12 @@
   function tickHomework(c) {
     const s = ALL[setIdx]; const cs = store.get("classState", {});
     (window.CLASS_ASSIGNMENTS || []).forEach(A => {
-      if (A.set !== s[0] || !A.chars || !A.chars.some(x => x[0] === c)) return;
-      const st = cs[A.id] = Object.assign({}, cs[A.id]); const t = new Set(st.ticks || []); t.add(c); st.ticks = [...t];
+      if (A.set !== s[0] || !A.chars) return;
+      // an item can be a word (春天): it is done when every character in it has been written enough times
+      const counts = repCounts(), N = repTarget();
+      const hit = A.chars.filter(x => { const cs2 = [...x[0]].filter(k => /[㐀-鿿]/.test(k)); return cs2.includes(c) && cs2.every(k => k === c || (counts[k] || 0) >= N); });
+      if (!hit.length) return;
+      const st = cs[A.id] = Object.assign({}, cs[A.id]); const t = new Set(st.ticks || []); hit.forEach(x => t.add(x[0])); st.ticks = [...t];
     });
     store.set("classState", cs);
   }

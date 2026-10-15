@@ -108,7 +108,7 @@
       const sum = ((classState[a.id] || {}).checks || {})[p.id];
       const chk = document.createElement("button"); chk.className = "pp-tag"; chk.textContent = sum ? "✓ " + sum.good + "/" + sum.total + " good" : "Check ✓";
       chk.onclick = () => window.CSChecker && window.CSPool && CSChecker.open({
-        blob: p.blob, pool: CSPool, targets: a.chars ? a.chars.map(c => c[0]) : [], times: a.times || 0, title: "Check: " + a.title,
+        blob: p.blob, pool: CSPool, targets: a.chars ? [...new Set(a.chars.flatMap(c => [...c[0]].filter(k => /[㐀-鿿]/.test(k))))] : [], times: a.times || 0, title: "Check: " + a.title,
         onDone: s2 => {
           classState = store.get("classState", {});
           const st = classState[a.id] = Object.assign({}, classState[a.id]);
@@ -116,7 +116,8 @@
           // a character written enough times, almost all good, gets ticked automatically
           if (a.chars) {
             const t = new Set(st.ticks || []);
-            Object.entries(s2.perChar).forEach(([c, v]) => { if (v.n >= (a.times || 1) && v.good >= Math.ceil(v.n * 0.8)) t.add(c); });
+            const okc = new Set(Object.entries(s2.perChar).filter(([, v]) => v.n >= (a.times || 1) && v.good >= Math.ceil(v.n * 0.8)).map(([c]) => c));
+            a.chars.forEach(x => { const cs2 = [...x[0]].filter(k => /[㐀-鿿]/.test(k)); if (cs2.length && cs2.every(k => okc.has(k))) t.add(x[0]); });
             st.ticks = [...t];
           }
           store.set("classState", classState); render();
@@ -223,7 +224,8 @@
         const cell = document.createElement("div"); cell.className = "hw-c" + (ticks.has(c) ? " ok" : "");
         const b = document.createElement("button"); b.className = "hw-ch"; b.title = py + " – " + m;
         b.innerHTML = '<span class="hw-n"></span><span class="hw-z"></span><span class="hw-p"></span>';
-        b.children[0].textContent = i + 1; b.children[1].textContent = c; b.children[2].textContent = py;
+        b.children[0].textContent = a.chars[i][3] || i + 1; b.children[1].textContent = c; b.children[2].textContent = py;
+        if ([...c].length > 1) { cell.classList.add("hw-word"); cell.style.gridColumn = "span " + Math.min(4, Math.max(2, Math.ceil([...c].length * 0.75))); }
         b.onclick = () => window.CSWrite && CSWrite.open(a.set, c);
         const t = document.createElement("button"); t.className = "hw-t"; t.setAttribute("aria-label", "Written " + c + " " + (a.times || 18) + " times"); t.textContent = ticks.has(c) ? "✓" : "○";
         t.onclick = () => {

@@ -641,3 +641,6 @@ button.padd{font:inherit;background:transparent;cursor:pointer}
 .aguide-b b{font-size:1.2rem;color:var(--seal)}
 .aguide-b span{font-size:.72rem;color:var(--muted)}
 .aguide-b.latest{border:2px solid var(--seal)}
+
+/* homework items that are whole words (春天, 光明磊落) */
+.hw-c.hw-word .hw-z{font-size:1.5rem;letter-spacing:.02em;white-space:nowrap}
