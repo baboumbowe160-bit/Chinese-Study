@@ -37,7 +37,7 @@
     const strip = $("sets"); strip.innerHTML = "";
     ALL.forEach((s, i) => {
       const b = document.createElement("button");
-      b.textContent = s[0] === "WB" ? "Workbook" : s[0][0] === "B" ? "Book " + ({ BV: "words", BP: "names+", BO: "old→new", BS: "extra", BC: "characters", BR: "radicals" }[s[0]] || "") : s[0] === "HN" ? "New students" : s[0][0] === "C" ? "Class " + (s[0].slice(1) || "1") : s[0][0] === "H" ? "Homework " + s[0].slice(1) : s[0] === "M" ? "Mine" : s[0] === "A" ? "＋ Added" : "L" + s[0];
+      b.textContent = s[0] === "WB" ? "Workbook" : s[0].startsWith("WS") ? "Worksheet " + s[0].slice(2) : s[0][0] === "B" ? "Book " + ({ BV: "words", BP: "names+", BO: "old→new", BS: "extra", BC: "characters", BR: "radicals" }[s[0]] || "") : s[0] === "HN" ? "New students" : s[0][0] === "C" ? "Class " + (s[0].slice(1) || "1") : s[0][0] === "H" ? "Homework " + s[0].slice(1) : s[0] === "M" ? "Mine" : s[0] === "A" ? "＋ Added" : "L" + s[0];
       b.setAttribute("aria-pressed", String(i === setIdx));
       b.onclick = () => { setIdx = i; wordIdx = 0; charIdx = 0; store.set("set", i); renderAll(); };
       strip.appendChild(b);

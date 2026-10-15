@@ -153,15 +153,93 @@
     const st = classState[a.id] || {};
     return Object.assign({}, a, { done: !!st.done, work: st.work || "" });
   }
+  const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const SAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke-width="2" stroke-linecap="round"/></svg>';
+  function sayB(text) { const b = mk("button", "say mini"); b.innerHTML = SAY_SVG; b.setAttribute("aria-label", "Listen"); b.onclick = e => { e.stopPropagation(); window.CSSay && CSSay(text.replace(/____/g, "，").replace(/\n/g, "，").replace(/[A-Za-z]+：/g, ""), b); }; return b; }
+  const hasZh = s => /[\u4e00-\u9fff]/.test(s);
+  // a question paper: try each question yourself, then show the answer and tick it if you got it
+  function questions(a, card) {
+    const st = () => classState[a.id] || {};
+    const got = new Set(st().got || []);
+    const box = mk("div", "aq-box");
+    const top = mk("div", "aq-top"); const cnt = mk("b");
+    const upd = () => { cnt.textContent = got.size + " / " + a.qs.reduce((s, g) => s + g.items.length, 0) + " correct"; const s2 = card.querySelector(".astate"); if (s2 && !a.done) s2.textContent = got.size ? got.size + "/" + a.qs.reduce((s, g) => s + g.items.length, 0) : "To do"; };
+    const all = mk("button", "ghost", "Show all answers");
+    all.onclick = () => { const on = !box.classList.contains("showall"); box.classList.toggle("showall", on); all.textContent = on ? "Hide all answers" : "Show all answers"; };
+    top.append(cnt, all); box.append(top);
+    if (a.set) { const w = mk("button", "primarybtn", "✍ Practise the answers in Write"); w.onclick = () => window.CSWrite && CSWrite.open(a.set); box.append(w); }
+    box.append(mk("p", "hint", "Answer each question in your book first. Then tap “Show answer” and tick ✓ if you got it right."));
+    a.qs.forEach((g, gi) => {
+      box.append(mk("h4", "aq-h", g.h)); if (g.sub) box.append(mk("p", "hint", g.sub));
+      g.items.forEach(([n, q, py, ans, apy, note], i) => {
+        const key = gi + ":" + i;
+        const r = mk("div", "aq" + (got.has(key) ? " got" : ""));
+        const qh = mk("div", "aq-q");
+        qh.append(mk("span", "aq-n", n === "" ? "•" : String(n)));
+        const qt = mk("div", "aq-qt");
+        q.split("\n").forEach(line => qt.append(mk("div", hasZh(line) ? "aq-zh" : "aq-en", line)));
+        if (py) qt.append(mk("div", "aq-py", py));
+        qh.append(qt); if (hasZh(q)) qh.append(sayB(q));
+        const reveal = mk("button", "aq-show", "Show answer");
+        const ansBox = mk("div", "aq-a");
+        const at = mk("div", "aq-at");
+        const az = mk(hasZh(ans) ? "button" : "div", hasZh(ans) ? "aq-az" : "aq-ae", ans);
+        if (hasZh(ans) && a.set) az.onclick = () => window.CSWrite && CSWrite.open(a.set, ans.split(" / ")[0].replace(/[。！？，…\s]/g, ""));
+        else if (hasZh(ans)) az.onclick = () => window.CSSay && CSSay(ans.split(" / ")[0]);
+        at.append(az); if (apy) at.append(mk("div", "aq-py", apy)); if (note) at.append(mk("div", "aq-note", note));
+        ansBox.append(at); if (hasZh(ans)) ansBox.append(sayB(ans.split(" / ")[0]));
+        const tick = mk("button", "aq-tick", got.has(key) ? "✓ Got it" : "○ I got it"); tick.setAttribute("aria-pressed", String(got.has(key)));
+        tick.onclick = () => {
+          classState = store.get("classState", {}); got.has(key) ? got.delete(key) : got.add(key);
+          classState[a.id] = Object.assign({}, classState[a.id], { got: [...got] }); store.set("classState", classState);
+          r.classList.toggle("got", got.has(key)); tick.textContent = got.has(key) ? "✓ Got it" : "○ I got it"; tick.setAttribute("aria-pressed", String(got.has(key))); upd();
+        };
+        ansBox.append(tick);
+        reveal.onclick = () => { r.classList.toggle("open"); reveal.textContent = r.classList.contains("open") ? "Hide answer" : "Show answer"; };
+        r.append(qh, reveal, ansBox); box.append(r);
+      });
+    });
+    upd(); return box;
+  }
+  // listening with pictures (the recording is in the workbook audio)
+  function pictures(a) {
+    const box = mk("div", "aq-box");
+    const au = mk("p", "wb-audio"); au.append("🎧 Play track " + a.wbTrack + " of the workbook audio. ");
+    const l = mk("a", null, "Open the HSK 1 Workbook audio ↗"); l.href = "https://soundcloud.com/user-682871665/sets/hsk-1-workbook-audio-2"; l.target = "_blank"; l.rel = "noopener"; au.append(l); box.append(au);
+    const pg = mk("div", "aq-pics");
+    a.pics.forEach(([L, emo, cap]) => { const c = mk("div", "aq-pic"); c.append(mk("b", "wb-letter", L), mk("span", "wb-emo", emo), mk("span", "wb-cap", cap)); pg.append(c); });
+    box.append(mk("h4", "aq-h", "The pictures"), pg);
+    if (a.example) {
+      const ex = mk("div", "aq ex open"); const q = mk("div", "aq-q"); const qt = mk("div", "aq-qt");
+      qt.append(mk("div", "aq-en", "Example"));
+      a.example[0].split("\n").forEach(x => qt.append(mk("div", "aq-zh", x)));
+      qt.append(mk("div", "aq-py", a.example[1]), mk("div", "aq-note", a.example[3] + " → picture " + a.example[2]));
+      q.append(qt, sayB(a.example[0])); ex.append(q); box.append(ex);
+    }
+    const mine = (classState[a.id] || {}).pick || {};
+    box.append(mk("h4", "aq-h", "Your answers"), mk("p", "hint", "Listen, then tap the letter of the picture for each dialogue. Check your answers in class."));
+    a.blanks.forEach(n => {
+      const r = mk("div", "wb-q row"); r.append(mk("span", "wb-num", n + "."));
+      const g = mk("div", "wb-ch letters");
+      a.pics.forEach(([L]) => {
+        const b = mk("button", "wb-op" + (mine[n] === L ? " sel" : ""), L);
+        b.onclick = () => { classState = store.get("classState", {}); const s = Object.assign({}, classState[a.id]); s.pick = Object.assign({}, s.pick, { [n]: L }); classState[a.id] = s; store.set("classState", classState); [...g.children].forEach(x => x.classList.toggle("sel", x === b)); };
+        g.append(b);
+      });
+      r.append(g); box.append(r);
+    });
+    return box;
+  }
   function card(a) {
     const card = document.createElement("article"); card.id = "acard-" + a.id; card.className = "acard" + (a.done ? " isdone" : "") + (a.fromClass ? " fromclass" : "");
     const head = document.createElement("button"); head.className = "ahead"; head.setAttribute("aria-expanded", String(open.has(a.id)));
     head.innerHTML = '<span class="anum"></span><span class="ameta"><span class="atitle"></span><span class="adate"></span></span><span class="astate"></span>';
-    head.querySelector(".anum").textContent = a.newcomer ? "新" : (a.n || "•");
+    head.querySelector(".anum").textContent = a.tag || (a.newcomer ? "新" : (a.n || "•"));
     head.querySelector(".atitle").textContent = a.title;
     head.querySelector(".adate").textContent = (a.fromClass ? "From class" : "My assignment") + (course === "all" ? " · " + courseName(a.course) : "") + (a.date ? " · " + niceDate(a.date) : "");
     const tk = a.chars ? ((classState[a.id] || {}).ticks || []).length : 0;
-    head.querySelector(".astate").textContent = a.done ? "Done" : a.chars && tk ? tk + "/" + a.chars.length : "To do";
+    const qn = a.qs ? a.qs.reduce((s, g) => s + g.items.length, 0) : 0, qk = a.qs ? ((classState[a.id] || {}).got || []).length : 0;
+    head.querySelector(".astate").textContent = a.done ? "Done" : a.chars && tk ? tk + "/" + a.chars.length : qn && qk ? qk + "/" + qn : "To do";
     head.onclick = () => { open.has(a.id) ? open.delete(a.id) : open.add(a.id); store.set("aOpen", [...open]); render(); };
     card.appendChild(head);
     if (!open.has(a.id)) return card;
@@ -203,6 +281,8 @@
       });
       body.appendChild(wb);
     }
+    if (a.qs) body.appendChild(questions(a, card));
+    if (a.pics) body.appendChild(pictures(a));
     if (a.chars) {
       // characters to write: tap to practise, tick when written N times
       const ticks = new Set((classState[a.id] || {}).ticks || []);
@@ -237,7 +317,7 @@
         cell.append(b, t); grid.appendChild(cell);
       });
       upd(); box.append(top, bar, tools, hint, grid); body.appendChild(box);
-    } else if (a.fromClass) {
+    } else if (a.fromClass && !a.qs && !a.pics) {
       const l = document.createElement("label"); l.className = "label"; l.textContent = "My answers"; l.htmlFor = "w-" + a.id;
       const ta = document.createElement("textarea"); ta.id = "w-" + a.id; ta.className = "awork-in"; ta.rows = 6; ta.value = a.work || "";
       ta.placeholder = "Write your answers here, one per line. Lines with Chinese get a speaker button.";
@@ -280,7 +360,7 @@
       items.forEach(a => box.appendChild(card(a)));
     };
     // guide for students who joined the course late
-    const c3 = CLASS.filter(a => a.course === "c3").sort((x, y) => (x.n || 0) - (y.n || 0));
+    const c3 = CLASS.filter(a => a.course === "c3" && !a.qs).sort((x, y) => (x.n || 0) - (y.n || 0));
     if (!q && (course === "all" || course === "c3") && c3.length) {
       const g = document.createElement("div"); g.className = "aguide";
       const nc = c3.find(a => a.newcomer), last = c3.filter(a => !a.newcomer).pop() || c3[c3.length - 1], latest = last;
