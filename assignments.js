@@ -157,7 +157,7 @@
     const card = document.createElement("article"); card.id = "acard-" + a.id; card.className = "acard" + (a.done ? " isdone" : "") + (a.fromClass ? " fromclass" : "");
     const head = document.createElement("button"); head.className = "ahead"; head.setAttribute("aria-expanded", String(open.has(a.id)));
     head.innerHTML = '<span class="anum"></span><span class="ameta"><span class="atitle"></span><span class="adate"></span></span><span class="astate"></span>';
-    head.querySelector(".anum").textContent = a.n || "•";
+    head.querySelector(".anum").textContent = a.newcomer ? "新" : (a.n || "•");
     head.querySelector(".atitle").textContent = a.title;
     head.querySelector(".adate").textContent = (a.fromClass ? "From class" : "My assignment") + (course === "all" ? " · " + courseName(a.course) : "") + (a.date ? " · " + niceDate(a.date) : "");
     const tk = a.chars ? ((classState[a.id] || {}).ticks || []).length : 0;
@@ -283,13 +283,13 @@
     const c3 = CLASS.filter(a => a.course === "c3").sort((x, y) => (x.n || 0) - (y.n || 0));
     if (!q && (course === "all" || course === "c3") && c3.length) {
       const g = document.createElement("div"); g.className = "aguide";
-      const latest = c3[c3.length - 1];
-      g.innerHTML = '<b>New to the course?</b><p class="hint">Chinese 3 (Characters) gives a writing assignment almost every week. Do them in order, 1 → ' + latest.n + '. Each one has its characters with stroke order, the words to learn and notes on common mistakes.</p>';
+      const nc = c3.find(a => a.newcomer), last = c3.filter(a => !a.newcomer).pop() || c3[c3.length - 1], latest = last;
+      g.innerHTML = '<b>New to the course?</b><p class="hint">Chinese 3 (Characters) gives a writing assignment almost every week. ' + (nc ? 'Joined late? Start with <b>New</b>: every new word from Lessons 1–7, 18 times each. Then do the class assignments in order, 1 → ' + last.n + '.' : 'Do them in order, 1 → ' + last.n + '.') + ' Each one has its characters with stroke order, the words to learn and notes on common mistakes.</p>';
       const row = document.createElement("div"); row.className = "aguide-row";
       c3.forEach(a => {
         const b = document.createElement("button"); b.className = "aguide-b" + (a === latest ? " latest" : "");
         const st = classState[a.id] || {}, tk = (st.ticks || []).length;
-        b.innerHTML = '<b></b><span></span>'; b.children[0].textContent = a.n; b.children[1].textContent = (a.date ? niceDate(a.date).replace(/,? \d{4}$/, "") : "–") + (st.done ? " ✓" : tk ? " · " + tk + "/" + a.chars.length : "");
+        b.innerHTML = '<b></b><span></span>'; b.children[0].textContent = a.newcomer ? "New" : a.n; b.children[1].textContent = (a.newcomer ? "L1–7" : a.date ? niceDate(a.date).replace(/,? \d{4}$/, "") : "–") + (st.done ? " ✓" : tk ? " · " + tk + "/" + a.chars.length : "");
         b.title = a.title; b.onclick = () => { open.add(a.id); store.set("aOpen", [...open]); render(); const el2 = document.getElementById("acard-" + a.id); if (el2) el2.scrollIntoView({ behavior: "smooth", block: "start" }); };
         row.appendChild(b);
       });

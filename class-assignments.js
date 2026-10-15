@@ -3,6 +3,28 @@
    chars: characters to write [character, pinyin, meaning] · set: word list in the Write tab · sheet: printable practice sheet
    date / dateNote: when it was given · marks: notes / hints [character, note] · tips: common mistakes · words: words to learn */
 var CLASS_ASSIGNMENTS = [
+  { id: "c3-new", course: "c3", n: 0, newcomer: true, sheet: "sheets/chinese3-new-students.pdf", title: "For new students – all new words of Lessons 1–7 (66 words)", dateNote: "For students who joined the course late · HSK Standard Course 1, Lessons 1–7, New Words", set: "HN", times: 18,
+    task: "Write every new word from Lessons 1 to 7 of the book 18 times, clearly, in your exercise book.\nWords are kept whole, in the book's order (L1 = Lesson 1). Tap a word to watch its stroke order and practise it first.",
+    words: [],
+    chars: [
+      ["你", "nǐ", "you", "L1"], ["好", "hǎo", "good, fine", "L1"], ["您", "nín", "you (polite)", "L1"], ["你们", "nǐmen", "you (plural)", "L1"],
+      ["对不起", "duìbuqǐ", "sorry", "L1"], ["没关系", "méi guānxi", "it's OK", "L1"], ["谢谢", "xièxie", "thanks", "L2"], ["不", "bù", "no, not", "L2"],
+      ["不客气", "bú kèqi", "you're welcome", "L2"], ["再见", "zàijiàn", "goodbye", "L2"], ["叫", "jiào", "to be called", "L3"], ["什么", "shénme", "what", "L3"],
+      ["名字", "míngzi", "name", "L3"], ["我", "wǒ", "I, me", "L3"], ["是", "shì", "to be", "L3"], ["老师", "lǎoshī", "teacher", "L3"],
+      ["吗", "ma", "question word", "L3"], ["学生", "xuésheng", "student", "L3"], ["人", "rén", "person", "L3"], ["李月", "Lǐ Yuè", "Li Yue (name)", "L3"],
+      ["中国", "Zhōngguó", "China", "L3"], ["美国", "Měiguó", "USA", "L3"], ["她", "tā", "she", "L4"], ["谁", "shéi", "who", "L4"],
+      ["的", "de", "'s, of", "L4"], ["汉语", "Hànyǔ", "Chinese language", "L4"], ["哪", "nǎ", "which", "L4"], ["国", "guó", "country", "L4"],
+      ["呢", "ne", "and …?", "L4"], ["他", "tā", "he", "L4"], ["同学", "tóngxué", "classmate", "L4"], ["朋友", "péngyou", "friend", "L4"],
+      ["家", "jiā", "family, home", "L5"], ["有", "yǒu", "to have", "L5"], ["口", "kǒu", "measure word (family)", "L5"], ["女儿", "nǚ'ér", "daughter", "L5"],
+      ["几", "jǐ", "how many", "L5"], ["岁", "suì", "years old", "L5"], ["了", "le", "change marker", "L5"], ["今年", "jīnnián", "this year", "L5"],
+      ["多", "duō", "how (+ adj.)", "L5"], ["大", "dà", "old, big", "L5"], ["会", "huì", "can", "L6"], ["说", "shuō", "to speak", "L6"],
+      ["妈妈", "māma", "mother", "L6"], ["菜", "cài", "dish, food", "L6"], ["很", "hěn", "very", "L6"], ["好吃", "hǎochī", "delicious", "L6"],
+      ["做", "zuò", "to make, do", "L6"], ["写", "xiě", "to write", "L6"], ["汉字", "Hànzì", "Chinese character", "L6"], ["字", "zì", "character", "L6"],
+      ["怎么", "zěnme", "how", "L6"], ["读", "dú", "to read", "L6"], ["请", "qǐng", "please", "L7"], ["问", "wèn", "to ask", "L7"],
+      ["今天", "jīntiān", "today", "L7"], ["号", "hào", "day of month", "L7"], ["月", "yuè", "month", "L7"], ["星期", "xīngqī", "week", "L7"],
+      ["昨天", "zuótiān", "yesterday", "L7"], ["明天", "míngtiān", "tomorrow", "L7"], ["去", "qù", "to go", "L7"], ["学校", "xuéxiào", "school", "L7"],
+      ["看", "kàn", "to look, read", "L7"], ["书", "shū", "book", "L7"]
+    ] },
   { id: "c3-1", course: "c3", n: 1, sheet: "sheets/chinese3-assignment-1.pdf", title: "Character writing 1 – 72 items", date: "2026-09-07", dateNote: "Given on 7 September 2026", set: "H1", times: 18,
     task: "Write each character 18 times, clearly, in your exercise book.\nWords and groups are kept together as given – write the whole item 18 times.\nTap an item below to watch its stroke order and practise it first.",
     marks: [],

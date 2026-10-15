@@ -37,7 +37,7 @@
     const strip = $("sets"); strip.innerHTML = "";
     ALL.forEach((s, i) => {
       const b = document.createElement("button");
-      b.textContent = s[0][0] === "C" ? "Class " + (s[0].slice(1) || "1") : s[0][0] === "H" ? "Homework " + s[0].slice(1) : s[0] === "M" ? "Mine" : s[0] === "A" ? "＋ Added" : "L" + s[0];
+      b.textContent = s[0] === "HN" ? "New students" : s[0][0] === "C" ? "Class " + (s[0].slice(1) || "1") : s[0][0] === "H" ? "Homework " + s[0].slice(1) : s[0] === "M" ? "Mine" : s[0] === "A" ? "＋ Added" : "L" + s[0];
       b.setAttribute("aria-pressed", String(i === setIdx));
       b.onclick = () => { setIdx = i; wordIdx = 0; charIdx = 0; store.set("set", i); renderAll(); };
       strip.appendChild(b);
@@ -49,7 +49,7 @@
     const PAGES = { 1: 2, 2: 8, 3: 14, 4: 22, 5: 30, 6: 40, 7: 48, 8: 56, 9: 64, 10: 72, 11: 82, 12: 90, 13: 98, 14: 104, 15: 112 };
     if (PAGES[s[0]]) $("settitle").append(el("span", "bookref", "Textbook p. " + PAGES[s[0]]));
     if (s[0][0] === "C") $("settitle").append(el("span", "bookref", "From the class board"));
-    if (s[0][0] === "H") { const A = (window.CLASS_ASSIGNMENTS || []).find(x => x.set === s[0]); $("settitle").append(el("span", "bookref", "Chinese 3 homework " + s[0].slice(1) + (A && A.date ? " · " + new Date(A.date + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "") + " · write each character " + ((A && A.times) || 18) + " times")); }
+    if (s[0][0] === "H") { const A = (window.CLASS_ASSIGNMENTS || []).find(x => x.set === s[0]); $("settitle").append(el("span", "bookref", (s[0] === "HN" ? "Chinese 3 · for new students · Lessons 1–7" : "Chinese 3 homework " + s[0].slice(1)) + (A && A.date ? " · " + new Date(A.date + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "") + " · write each " + (s[0] === "HN" ? "word " : "character ") + ((A && A.times) || 18) + " times")); }
     $("addcard").hidden = s[0] !== "A";
   }
 
