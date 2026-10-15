@@ -136,61 +136,62 @@
     return s;
   }
   function best(list, c, n, filter) { return list.filter(filter || (() => true)).map(x => [x, score(x[1], c) + Math.random() * 0.4]).sort((a, b) => b[1] - a[1]).slice(0, n).map(x => x[0]); }
-  /* opts: {first, last, style: n|m|f, mode: "sound"|"meaning", traits: [ids]} → list of names with descriptions */
+  /* opts: {first, last, style: n|m|f, mode: "sound"|"meaning", traits: [ids]} → list of names with descriptions.
+     Only real, commonly used Chinese names: a common surname + a given name Chinese people really have (NAMES.GIVEN). */
+  const RARE_SUR = new Set(["卡", "巴", "沙", "司马", "欧阳"]);
   function suggest(opts) {
     const o = Object.assign({ first: "", last: "", style: "n", mode: "sound", traits: [] }, opts || {});
+    const G = (window.NAMES && NAMES.GIVEN) || [];
     const fc = chunks(o.first).map(parse), lc = chunks(o.last).map(parse);
-    const okStyle = x => o.style === "n" || x[3] === o.style || x[3] === "n";
-    const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
-    // surnames
+    const okStyle = g => o.style === "n" || g[3] === o.style || g[3] === "n";
+    const firstSyl = py => py.replace(/'/g, " ").split(/(?=[A-ZĀÁǍÀĒÉĚÈŌÓǑÒ])| /)[0] || py;
+    // surname: a real, common surname – the one closest in sound to the student's surname, if given
+    const SUR = T.surnames.filter(x => x[0].length === 1 && !RARE_SUR.has(x[0]));
     let surs;
-    if (lc.length) surs = best(T.surnames.filter(s => s[0].length === 1), lc[0], 4).map(s => [s, s[0] + " " + s[1] + " sounds like your surname " + o.last + (/^an? (old|ancient)/.test(s[2]) ? " – it is a real Chinese surname (" + s[2] + ")" : " and means “" + s[2] + "”")]);
-    else if (o.mode === "meaning") surs = shuffleTake(T.meaningSurnames, 4).map(s => [s, "a real Chinese surname meaning “" + s[2] + "”"]);
-    else surs = shuffleTake(T.surnames.filter(s => s[0].length === 1), 4).map(s => [s, "a common Chinese surname"]);
-    const out = [], seen = new Set();
-    const push = (sur, given, why, label) => {
-      if (!given.length || given.some((g, i) => given.findIndex(h => h[0] === g[0] || plainPy(h[1]) === plainPy(g[1])) !== i)) return;
-      if (given.some(g => g[0] === sur[0][0])) return;
-      const zh = sur[0][0] + given.map(g => g[0]).join("");
-      if (seen.has(zh)) return; seen.add(zh);
-      out.push({ zh, py: sur[0][1] + " " + cap(given.map(g => g[1]).reduce((s, p) => s + (s && /^[aoeāáǎàōóǒòēéěè]/.test(p) ? "'" : "") + p, "")),
-        parts: [[sur[0][0], sur[0][1], "surname – " + sur[0][2]]].concat(given.map(g => [g[0], g[1], g[2]])),
-        meaning: given.map(g => g[2]).join(" + "), why: [sur[1]].concat(why), label });
-    };
+    if (lc.length) surs = best(SUR, lc[0], 3).map(x => [x, x[0] + " " + x[1] + " – a real, common Chinese surname that sounds close to " + o.last]);
+    else if (o.mode === "meaning") surs = shuffleTake(T.meaningSurnames.filter(x => !RARE_SUR.has(x[0])), 3).map(x => [x, x[0] + " " + x[1] + " – a real Chinese surname meaning “" + x[2] + "”"]);
+    else surs = SUR.slice(0, 20).sort(() => Math.random() - .5).slice(0, 3).map(x => [x, x[0] + " " + x[1] + " – one of the most common Chinese surnames"]);
+    // given names: real names, chosen by the qualities picked and/or by sound
+    let pool = G.filter(okStyle), label;
     if (o.mode === "meaning") {
-      const picked = o.traits.length ? T.traits.filter(x => o.traits.includes(x[0])) : shuffleTake(T.traits, 2);
-      const pools = picked.map(tr => ({ tr, chars: tr[3].filter(okStyle) })).filter(p => p.chars.length);
-      if (!pools.length) return [];
-      const soundy = fc[0] ? c => score(c[1], fc[0]) : () => 0;
-      const label = picked.map(x => x[1]).join(" + ");
-      for (let i = 0; i < 12 && out.length < 6; i++) {
-        const sur = surs[i % surs.length];
-        const A = pools[i % pools.length], B = pools[(i + 1) % pools.length];
-        let ca = shuffleTake(A.chars, A.chars.length).sort((x, y) => soundy(y) - soundy(x) + (Math.random() - .5) * 2);
-        const c1 = ca[i % Math.min(3, ca.length)];
-        const cb = shuffleTake(B.chars.filter(c => c[0] !== c1[0]), 3);
-        const why = [];
-        why.push(c1[0] + " " + c1[1] + " – chosen for " + A.tr[1].toLowerCase());
-        if (fc[0] && soundy(c1) >= 3) why.push(c1[0] + " also sounds a little like " + o.first);
-        if (cb[0] && (i % 3 !== 2)) { why.push(cb[0][0] + " " + cb[0][1] + " – chosen for " + B.tr[1].toLowerCase()); push(sur, [c1, cb[0]], why, label); }
-        else push(sur, [c1], why, label);
-      }
-    } else {
-      const g1 = fc[0] ? best(T.given, fc[0], 3, okStyle) : shuffleTake(T.given.filter(okStyle), 3);
-      const g2 = fc[1] ? best(T.given, fc[1], 3, okStyle) : [];
-      surs.forEach((s, i) => {
-        const a = g1[i % g1.length], b = g2.length ? g2[(i + 1) % g2.length] : null;
-        const w1 = a[0] + " " + a[1] + " sounds like “" + (chunks(o.first)[0] || "") + "” in " + o.first;
-        push(s, [a], [w1], "Sounds like your name");
-        if (b) push(s, [a, b], [w1, b[0] + " " + b[1] + " sounds like “" + chunks(o.first)[1] + "”"], "Sounds like your name");
-      });
-    }
-    return out.slice(0, 6);
+      const picked = o.traits.length ? o.traits : [];
+      if (picked.length) pool = pool.filter(g => g[4].some(t => picked.includes(t)));
+      label = picked.length ? T.traits.filter(x => picked.includes(x[0])).map(x => x[1]).join(" + ") : "Popular Chinese names";
+    } else label = "Starts like your name";
+    if (!pool.length) return [];
+    const snd = g => fc[0] ? score(firstSyl(g[1]), fc[0]) : 0;
+    const both = g => (o.traits.length ? g[4].filter(t => o.traits.includes(t)).length * 2 : 0);
+    let ranked = pool.map(g => [g, (o.mode === "sound" ? snd(g) * 2 : snd(g) * 0.6) + both(g) + Math.random() * 1.2]).sort((x, y) => y[1] - x[1]).map(x => x[0]);
+    if (o.mode === "sound" && fc[0]) ranked = ranked.filter(g => snd(g) >= 2).concat(ranked.filter(g => snd(g) < 2));
+    const out = [];
+    ranked.slice(0, 6).forEach((g, i) => {
+      const sur = surs[i % surs.length], zh = sur[0][0] + g[0];
+      if (out.some(n => n.zh === zh) || g[0].includes(sur[0][0])) return;
+      const why = [sur[1], g[0] + " " + g[1] + " – a real Chinese given name meaning “" + g[2] + "”"];
+      if (o.mode === "sound" && fc[0] && snd(g) >= 3) why.push("It starts with a sound like the beginning of " + o.first + ".");
+      const tr = T.traits.filter(x => g[4].includes(x[0])).map(x => x[1].toLowerCase());
+      if (tr.length) why.push("Good for: " + tr.join(", "));
+      if (g[5]) why.push("Famous person with this given name: " + g[5]);
+      out.push({ zh, py: sur[0][1] + " " + g[1], parts: [[sur[0][0], sur[0][1], "surname – " + sur[0][2]], [g[0], g[1], g[2]]], meaning: g[2], why, label, famous: g[5] || "" });
+    });
+    return out;
+  }
+  // well-known Chinese people – what their names mean
+  function famousCard() {
+    const c = card("Famous Chinese names");
+    c.append(el("p", "hint", "Real names of well-known Chinese people, and what they mean. Many Chinese given names carry a wish – to be bright, strong, successful or kind."));
+    const list = el("div", "n-famous");
+    ((window.NAMES && NAMES.FAMOUS) || []).forEach(([zh, py, who, mean]) => {
+      const r = el("div", "u-line"); const t = el("div", "u-txt");
+      t.append(el("div", "u-zh", zh), el("div", "u-py", py), el("div", "u-en", who + " · " + mean));
+      r.append(t, sayBtn(zh, "Listen to " + py)); list.append(r);
+    });
+    c.append(list); return c;
   }
   function name() {
     const p = $("upane"); p.append(header("My Chinese name", "名"));
     const c1 = card();
-    c1.innerHTML = "<p>A Chinese name has the <b>surname first</b> (usually one character), then the <b>given name</b> (one or two characters). 王明 = surname 王 Wáng + name 明 Míng (“bright”).</p><p>Choose a name that <b>sounds like your own name</b>, or one that describes <b>who you are or want to be</b> – hardworking, honest in business, faithful, kind… Every character in these suggestions has a good meaning.</p>";
+    c1.innerHTML = "<p>A Chinese name has the <b>surname first</b> (usually one character), then the <b>given name</b> (one or two characters). 王明 = surname 王 Wáng + name 明 Míng (“bright”).</p><p>Every suggestion here is a <b>real Chinese name</b> – a common surname plus a given name that Chinese people really use, many of them carried by famous people. Choose one that describes <b>who you are or want to be</b>, or one that <b>starts like your own name</b>.</p>";
     p.append(c1);
     const saved = store.get("myName", null);
     if (saved) { const s = card("Your Chinese name"); s.append(nameCard(saved, true)); p.append(s); }
@@ -198,6 +199,7 @@
     const box = el("div"); f.append(box); p.append(f);
     const res = el("div", "n-res"); p.append(res);
     buildPicker(box, res, n => { store.set("myName", n); window.CSGreet && CSGreet(); go("name"); });
+    p.append(famousCard());
     const own = card("Already have a Chinese name?");
     own.innerHTML += '<p class="hint">Maybe your teacher gave you one. Type it here.</p><div class="n-form"><label for="oZh">Chinese characters</label><input id="oZh" lang="zh" maxlength="6" placeholder="e.g. 王明"><label for="oPy">Pinyin</label><input id="oPy" maxlength="40" placeholder="e.g. Wáng Míng"><button id="oSave" class="ghost">Save my Chinese name</button><p class="hint" id="oMsg"></p></div>';
     p.append(own);
@@ -213,7 +215,7 @@
     const st = { mode: store.get("nameMode", "meaning"), traits: store.get("nameTraits", []), style: "n" };
     box.innerHTML = "";
     const modes = el("div", "voices n-modes");
-    [["meaning", "By meaning"], ["sound", "Sounds like my name"]].forEach(([m, l]) => {
+    [["meaning", "By meaning"], ["sound", "Close to my name"]].forEach(([m, l]) => {
       const b = el("button", null, l); b.setAttribute("aria-pressed", String(st.mode === m));
       b.onclick = () => { st.mode = m; store.set("nameMode", m); modes.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); draw(); run(); };
       modes.append(b);
@@ -246,7 +248,7 @@
           chips.append(c);
         });
         area.append(chips);
-      } else area.append(el("p", "hint", "Type your first name and surname. The suggestions sound a little like them."));
+      } else area.append(el("p", "hint", "Type your first name and surname. You get real Chinese names whose first sound is close to your name, and a real surname close to yours."));
       const go2 = el("button", "primarybtn", "Suggest names"); go2.onclick = run; area.append(go2);
     }
     function run() {
