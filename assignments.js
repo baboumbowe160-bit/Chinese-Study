@@ -289,7 +289,7 @@
       c3.forEach(a => {
         const b = document.createElement("button"); b.className = "aguide-b" + (a === latest ? " latest" : "");
         const st = classState[a.id] || {}, tk = (st.ticks || []).length;
-        b.innerHTML = '<b></b><span></span>'; b.children[0].textContent = a.n; b.children[1].textContent = (a.date ? niceDate(a.date).replace(/,? \d{4}$/, "") : "Sep 7–21") + (st.done ? " ✓" : tk ? " · " + tk + "/" + a.chars.length : "");
+        b.innerHTML = '<b></b><span></span>'; b.children[0].textContent = a.n; b.children[1].textContent = (a.date ? niceDate(a.date).replace(/,? \d{4}$/, "") : "–") + (st.done ? " ✓" : tk ? " · " + tk + "/" + a.chars.length : "");
         b.title = a.title; b.onclick = () => { open.add(a.id); store.set("aOpen", [...open]); render(); const el2 = document.getElementById("acard-" + a.id); if (el2) el2.scrollIntoView({ behavior: "smooth", block: "start" }); };
         row.appendChild(b);
       });
