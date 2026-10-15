@@ -47,8 +47,8 @@ var CLASS_ASSIGNMENTS = [
       ["喜", "xǐ", "happy, to like"]
     ] },
   { id: "c3-3", course: "c3", n: 3, sheet: "sheets/chinese3-assignment-3.pdf", title: "Character writing 3 – 24 characters", date: "2026-09-21", dateNote: "Given on 21 September 2026", set: "H3", times: 18,
-    task: "Write each character 18 times, clearly, in your exercise book.\nAlso write 年, 子 and 家 20 times each (年 子 家 20遍).",
-    marks: [["年", "年 is 6 strokes: 丿, 一, 一, 丨 (short), 一 (long), then the long 丨 last, straight through."], ["子", "In 儿子, write 子 – not 了. 子 has a horizontal line across the middle (3 strokes: 乛, 亅, 一)."], ["家", "家 = 宀 roof on top of 豕 (pig): 10 strokes."], ["年", "Write 年, 子 and 家 20 times each (20遍)."]],
+    task: "Write each character 18 times, clearly, in your exercise book.",
+    marks: [["年", "年 is 6 strokes: 丿, 一, 一, 丨 (short), 一 (long), then the long 丨 last, straight through."], ["子", "In 儿子, write 子 – not 了. 子 has a horizontal line across the middle (3 strokes: 乛, 亅, 一)."], ["家", "家 = 宀 roof on top of 豕 (pig): 10 strokes."]],
     tips: [["乐", "乐 is lè (happy) – or yuè in 音乐 (music)."], ["叉", "叉子 is chāzi (first tone)."]],
     words: [["勺子", "sháozi", "spoon"], ["叉子", "chāzi", "fork"], ["原因", "yuányīn", "reason"], ["哪儿", "nǎr", "where"], ["多少", "duōshao", "how many, how much"], ["大小", "dàxiǎo", "size"], ["今年", "jīnnián", "this year"], ["女儿", "nǚ'ér", "daughter"], ["儿子", "érzi", "son"]],
     chars: [
