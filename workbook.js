@@ -2,7 +2,8 @@
    Data: WB (wb-data.js). Drawn inside the Basics tab by basics.js, which passes its helpers in K. */
 (function () {
   "use strict";
-  const AUDIO_SET = "https://soundcloud.com/user-682871665/sets/hsk-1-workbook-audio-2";
+  const AUDIO_SET = "http://www.blcup.com/MobileResSeries?rid=4c545205-cd03-4496-9576-7ad165099c7c";   // official audio (the QR code on the workbook's back cover)
+  const AUDIO_ALT = "https://soundcloud.com/user-682871665/sets/hsk-1-workbook-audio-2";
   const MV = { a: "āáǎà", e: "ēéěè", i: "īíǐì", o: "ōóǒò", u: "ūúǔù", v: "ǖǘǚǜ" };
   const UNMARK = {}; Object.keys(MV).forEach(v => [...MV[v]].forEach((c, i) => UNMARK[c] = [v, i + 1]));
   // put a tone mark on a plain syllable: mark("hao", 3) -> "hǎo"
@@ -412,7 +413,9 @@
       head.append(list);
       const au = K.el("p", "wb-audio");
       au.append(L.test ? "🎧 Questions 1–20 (listening) need the test recording. " : L.n <= 2 ? "🎧 A few exercises in your paper workbook need its recording. " : "🎧 Part 一 (Listening) in your paper workbook needs its recording – tracks " + L.n + "-1 and " + L.n + "-2. ");
-      const a = K.el("a", null, "Open the workbook audio ↗"); a.href = AUDIO_SET; a.target = "_blank"; a.rel = "noopener"; au.append(a);
+      const a = K.el("a", null, "Official workbook audio ↗"); a.href = AUDIO_SET; a.target = "_blank"; a.rel = "noopener";
+      const a2 = K.el("a", null, "another copy ↗"); a2.href = AUDIO_ALT; a2.target = "_blank"; a2.rel = "noopener";
+      au.append(a, " (or ", a2, ")");
       head.append(au); p.append(head);
       return;
     }

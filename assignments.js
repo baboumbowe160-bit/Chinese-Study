@@ -207,7 +207,8 @@
   function pictures(a) {
     const box = mk("div", "aq-box");
     const au = mk("p", "wb-audio"); au.append("🎧 Play track " + a.wbTrack + " of the workbook audio. ");
-    const l = mk("a", null, "Open the HSK 1 Workbook audio ↗"); l.href = "https://soundcloud.com/user-682871665/sets/hsk-1-workbook-audio-2"; l.target = "_blank"; l.rel = "noopener"; au.append(l); box.append(au);
+    const l = mk("a", null, "Official workbook audio ↗"); l.href = "http://www.blcup.com/MobileResSeries?rid=4c545205-cd03-4496-9576-7ad165099c7c"; l.target = "_blank"; l.rel = "noopener";
+    const l2 = mk("a", null, "another copy ↗"); l2.href = "https://soundcloud.com/user-682871665/sets/hsk-1-workbook-audio-2"; l2.target = "_blank"; l2.rel = "noopener"; au.append(l, " (or ", l2, ")"); box.append(au);
     const pg = mk("div", "aq-pics");
     a.pics.forEach(([L, emo, cap]) => { const c = mk("div", "aq-pic"); c.append(mk("b", "wb-letter", L), mk("span", "wb-emo", emo), mk("span", "wb-cap", cap)); pg.append(c); });
     box.append(mk("h4", "aq-h", "The pictures"), pg);

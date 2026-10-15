@@ -1031,6 +1031,8 @@
     const p = $("bpane"); p.append(header("From the book", "书"));
     if (!BK) { p.append(el("p", "hint", "Book lists are loading – try again in a moment.")); return; }
     p.append(el("p", "hint", "The reference pages at the back of HSK Standard Course 1 (pages 120–129). Listen, practise writing in Write, and quiz yourself."));
+    const au = el("p", "wb-audio"); au.append("🎧 The textbook's own recordings (texts, new words, listening): ");
+    const al = el("a", null, "Official HSK 1 textbook audio ↗"); al.href = "http://www.blcup.com/MobileResSeries?rid=c55419ff-dd4c-4ead-9dae-0d159197f622"; al.target = "_blank"; al.rel = "noopener"; au.append(al); p.append(au);
     const tabs = el("div", "bk-tabs");
     BOOK_TABS.forEach(([id, , name]) => {
       const b = el("button", "bk-tab" + (id === bookTab ? " on" : ""), name + " " + bookItems(id).length);
