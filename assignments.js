@@ -172,6 +172,7 @@
     }
     if (a.dateNote) { const dn = document.createElement("p"); dn.className = "hint adnote"; dn.textContent = "📅 " + a.dateNote; body.appendChild(dn); }
     const practise = c => window.CSWrite && CSWrite.open(a.set, c);
+    const marksTitle = a.marksTitle || "✍ The lecturer's corrections", marksSub = a.marksSub || "These were marked in red on a classmate's work. Learn them so you don't make the same mistake – tap a character to practise it.";
     const noteBox = (cls, title, sub, items) => {
       const box = document.createElement("div"); box.className = "anotes " + cls;
       const h = document.createElement("p"); h.className = "label"; h.textContent = title; box.appendChild(h);
@@ -184,7 +185,7 @@
       });
       body.appendChild(box);
     };
-    if (a.marks && a.marks.length) noteBox("marks", "✍ The lecturer's corrections", "These were marked in red on a classmate's work. Learn them so you don't make the same mistake – tap a character to practise it.", a.marks);
+    if (a.marks && a.marks.length) noteBox("marks", marksTitle, marksSub, a.marks);
     if (a.tips && a.tips.length) noteBox("tips", "💡 Watch out", "", a.tips);
     if (a.words && a.words.length) {
       const wb = document.createElement("div"); wb.className = "awords";
