@@ -225,7 +225,7 @@
         const b = document.createElement("button"); b.className = "hw-ch"; b.title = py + " – " + m;
         b.innerHTML = '<span class="hw-n"></span><span class="hw-z"></span><span class="hw-p"></span>';
         b.children[0].textContent = a.chars[i][3] || i + 1; b.children[1].textContent = c; b.children[2].textContent = py;
-        if ([...c].length > 1) { cell.classList.add("hw-word"); cell.style.gridColumn = "span " + Math.min(4, Math.max(2, Math.ceil([...c].length * 0.75))); }
+        if ([...c].length > 1) { const L = [...c].length; cell.classList.add("hw-word"); if (L > 7) cell.classList.add("hw-long"); cell.style.gridColumn = L > 7 ? "1 / -1" : "span " + Math.min(4, Math.max(2, Math.ceil(L * 0.75))); }
         b.onclick = () => window.CSWrite && CSWrite.open(a.set, c);
         const t = document.createElement("button"); t.className = "hw-t"; t.setAttribute("aria-label", "Written " + c + " " + (a.times || 18) + " times"); t.textContent = ticks.has(c) ? "✓" : "○";
         t.onclick = () => {

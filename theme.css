@@ -644,3 +644,5 @@ button.padd{font:inherit;background:transparent;cursor:pointer}
 
 /* homework items that are whole words (春天, 光明磊落) */
 .hw-c.hw-word .hw-z{font-size:1.5rem;letter-spacing:.02em;white-space:nowrap}
+.hw-c.hw-long .hw-z{white-space:normal;font-size:1.3rem;line-height:1.3;padding:0 18px}
+.hw-c.hw-long .hw-ch{padding-top:18px}

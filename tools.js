@@ -19,7 +19,7 @@
     return r ? "audio/" + r + ".mp3" : null;
   }
   function segment(text) {
-    const s = [...text.replace(/〇/g, "零").replace(/[，。！？、：；,.!?\s·]/g, "")], out = [];
+    const s = [...text.replace(/〇/g, "零").replace(/[，。！？、：；,.!?\s·→]/g, "")], out = [];
     let i = 0;
     while (i < s.length) {
       let done = false;
