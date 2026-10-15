@@ -153,7 +153,7 @@
     return Object.assign({}, a, { done: !!st.done, work: st.work || "" });
   }
   function card(a) {
-    const card = document.createElement("article"); card.className = "acard" + (a.done ? " isdone" : "") + (a.fromClass ? " fromclass" : "");
+    const card = document.createElement("article"); card.id = "acard-" + a.id; card.className = "acard" + (a.done ? " isdone" : "") + (a.fromClass ? " fromclass" : "");
     const head = document.createElement("button"); head.className = "ahead"; head.setAttribute("aria-expanded", String(open.has(a.id)));
     head.innerHTML = '<span class="anum"></span><span class="ameta"><span class="atitle"></span><span class="adate"></span></span><span class="astate"></span>';
     head.querySelector(".anum").textContent = a.n || "•";
@@ -169,6 +169,37 @@
       const t = document.createElement("div"); t.className = "atask";
       const l = document.createElement("p"); l.className = "label"; l.textContent = "Instructions";
       t.appendChild(l); a.task.split("\n").forEach(x => t.appendChild(lineEl(x))); body.appendChild(t);
+    }
+    if (a.dateNote) { const dn = document.createElement("p"); dn.className = "hint adnote"; dn.textContent = "📅 " + a.dateNote; body.appendChild(dn); }
+    const practise = c => window.CSWrite && CSWrite.open(a.set, c);
+    const noteBox = (cls, title, sub, items) => {
+      const box = document.createElement("div"); box.className = "anotes " + cls;
+      const h = document.createElement("p"); h.className = "label"; h.textContent = title; box.appendChild(h);
+      if (sub) { const p = document.createElement("p"); p.className = "hint"; p.textContent = sub; box.appendChild(p); }
+      items.forEach(([c, note]) => {
+        const r = document.createElement("div"); r.className = "anote";
+        const b = document.createElement("button"); b.className = "anote-c"; b.textContent = c; b.setAttribute("aria-label", "Practise " + c); b.onclick = () => practise(c);
+        const t = document.createElement("p"); t.textContent = note;
+        r.append(b, t); box.appendChild(r);
+      });
+      body.appendChild(box);
+    };
+    if (a.marks && a.marks.length) noteBox("marks", "✍ The lecturer's corrections", "These were marked in red on a classmate's work. Learn them so you don't make the same mistake – tap a character to practise it.", a.marks);
+    if (a.tips && a.tips.length) noteBox("tips", "💡 Watch out", "", a.tips);
+    if (a.words && a.words.length) {
+      const wb = document.createElement("div"); wb.className = "awords";
+      const l = document.createElement("p"); l.className = "label"; l.textContent = "Words to learn"; wb.appendChild(l);
+      a.words.forEach(([w, py, m]) => {
+        const r = document.createElement("div"); r.className = "line";
+        const t = document.createElement("button"); t.className = "ltxt aword"; t.onclick = () => practise(w);
+        t.innerHTML = '<span class="lzh"></span> <span class="lpy"></span> <span class="aw-m"></span>';
+        t.children[0].textContent = w; t.children[1].textContent = py; t.children[2].textContent = m;
+        const sb = document.createElement("button"); sb.className = "say mini"; sb.setAttribute("aria-label", "Listen to " + w);
+        sb.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke-width="2" stroke-linecap="round"/></svg>';
+        sb.onclick = () => window.CSSay && CSSay(w, sb);
+        r.append(t, sb); wb.appendChild(r);
+      });
+      body.appendChild(wb);
     }
     if (a.chars) {
       // characters to write: tap to practise, tick when written N times
@@ -238,13 +269,29 @@
     const box = $("aList"); box.innerHTML = "";
     const match = a => !q || [a.title, a.task, a.work, "assignment " + a.n, courseName(a.course)].join(" ").toLowerCase().includes(q);
     const inCourse = a => course === "all" || a.course === course;
-    const cls = CLASS.map(view).filter(inCourse).filter(match).sort((x, y) => (x.course || "").localeCompare(y.course || "") || (y.n || 0) - (x.n || 0));
+    const cls = CLASS.map(view).filter(inCourse).filter(match).sort((x, y) => (x.course || "").localeCompare(y.course || "") || (x.n || 0) - (y.n || 0));
     const mine = list.filter(inCourse).filter(match).sort((x, y) => y.n - x.n);
     const section = (title, items, empty) => {
       const h = document.createElement("h3"); h.className = "asec"; h.textContent = title; box.appendChild(h);
       if (!items.length) { const p = document.createElement("p"); p.className = "empty"; p.textContent = empty; box.appendChild(p); return; }
       items.forEach(a => box.appendChild(card(a)));
     };
+    // guide for students who joined the course late
+    const c3 = CLASS.filter(a => a.course === "c3").sort((x, y) => (x.n || 0) - (y.n || 0));
+    if (!q && (course === "all" || course === "c3") && c3.length) {
+      const g = document.createElement("div"); g.className = "aguide";
+      const latest = c3[c3.length - 1];
+      g.innerHTML = '<b>New to the course?</b><p class="hint">Chinese 3 (Characters) gives a writing assignment almost every week. Do them in order, 1 → ' + latest.n + '. Each one has its characters with stroke order, the words to learn and the lecturer\'s corrections – the mistakes the class made, so you can avoid them.</p>';
+      const row = document.createElement("div"); row.className = "aguide-row";
+      c3.forEach(a => {
+        const b = document.createElement("button"); b.className = "aguide-b" + (a === latest ? " latest" : "");
+        const st = classState[a.id] || {}, tk = (st.ticks || []).length;
+        b.innerHTML = '<b></b><span></span>'; b.children[0].textContent = a.n; b.children[1].textContent = (a.date ? niceDate(a.date).replace(/,? \d{4}$/, "") : "Sep") + (st.done ? " ✓" : tk ? " · " + tk + "/" + a.chars.length : "");
+        b.title = a.title; b.onclick = () => { open.add(a.id); store.set("aOpen", [...open]); render(); const el2 = document.getElementById("acard-" + a.id); if (el2) el2.scrollIntoView({ behavior: "smooth", block: "start" }); };
+        row.appendChild(b);
+      });
+      g.appendChild(row); box.appendChild(g);
+    }
     section("From class", cls, q ? "No class assignment matches your search." : "Class assignments for " + (course === "all" ? "your courses" : courseName(course)) + " will appear here.");
     section("My own assignments", mine, q ? "None of your assignments match." : "Tap ＋ New to add your own.");
   }

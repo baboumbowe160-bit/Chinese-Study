@@ -620,3 +620,24 @@ button.padd{font:inherit;background:transparent;cursor:pointer}
 .chk-body>*{flex-shrink:0}
 
 .u-line.hl{background:#fff3d6;border-radius:10px}
+
+/* class assignments: lecturer's corrections, tips, words, guide for new students */
+.adnote{margin:0 0 6px}
+.anotes{border-radius:12px;padding:10px 12px;margin:8px 0;display:flex;flex-direction:column;gap:6px}
+.anotes.marks{background:#fff1f0;border:1.5px solid #e9a6a3}
+.anotes.marks>.label{color:#b3141b}
+.anotes.tips{background:#fff8e6;border:1px solid #ecd59a}
+.anotes .hint{margin:0}
+.anote{display:flex;gap:10px;align-items:flex-start}
+.anote p{margin:0;font-size:.92rem;line-height:1.45}
+.anote-c{flex:0 0 auto;width:46px;height:46px;border-radius:10px;border:1.5px solid var(--seal);background:#fff;font-family:var(--f-han);font-size:1.7rem;color:var(--seal);cursor:pointer;line-height:1}
+.awords{margin:8px 0}
+.aword{background:none;border:0;padding:0;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.aw-m{color:var(--muted);font-size:.88rem}
+.aguide{border:1.5px solid var(--gold);border-radius:14px;padding:12px;margin:4px 0 10px;background:linear-gradient(160deg,#fff9ea,var(--paper))}
+.aguide p{margin:4px 0 8px}
+.aguide-row{display:flex;gap:6px;flex-wrap:wrap}
+.aguide-b{display:flex;flex-direction:column;align-items:center;min-width:58px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;font:inherit}
+.aguide-b b{font-size:1.2rem;color:var(--seal)}
+.aguide-b span{font-size:.72rem;color:var(--muted)}
+.aguide-b.latest{border:2px solid var(--seal)}
