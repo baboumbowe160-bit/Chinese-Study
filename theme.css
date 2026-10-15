@@ -781,3 +781,7 @@ button.padd{font:inherit;background:transparent;cursor:pointer}
 .aq-fb.right{color:var(--ok);font-weight:700}.aq-fb.wrong{color:var(--seal);font-weight:600}
 .aq-fb.open{color:#8a5a00}.aq-fb.pinyin,.aq-fb.empty{color:var(--muted)}
 .aq-kb{background:var(--gold-soft);border-radius:10px;padding:8px 10px}
+.apapers{margin:10px 0}
+.apapers-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.apaper{display:flex;flex-direction:column;gap:4px;text-decoration:none;color:var(--muted);font-size:.78rem;text-align:center}
+.apaper img{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);background:#fff}

@@ -181,7 +181,7 @@
         qh.append(qt); if (hasZh(q)) qh.append(sayB(q));
         const row = mk("div", "aq-in");
         const inp = mk("input", "aq-inp"); inp.type = "text"; inp.lang = c.e ? "en" : "zh-CN"; inp.autocomplete = "off"; inp.spellcheck = false;
-        inp.placeholder = c.e ? "Type the English" : "Type your answer in Chinese"; inp.value = typed[sk] || "";
+        inp.placeholder = c.e ? "Type the English" : "Answer in Chinese"; inp.value = typed[sk] || "";
         const btn = mk("button", "primarybtn aq-check", "Check");
         const fb = mk("p", "aq-fb");
         const show = res => {
@@ -283,6 +283,17 @@
         r.append(t, sb); wb.appendChild(r);
       });
       body.appendChild(wb);
+    }
+    if (a.papers && a.papers.length) {
+      const pb = mk("div", "apapers");
+      pb.append(mk("p", "label", "📄 The paper (" + a.papers.length + " pages – front and back)"));
+      const row = mk("div", "apapers-row");
+      a.papers.forEach((src, i) => {
+        const l = mk("a", "apaper"); l.href = src; l.target = "_blank"; l.rel = "noopener"; l.setAttribute("aria-label", "Open page " + (i + 1) + " full size");
+        const im = mk("img"); im.src = src; im.alt = "Page " + (i + 1) + " of the paper"; im.loading = "lazy";
+        l.append(im, mk("span", null, "Page " + (i + 1) + " · tap to enlarge")); row.append(l);
+      });
+      pb.append(row); body.appendChild(pb);
     }
     if (a.qs) body.appendChild(questions(a, card));
     if (a.pics) body.appendChild(pictures(a));
