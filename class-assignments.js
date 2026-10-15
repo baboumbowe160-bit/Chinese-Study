@@ -1,5 +1,5 @@
 /* Class assignments, added by the app maker. Each one appears for every student.
-   course: "c1" = Chinese 1 (Synthesis) · "c2" = Chinese 2 (Listening & Speaking) · "c3" = Chinese 3 (Characters)
+   course: "c1" = Chinese 1 (Synthesis) · "c2" = Chinese 2 (Reading & Writing) · "c3" = Chinese 3 (Characters)
    chars: characters to write [character, pinyin, meaning] · set: word list in the Write tab · sheet: printable practice sheet
    date / dateNote: when it was given · marks: notes / hints [character, note] · tips: common mistakes · words: words to learn */
 var CLASS_ASSIGNMENTS = [

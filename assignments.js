@@ -8,7 +8,7 @@
   };
 
   let list = store.get("assignments", []) || [];
-  const COURSES = [["c1", "Chinese 1", "Synthesis"], ["c2", "Chinese 2", "Listening & Speaking"], ["c3", "Chinese 3", "Characters"]];
+  const COURSES = [["c1", "Chinese 1", "Synthesis"], ["c2", "Chinese 2", "Reading & Writing"], ["c3", "Chinese 3", "Characters"]];
   const CLASS = (window.CLASS_ASSIGNMENTS || []).map(a => Object.assign({ fromClass: true }, a));
   let classState = store.get("classState", {});   // per class assignment: { done, work }
   let course = store.get("aCourse", "all");
@@ -157,46 +157,48 @@
   const SAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke-width="2" stroke-linecap="round"/></svg>';
   function sayB(text) { const b = mk("button", "say mini"); b.innerHTML = SAY_SVG; b.setAttribute("aria-label", "Listen"); b.onclick = e => { e.stopPropagation(); window.CSSay && CSSay(text.replace(/____/g, "，").replace(/\n/g, "，").replace(/[A-Za-z]+：/g, ""), b); }; return b; }
   const hasZh = s => /[\u4e00-\u9fff]/.test(s);
-  // a question paper: try each question yourself, then show the answer and tick it if you got it
+  // a question paper: the student types an answer and the app says right or wrong (it never shows the answer)
   function questions(a, card) {
-    const st = () => classState[a.id] || {};
-    const got = new Set(st().got || []);
+    const st = classState[a.id] || {};
+    const got = new Set(st.got || []), typed = Object.assign({}, st.typed || {});
+    const total = a.qs.reduce((s, g) => s + g.items.length, 0);
     const box = mk("div", "aq-box");
-    const top = mk("div", "aq-top"); const cnt = mk("b");
-    const upd = () => { cnt.textContent = got.size + " / " + a.qs.reduce((s, g) => s + g.items.length, 0) + " correct"; const s2 = card.querySelector(".astate"); if (s2 && !a.done) s2.textContent = got.size ? got.size + "/" + a.qs.reduce((s, g) => s + g.items.length, 0) : "To do"; };
-    const all = mk("button", "ghost", "Show all answers");
-    all.onclick = () => { const on = !box.classList.contains("showall"); box.classList.toggle("showall", on); all.textContent = on ? "Hide all answers" : "Show all answers"; };
-    top.append(cnt, all); box.append(top);
-    if (a.set) { const w = mk("button", "primarybtn", "✍ Practise the answers in Write"); w.onclick = () => window.CSWrite && CSWrite.open(a.set); box.append(w); }
-    box.append(mk("p", "hint", "Answer each question in your book first. Then tap “Show answer” and tick ✓ if you got it right."));
+    const top = mk("div", "aq-top"); const cnt = mk("b"); top.append(cnt); box.append(top);
+    const upd = () => { cnt.textContent = got.size + " / " + total + " correct"; const s2 = card.querySelector(".astate"); if (s2 && !a.done) s2.textContent = got.size ? got.size + "/" + total : "To do"; };
+    const save = () => { classState = store.get("classState", {}); classState[a.id] = Object.assign({}, classState[a.id], { got: [...got], typed }); store.set("classState", classState); };
+    const kb = mk("p", "hint aq-kb"); kb.textContent = "Type in Chinese characters with a Chinese keyboard (on Android: Gboard → Settings → Languages → Add keyboard → Chinese (Pinyin) or Chinese handwriting). The app checks your answer – it never shows the answers.";
+    box.append(kb);
     a.qs.forEach((g, gi) => {
       box.append(mk("h4", "aq-h", g.h)); if (g.sub) box.append(mk("p", "hint", g.sub));
-      g.items.forEach(([n, q, py, ans, apy, note], i) => {
-        const key = gi + ":" + i;
-        const r = mk("div", "aq" + (got.has(key) ? " got" : ""));
+      g.items.forEach(([n, q, py, c], i) => {
+        const key = a.id + ":" + gi + ":" + i, sk = gi + ":" + i;
+        const r = mk("div", "aq" + (got.has(sk) ? " got" : ""));
         const qh = mk("div", "aq-q");
         qh.append(mk("span", "aq-n", n === "" ? "•" : String(n)));
         const qt = mk("div", "aq-qt");
         q.split("\n").forEach(line => qt.append(mk("div", hasZh(line) ? "aq-zh" : "aq-en", line)));
         if (py) qt.append(mk("div", "aq-py", py));
         qh.append(qt); if (hasZh(q)) qh.append(sayB(q));
-        const reveal = mk("button", "aq-show", "Show answer");
-        const ansBox = mk("div", "aq-a");
-        const at = mk("div", "aq-at");
-        const az = mk(hasZh(ans) ? "button" : "div", hasZh(ans) ? "aq-az" : "aq-ae", ans);
-        if (hasZh(ans) && a.set) az.onclick = () => window.CSWrite && CSWrite.open(a.set, ans.split(" / ")[0].replace(/[。！？，…\s]/g, ""));
-        else if (hasZh(ans)) az.onclick = () => window.CSSay && CSSay(ans.split(" / ")[0]);
-        at.append(az); if (apy) at.append(mk("div", "aq-py", apy)); if (note) at.append(mk("div", "aq-note", note));
-        ansBox.append(at); if (hasZh(ans)) ansBox.append(sayB(ans.split(" / ")[0]));
-        const tick = mk("button", "aq-tick", got.has(key) ? "✓ Got it" : "○ I got it"); tick.setAttribute("aria-pressed", String(got.has(key)));
-        tick.onclick = () => {
-          classState = store.get("classState", {}); got.has(key) ? got.delete(key) : got.add(key);
-          classState[a.id] = Object.assign({}, classState[a.id], { got: [...got] }); store.set("classState", classState);
-          r.classList.toggle("got", got.has(key)); tick.textContent = got.has(key) ? "✓ Got it" : "○ I got it"; tick.setAttribute("aria-pressed", String(got.has(key))); upd();
+        const row = mk("div", "aq-in");
+        const inp = mk("input", "aq-inp"); inp.type = "text"; inp.lang = c.e ? "en" : "zh-CN"; inp.autocomplete = "off"; inp.spellcheck = false;
+        inp.placeholder = c.e ? "Type the English" : "Type your answer in Chinese"; inp.value = typed[sk] || "";
+        const btn = mk("button", "primarybtn aq-check", "Check");
+        const fb = mk("p", "aq-fb");
+        const show = res => {
+          fb.className = "aq-fb " + res;
+          fb.textContent = res === "right" ? "✓ Correct!" : res === "open" ? "🤔 This question has many possible answers and the app doesn't know yours. It may still be right – show it to your teacher." :
+            res === "pinyin" ? "Please write it in Chinese characters, not pinyin." : res === "empty" ? "Type your answer first." : "✗ Not correct yet – look again and try once more.";
         };
-        ansBox.append(tick);
-        reveal.onclick = () => { r.classList.toggle("open"); reveal.textContent = r.classList.contains("open") ? "Hide answer" : "Show answer"; };
-        r.append(qh, reveal, ansBox); box.append(r);
+        const run = () => {
+          const res = CSCheck.check(key, c, inp.value);
+          typed[sk] = inp.value;
+          if (res === "right") got.add(sk); else got.delete(sk);
+          r.classList.toggle("got", res === "right"); save(); upd(); show(res);
+        };
+        btn.onclick = run; inp.onkeydown = e => { if (e.key === "Enter") run(); };
+        inp.oninput = () => { fb.textContent = ""; fb.className = "aq-fb"; };
+        if (got.has(sk)) show("right");
+        row.append(inp, btn); r.append(qh, row, fb); box.append(r);
       });
     });
     upd(); return box;

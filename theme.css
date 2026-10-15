@@ -772,3 +772,12 @@ button.padd{font:inherit;background:transparent;cursor:pointer}
 .aq-pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .aq-pic{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px;border:1px solid var(--line);border-radius:12px;text-align:center}
 .aq.ex{background:var(--paper);border-radius:10px;padding:8px}
+.aq-in{display:flex;gap:6px;margin:8px 0 0 36px}
+.aq-inp{flex:1;min-width:0;font:inherit;font-size:1.15rem;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:#fff}
+.aq-inp:focus{outline:none;border-color:var(--gold)}
+.aq.got .aq-inp{border-color:var(--ok);background:#f1faf4}
+.aq-check{padding:8px 14px}
+.aq-fb{margin:4px 0 0 36px;font-size:.9rem;min-height:0}
+.aq-fb.right{color:var(--ok);font-weight:700}.aq-fb.wrong{color:var(--seal);font-weight:600}
+.aq-fb.open{color:#8a5a00}.aq-fb.pinyin,.aq-fb.empty{color:var(--muted)}
+.aq-kb{background:var(--gold-soft);border-radius:10px;padding:8px 10px}
