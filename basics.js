@@ -130,6 +130,7 @@
     ["rhymes", "诗", "Rhymes & poems", "Famous children's rhymes, poems 🎵 and tongue twisters"],
     ["riddles", "谜", "Riddles", "Guess the thing – or the character 🤔"],
     ["games", "玩", "Games", "6 games: tones, numbers, codes, radicals, pictures"],
+    ["book", "书", "From the book", "Every word list at the back of the book (p.120–129) – practise and quiz"],
   ];
   function hub() {
     const p = $("bpane"); p.innerHTML = "";
@@ -152,7 +153,7 @@
     });
     p.append(g);
   }
-  const SHORT = { sounds: "Sounds", numbers: "Numbers", lucky: "Lucky numbers", strokes: "Strokes", radicals: "Radicals", pictures: "Pictures", phrases: "Phrases", qwords: "Questions", rhymes: "Rhymes", riddles: "Riddles", games: "Games" };
+  const SHORT = { sounds: "Sounds", numbers: "Numbers", lucky: "Lucky numbers", strokes: "Strokes", radicals: "Radicals", pictures: "Pictures", phrases: "Phrases", qwords: "Questions", rhymes: "Rhymes", riddles: "Riddles", games: "Games", book: "Book lists" };
   function header(title, zh) {
     const wrap = el("div", "b-head");
     const h = el("div", "b-headrow");
@@ -189,7 +190,7 @@
     curSec = id; if (typeof chantStop === "function") chantStop();
     store.set("bsec", id); seqToken++;
     const p = $("bpane"); p.innerHTML = "";
-    ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, rhymes, riddles, games }[id] || hub)();
+    ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, rhymes, riddles, games, book: bookLists }[id] || hub)();
     if (id !== "hub") footer(id);
     window.scrollTo(0, 0);
   }
@@ -987,6 +988,114 @@
       r.append(t, sayBtn(btn => (window.CSSay ? CSSay(ex.split(" · ")[0], btn) : null), "Listen")); c2.append(r);
     });
     p.append(c2);
+  }
+
+
+  /* ---------- 12. From the book: reference pages 120–129 ---------- */
+  const BK = window.BOOK || null;
+  const BOOK_TABS = [
+    ["vocab", "BV", "Vocabulary", "词语总表 · p.120–124", "All new words of Lessons 1–15, A to Z, with the lesson they are in."],
+    ["proper", "BP", "Names", "专有名词 · p.124", "Proper nouns: people, countries and cities."],
+    ["extra", "BP", "Extra words", "超纲词 · p.125", "Words used in the book that are not in the HSK 1 syllabus (level shown)."],
+    ["old", "BO", "Old → new", "旧字新词 · p.125–126", "New words made only of characters you already learned."],
+    ["supp", "BS", "Supplementary", "补充 · p.127", "More words you can now read, built from words you know."],
+    ["chars", "BC", "Characters", "汉字总表 · p.128", "The characters the book teaches you to write, lesson by lesson."],
+    ["radicals", "BR", "Radicals", "偏旁总表 · p.129", "The radicals (building blocks) taught in each lesson."],
+  ];
+  let bookTab = store.get("bookTab", "vocab"), bookLesson = store.get("bookLesson", 0);
+  function bookItems(tab) {
+    if (!BK) return [];
+    if (tab === "vocab" || tab === "proper" || tab === "extra") return BK[tab].map(([w, py, pos, m, l]) => ({ w, py, m, l, pos }));
+    if (tab === "old") return BK.old.map(([w, py, pos, m, l, from]) => ({ w, py, m, l, pos, from }));
+    if (tab === "supp") return BK.supp.map(([w, py, m, from]) => ({ w, py, m, from }));
+    if (tab === "chars") return BK.chars.map(([c, l]) => ({ w: c, py: (BK.charinfo[c] || [])[0] || "", m: (BK.charinfo[c] || [])[1] || "", l }));
+    if (tab === "radicals") return BK.radicals.map(([c, py, m, l]) => ({ w: c, py, m, l }));
+    return [];
+  }
+  function bookLists() {
+    const p = $("bpane"); p.append(header("From the book", "书"));
+    if (!BK) { p.append(el("p", "hint", "Book lists are loading – try again in a moment.")); return; }
+    p.append(el("p", "hint", "The reference pages at the back of HSK Standard Course 1 (pages 120–129). Listen, practise writing in Write, and quiz yourself."));
+    const tabs = el("div", "bk-tabs");
+    BOOK_TABS.forEach(([id, , name]) => {
+      const b = el("button", "bk-tab" + (id === bookTab ? " on" : ""), name + " " + bookItems(id).length);
+      b.onclick = () => { bookTab = id; store.set("bookTab", id); bookLesson = 0; store.set("bookLesson", 0); go("book"); };
+      tabs.append(b);
+    });
+    p.append(tabs);
+    const [id, set, name, zh, about] = BOOK_TABS.find(t => t[0] === bookTab) || BOOK_TABS[0];
+    const card = el("div", "b-card");
+    card.append(el("h3", null, name + " · " + zh), el("p", "hint", about));
+    let items = bookItems(id);
+    const lessons = [...new Set(items.map(x => x.l).filter(Boolean))].sort((a, b) => a - b);
+    if (lessons.length > 1) {
+      const lf = el("div", "bk-lessons"); lf.append(el("span", "hint", "Lesson: "));
+      [0].concat(lessons).forEach(l => { const b = el("button", "bk-l" + (l === bookLesson ? " on" : ""), l ? String(l) : "All"); b.onclick = () => { bookLesson = l; store.set("bookLesson", l); go("book"); }; lf.append(b); });
+      card.append(lf);
+    }
+    if (bookLesson) items = items.filter(x => x.l === bookLesson);
+    const tools = el("div", "frow");
+    const pw = el("button", "primarybtn", "✍ Practise writing"); pw.onclick = () => window.CSWrite && CSWrite.open(set, items[0] && items[0].w.replace(/…+/g, ""));
+    const qz = el("button", "ghost", "🎯 Quiz me"); qz.onclick = () => bookQuiz(items, card);
+    const pa = el("button", "ghost", "▶ Listen to all");
+    pa.onclick = async () => {
+      if (pa.dataset.on) { pa.dataset.on = ""; return; } pa.dataset.on = "1"; pa.textContent = "■ Stop";
+      const rows = list.querySelectorAll(".u-line");
+      for (let i = 0; i < items.length && pa.dataset.on && pa.isConnected; i++) {
+        rows[i].classList.add("hl"); rows[i].scrollIntoView({ block: "nearest", behavior: "smooth" });
+        if (window.CSSay) await CSSay(items[i].w.replace(/…+/g, "，"), rows[i].querySelector(".say"));
+        await new Promise(r => setTimeout(r, 650 + items[i].w.length * 350)); rows[i].classList.remove("hl");
+      }
+      pa.dataset.on = ""; pa.textContent = "▶ Listen to all";
+    };
+    tools.append(pw, qz, pa); card.append(tools);
+    const qbox = el("div", "bk-quiz"); card.append(qbox);
+    const list = el("div", id === "chars" || id === "radicals" ? "bk-grid" : "bk-list");
+    let lastL = null;
+    items.forEach(x => {
+      if ((id === "chars" || id === "radicals") && x.l !== lastL && !bookLesson) { list.append(el("div", "bk-gl", "Lesson " + x.l)); lastL = x.l; }
+      const r = el("div", "u-line");
+      const t = el("button", "u-txt bk-w"); t.onclick = () => window.CSWrite && CSWrite.open(set, x.w.replace(/…+/g, ""));
+      t.append(el("div", "u-zh", x.w), el("div", "u-py", x.py + (x.pos ? "  · " + x.pos : "")), el("div", "u-en", x.m + (x.from ? "  ← " + x.from : "") + (x.l && id !== "chars" && id !== "radicals" ? "  · L" + x.l : "")));
+      r.append(t, sayBtn(btn => window.CSSay && CSSay(x.w.replace(/…+/g, "，"), btn), "Listen: " + x.w));
+      list.append(r);
+    });
+    card.append(list);
+    p.append(card);
+  }
+  function bookQuiz(items, card) {
+    const box = card.querySelector(".bk-quiz"); box.innerHTML = "";
+    const pool = items.filter(x => x.m);
+    if (pool.length < 4) { box.append(el("p", "hint", "Choose a bigger list (All lessons) for the quiz.")); return; }
+    const qs = shuffle(pool).slice(0, Math.min(10, pool.length));
+    let i = 0, right = 0;
+    const next = () => {
+      box.innerHTML = "";
+      if (i >= qs.length) {
+        box.append(el("p", "g-fb " + (right >= qs.length * 0.8 ? "good" : ""), "Score: " + right + " / " + qs.length + (right === qs.length ? " – perfect! 太棒了！" : right >= qs.length * 0.8 ? " – very good! 很好！" : " – keep practising, then try again.")));
+        const again = el("button", "ghost", "↻ New quiz"); again.onclick = () => bookQuiz(items, card); box.append(again); return;
+      }
+      const q = qs[i], mode = i % 2;   // 0: Chinese → meaning · 1: meaning → Chinese
+      const opts = shuffle([q].concat(shuffle(pool.filter(x => x !== q && x.m !== q.m && x.w !== q.w)).slice(0, 3)));
+      box.append(el("p", "label", "Question " + (i + 1) + " of " + qs.length));
+      if (mode === 0) { const h = el("div", "bk-qz"); h.append(el("span", "u-zh", q.w), el("span", "u-py", q.py)); box.append(h, el("p", "hint", "What does it mean?")); if (window.CSSay) CSSay(q.w.replace(/…+/g, "，")); }
+      else box.append(el("p", "bk-qm", q.m), el("p", "hint", "Which one is it?"));
+      const g = el("div", "bk-opts");
+      opts.forEach(o => {
+        const b = el("button", "bk-opt" + (mode ? " zh" : ""), mode ? o.w : o.m);
+        b.onclick = () => {
+          if (g.dataset.done) return; g.dataset.done = "1";
+          const ok = o === q; if (ok) right++;
+          b.classList.add(ok ? "ok" : "no");
+          [...g.children].forEach((c, k) => { if (opts[k] === q) c.classList.add("ok"); });
+          if (mode && window.CSSay) CSSay(q.w.replace(/…+/g, "，"));
+          const n = el("button", "primarybtn", i + 1 < qs.length ? "Next ›" : "See score"); n.onclick = () => { i++; next(); }; box.append(el("p", "hint", q.w + " " + q.py + " – " + q.m), n);
+        };
+        g.append(b);
+      });
+      box.append(g);
+    };
+    next(); box.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   /* ---------- 6. Games ---------- */

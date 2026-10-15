@@ -3,7 +3,7 @@
    chars: characters to write [character, pinyin, meaning] · set: word list in the Write tab · sheet: printable practice sheet
    date / dateNote: when it was given · marks: notes / hints [character, note] · tips: common mistakes · words: words to learn */
 var CLASS_ASSIGNMENTS = [
-  { id: "c3-new", course: "c3", n: 0, newcomer: true, sheet: "sheets/chinese3-new-students.pdf", title: "For new students – all new words of Lessons 1–7 (66 words)", dateNote: "For students who joined the course late · HSK Standard Course 1, Lessons 1–7, New Words", set: "HN", times: 18,
+  { id: "c3-new", course: "c3", n: 0, newcomer: true, sheet: "sheets/chinese3-new-students.pdf", title: "For new students – all new words of Lessons 1–7 (76 words)", dateNote: "For students who joined the course late · HSK Standard Course 1, Lessons 1–7, New Words", set: "HN", times: 18,
     task: "Write every new word from Lessons 1 to 7 of the book 18 times, clearly, in your exercise book.\nWords are kept whole, in the book's order (L1 = Lesson 1). Tap a word to watch its stroke order and practise it first.",
     words: [],
     chars: [
@@ -17,13 +17,15 @@ var CLASS_ASSIGNMENTS = [
       ["呢", "ne", "and …?", "L4"], ["他", "tā", "he", "L4"], ["同学", "tóngxué", "classmate", "L4"], ["朋友", "péngyou", "friend", "L4"],
       ["家", "jiā", "family, home", "L5"], ["有", "yǒu", "to have", "L5"], ["口", "kǒu", "measure word (family)", "L5"], ["女儿", "nǚ'ér", "daughter", "L5"],
       ["几", "jǐ", "how many", "L5"], ["岁", "suì", "years old", "L5"], ["了", "le", "change marker", "L5"], ["今年", "jīnnián", "this year", "L5"],
-      ["多", "duō", "how (+ adj.)", "L5"], ["大", "dà", "old, big", "L5"], ["会", "huì", "can", "L6"], ["说", "shuō", "to speak", "L6"],
-      ["妈妈", "māma", "mother", "L6"], ["菜", "cài", "dish, food", "L6"], ["很", "hěn", "very", "L6"], ["好吃", "hǎochī", "delicious", "L6"],
-      ["做", "zuò", "to make, do", "L6"], ["写", "xiě", "to write", "L6"], ["汉字", "Hànzì", "Chinese character", "L6"], ["字", "zì", "character", "L6"],
-      ["怎么", "zěnme", "how", "L6"], ["读", "dú", "to read", "L6"], ["请", "qǐng", "please", "L7"], ["问", "wèn", "to ask", "L7"],
-      ["今天", "jīntiān", "today", "L7"], ["号", "hào", "day of month", "L7"], ["月", "yuè", "month", "L7"], ["星期", "xīngqī", "week", "L7"],
-      ["昨天", "zuótiān", "yesterday", "L7"], ["明天", "míngtiān", "tomorrow", "L7"], ["去", "qù", "to go", "L7"], ["学校", "xuéxiào", "school", "L7"],
-      ["看", "kàn", "to look, read", "L7"], ["书", "shū", "book", "L7"]
+      ["多", "duō", "how (+ adj.)", "L5"], ["大", "dà", "old, big", "L5"], ["一", "yī", "one", "L5"], ["二", "èr", "two", "L5"],
+      ["三", "sān", "three", "L5"], ["四", "sì", "four", "L5"], ["五", "wǔ", "five", "L5"], ["六", "liù", "six", "L5"],
+      ["七", "qī", "seven", "L5"], ["八", "bā", "eight", "L5"], ["九", "jiǔ", "nine", "L5"], ["十", "shí", "ten", "L5"],
+      ["会", "huì", "can", "L6"], ["说", "shuō", "to speak", "L6"], ["妈妈", "māma", "mother", "L6"], ["菜", "cài", "dish, food", "L6"],
+      ["很", "hěn", "very", "L6"], ["好吃", "hǎochī", "delicious", "L6"], ["做", "zuò", "to make, do", "L6"], ["写", "xiě", "to write", "L6"],
+      ["汉字", "Hànzì", "Chinese character", "L6"], ["字", "zì", "character", "L6"], ["怎么", "zěnme", "how", "L6"], ["读", "dú", "to read", "L6"],
+      ["请", "qǐng", "please", "L7"], ["问", "wèn", "to ask", "L7"], ["今天", "jīntiān", "today", "L7"], ["号", "hào", "day of month", "L7"],
+      ["月", "yuè", "month", "L7"], ["星期", "xīngqī", "week", "L7"], ["昨天", "zuótiān", "yesterday", "L7"], ["明天", "míngtiān", "tomorrow", "L7"],
+      ["去", "qù", "to go", "L7"], ["学校", "xuéxiào", "school", "L7"], ["看", "kàn", "to look, read", "L7"], ["书", "shū", "book", "L7"]
     ] },
   { id: "c3-1", course: "c3", n: 1, sheet: "sheets/chinese3-assignment-1.pdf", title: "Character writing 1 – 72 items", date: "2026-09-07", dateNote: "Given on 7 September 2026", set: "H1", times: 18,
     task: "Write each character 18 times, clearly, in your exercise book.\nWords and groups are kept together as given – write the whole item 18 times.\nTap an item below to watch its stroke order and practise it first.",
