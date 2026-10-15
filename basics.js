@@ -131,6 +131,7 @@
     ["riddles", "谜", "Riddles", "Guess the thing – or the character 🤔"],
     ["games", "玩", "Games", "6 games: tones, numbers, codes, radicals, pictures"],
     ["book", "书", "From the book", "Every word list at the back of the book (p.120–129) – practise and quiz"],
+    ["wb", "练", "Workbook", "Lessons 1–15 + model test from the HSK 1 Workbook – tap, listen, check"],
   ];
   function hub() {
     const p = $("bpane"); p.innerHTML = "";
@@ -153,7 +154,7 @@
     });
     p.append(g);
   }
-  const SHORT = { sounds: "Sounds", numbers: "Numbers", lucky: "Lucky numbers", strokes: "Strokes", radicals: "Radicals", pictures: "Pictures", phrases: "Phrases", qwords: "Questions", rhymes: "Rhymes", riddles: "Riddles", games: "Games", book: "Book lists" };
+  const SHORT = { sounds: "Sounds", numbers: "Numbers", lucky: "Lucky numbers", strokes: "Strokes", radicals: "Radicals", pictures: "Pictures", phrases: "Phrases", qwords: "Questions", rhymes: "Rhymes", riddles: "Riddles", games: "Games", book: "Book lists", wb: "Workbook" };
   function header(title, zh) {
     const wrap = el("div", "b-head");
     const h = el("div", "b-headrow");
@@ -190,7 +191,7 @@
     curSec = id; if (typeof chantStop === "function") chantStop();
     store.set("bsec", id); seqToken++;
     const p = $("bpane"); p.innerHTML = "";
-    ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, rhymes, riddles, games, book: bookLists }[id] || hub)();
+    ({ hub, sounds, numbers, lucky, strokes, radicals, pictures, phrases, qwords, rhymes, riddles, games, book: bookLists, wb: workbook }[id] || hub)();
     if (id !== "hub") footer(id);
     window.scrollTo(0, 0);
   }
@@ -1011,6 +1012,20 @@
     if (tab === "chars") return BK.chars.map(([c, l]) => ({ w: c, py: (BK.charinfo[c] || [])[0] || "", m: (BK.charinfo[c] || [])[1] || "", l }));
     if (tab === "radicals") return BK.radicals.map(([c, py, m, l]) => ({ w: c, py, m, l }));
     return [];
+  }
+  // Workbook section (workbook.js draws it; these are the helpers it needs)
+  let wordInfo = null;
+  function charInfo(c) {
+    if (!wordInfo) { wordInfo = {}; (window.SETS || []).forEach(st => st[3].forEach(w => { if (!wordInfo[w[0]]) wordInfo[w[0]] = w; })); }
+    return wordInfo[c] || [c, "", ""];
+  }
+  function workbook() {
+    const p = $("bpane"); p.append(header("Workbook", "练"));
+    if (!window.CSWorkbook) { p.append(el("p", "hint", "The workbook is loading – try again in a moment.")); return; }
+    CSWorkbook.render(p, {
+      el, store, shuffle, sayBtn, sayIcon, go,
+      openChar: c => { const w = charInfo(c); openSheet({ c, py: w[1], mean: w[2] }); }
+    });
   }
   function bookLists() {
     const p = $("bpane"); p.append(header("From the book", "书"));
