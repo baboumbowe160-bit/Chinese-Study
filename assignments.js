@@ -172,7 +172,7 @@
     }
     if (a.dateNote) { const dn = document.createElement("p"); dn.className = "hint adnote"; dn.textContent = "📅 " + a.dateNote; body.appendChild(dn); }
     const practise = c => window.CSWrite && CSWrite.open(a.set, c);
-    const marksTitle = a.marksTitle || "✍ The lecturer's corrections", marksSub = a.marksSub || "These were marked in red on a classmate's work. Learn them so you don't make the same mistake – tap a character to practise it.";
+    const marksTitle = a.marksTitle || "✍ Notes", marksSub = a.marksSub || "Common mistakes to avoid – tap a character to practise it.";
     const noteBox = (cls, title, sub, items) => {
       const box = document.createElement("div"); box.className = "anotes " + cls;
       const h = document.createElement("p"); h.className = "label"; h.textContent = title; box.appendChild(h);
@@ -282,7 +282,7 @@
     if (!q && (course === "all" || course === "c3") && c3.length) {
       const g = document.createElement("div"); g.className = "aguide";
       const latest = c3[c3.length - 1];
-      g.innerHTML = '<b>New to the course?</b><p class="hint">Chinese 3 (Characters) gives a writing assignment almost every week. Do them in order, 1 → ' + latest.n + '. Each one has its characters with stroke order, the words to learn and the lecturer\'s corrections – the mistakes the class made, so you can avoid them.</p>';
+      g.innerHTML = '<b>New to the course?</b><p class="hint">Chinese 3 (Characters) gives a writing assignment almost every week. Do them in order, 1 → ' + latest.n + '. Each one has its characters with stroke order, the words to learn and notes on common mistakes.</p>';
       const row = document.createElement("div"); row.className = "aguide-row";
       c3.forEach(a => {
         const b = document.createElement("button"); b.className = "aguide-b" + (a === latest ? " latest" : "");
