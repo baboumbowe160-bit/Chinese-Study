@@ -100,9 +100,14 @@
   }
 
   function loadChar(c) {
-    if (typeof HanziWriter === "undefined" || !c) { say("Could not load this character.", "bad"); return; }
     step = 0;
-    const el = $("writer"); el.innerHTML = "";
+    const el = $("writer"); el.innerHTML = ""; writer = null;   // never leave the previous character on screen
+    if (typeof HanziWriter === "undefined" || !c || !charData(c)) {
+      const w = words()[wordIdx], txt = (w && w[0]) || c || "";
+      const big = document.createElement("div"); big.className = "writer-plain"; big.textContent = txt; el.appendChild(big);
+      say(typeof HanziWriter === "undefined" ? "The writing tool is still loading – tap the word again in a moment." : "The stroke animation for this shape isn't available. Copy it from the big picture.", "bad");
+      return;
+    }
     const size = $("box").clientWidth;
     writer = HanziWriter.create(el, c, {
       width: size, height: size, padding: Math.round(size * 0.06),
