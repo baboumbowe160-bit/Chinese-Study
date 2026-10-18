@@ -201,11 +201,54 @@
     const paths = { 1: "M8 12 H52", 2: "M8 34 L52 10", 3: "M8 22 L28 40 L52 14", 4: "M8 8 L52 40" };
     return '<svg viewBox="0 0 60 48" class="tsvg" aria-hidden="true"><line x1="4" y1="8" x2="56" y2="8"/><line x1="4" y1="24" x2="56" y2="24"/><line x1="4" y1="40" x2="56" y2="40"/>' + (paths[t] ? '<path d="' + paths[t] + '"/>' : '<circle cx="30" cy="30" r="4"/>') + "</svg>";
   }
+  /* The 3 parts of a syllable and the types of initials, finals and tones (Pronunciation training: the pinyin chart) */
+  function syllableParts() {
+    // how each sound is played: a clip from the sounds list, else one recorded syllable
+    const KEY = { b: "bo1", p: "po1", m: "mo1", f: "fo2", d: "de2", t: "te4", n: "ne4", l: "le4", g: "ge1", k: "ke1", h: "he1", j: "ji1", q: "qi1", x: "xi1", zh: "zhi1", ch: "chi1", sh: "shi1", r: "ri4", z: "zi1", c: "ci2", s: "si1",
+      a: "a1", o: "o1", e: "e1", i: "yi1", u: "wu1", "ü": "yu1", ai: "ai1", ao: "ao1", ei: "ei1", er: "er2", ou: "ou1", ia: "ya1", ie: "ye1", iao: "yao1", iou: "you1", ua: "wa1", uo: "wo1", uai: "wai1", uei: "wei1", "üe": "yue1",
+      an: "an1", ang: "ang1", en: "en1", eng: "eng1", ong: "dong1", ian: "yan1", "in": "yin1", iang: "yang1", ing: "ying1", iong: "yong1", uan: "wan1", uen: "wen1", uang: "wang1", ueng: "weng1", "üan": "yuan1", "ün": "yun1" };
+    const SHORT = { iou: "iu", uei: "ui", uen: "un" };
+    const hear = (l, b) => { const k = KEY[l]; if (!k) return; const src = clip("@" + k) || "audio/py/" + k + ".mp3"; playSrc(src, b); };
+    const chip = l => { const b = el("button", "sp-chip"); b.textContent = l; if (SHORT[l]) b.append(el("small", null, " (" + SHORT[l] + ")")); b.onclick = () => hear(l, b); return b; };
+    const row = (list, cls) => { const r = el("div", "sp-row" + (cls ? " " + cls : "")); list.forEach(l => r.append(chip(l))); return r; };
+    const fam = (base, list) => { const f = el("div", "sp-fam"); const h = el("button", "sp-base", base); h.onclick = () => hear(base, h); f.append(h, el("span", "sp-arrow", "→")); list.forEach(l => f.append(chip(l))); return f; };
+    const c = el("div", "b-card sp-card");
+    c.append(el("h3", null, "The 3 parts of a Chinese syllable"));
+    const eq = el("div", "sp-eq");
+    eq.innerHTML = '<span class="sp-box sp-i"><b>Initial</b><i>the consonant</i><em>m</em></span><span class="sp-plus">+</span><span class="sp-box sp-f"><b>Final</b><i>the vowel part</i><em>a</em></span><span class="sp-plus">+</span><span class="sp-box sp-t"><b>Tone</b><i>the pitch</i><em>ˇ</em></span><span class="sp-plus">=</span><span class="sp-box sp-r"><b>Syllable</b><i>马 horse</i><em>mǎ</em></span>';
+    eq.onclick = () => window.CSSay && CSSay("马", eq);
+    c.append(el("p", "hint", "Initials = the consonants of Chinese. Finals = the vowels of Chinese. Almost every syllable is made of these 3 parts. Tap any sound below to hear it."), eq);
+    c.append(el("h4", "sp-h", "Exception – syllables with no initial"), el("p", "hint", "These finals can stand alone as a whole syllable:"), row(["a", "ai", "ao", "an", "ang", "e", "ei", "en", "eng", "er", "ong", "ou"]));
+    c.append(el("p", "hint sp-note", "ong is the one you will not meet alone in words – it always comes after an initial: dōng, hóng, zhōng."));
+    // initials
+    c.append(el("h4", "sp-h sp-hi", "Initials – 3 types"));
+    [["① Do not exist at all in English", ["z", "c", "zh", "ch", "sh", "r", "j", "q", "x"], "Practise these most – listen and copy."],
+     ["② Somehow exist in English", ["b", "d", "g", "t", "p", "k", "h"], "Close to English. p, t, k come with a strong puff of air; b, d, g have none."],
+     ["③ Easy – exactly as in English", ["m", "f", "n", "l", "s"], ""]].forEach(([t, l, n]) => { c.append(el("p", "sp-t", t), row(l, "sp-ini")); if (n) c.append(el("p", "hint sp-note", n)); });
+    // finals
+    c.append(el("h4", "sp-h sp-hf", "Finals – 3 types"));
+    c.append(el("p", "sp-t", "① Simple finals – one vowel"), row(["a", "e", "i", "o", "u", "ü"], "sp-fin"));
+    c.append(el("p", "sp-t", "② Compound finals – simple finals joined together"));
+    [["a", ["ai", "ao"]], ["i", ["ia", "ie", "iao", "iou"]], ["e", ["ei", "er"]], ["ü", ["üe"]], ["o", ["ou"]], ["u", ["ua", "uai", "uo", "uei"]]].forEach(([b, l]) => c.append(fam(b, l)));
+    c.append(el("p", "sp-t", "③ Nasal finals – end with n or ng; use your nose to pronounce them"));
+    [["a", ["an", "ang"]], ["i", ["ian", "in", "iang", "ing", "iong"]], ["e", ["en", "eng"]], ["o", ["ong"]], ["u", ["uan", "uen", "uang", "ueng"]], ["ü", ["üan", "ün"]]].forEach(([b, l]) => c.append(fam(b, l)));
+    c.append(el("p", "hint sp-note", "In words, iou, uei and uen are written short after an initial: liù, duì, lùn."));
+    // tones
+    c.append(el("h4", "sp-h sp-ht", "Tones – 4 tones + the neutral tone"));
+    const tr = el("div", "sp-row sp-tones");
+    [[1, "ā", "1st – high & flat"], [2, "á", "2nd – rising"], [3, "ǎ", "3rd – low, dips"], [4, "à", "4th – falling"], [5, "a", "neutral – short & light"]].forEach(([t, m, d]) => {
+      const b = el("button", "sp-chip sp-tone tc-t" + t); b.append(el("b", null, m), el("small", null, d));
+      b.onclick = () => t === 5 ? sayChar("吗", b) : playSrc(clip("@ma" + t), b); tr.append(b);
+    });
+    c.append(tr, el("p", "hint", "The tone changes the meaning: mā 妈 mother · má 麻 hemp · mǎ 马 horse · mà 骂 to scold. More on tones just below."));
+    return c;
+  }
   function sounds() {
     const p = $("bpane"); p.append(header("Sounds (pinyin)", "拼"));
     const intro = el("div", "b-card");
     intro.innerHTML = "<p><b>Pinyin</b> (拼音, “spelled sounds”) uses Latin letters to show how characters are pronounced. It was created in China in the 1950s by a team led by Zhou Youguang, so that everyone could learn to read faster. Chinese children learn it first – and so will you.</p><p>Every syllable has 3 parts: <b>initial</b> (start sound) + <b>final</b> (end sound) + <b>tone</b>. Example: <b>m</b> + <b>a</b> + <b>ˇ</b> = <b>mǎ</b> 马 (horse).</p>";
     p.append(intro);
+    p.append(syllableParts());
     // tones
     const tc = el("div", "b-card"); tc.append(el("h3", null, "The 4 tones – tap to hear"));
     tc.append(el("p", "hint", "The tone changes the meaning! Same sound “ma”, four different words:"));
