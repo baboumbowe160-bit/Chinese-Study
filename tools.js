@@ -18,8 +18,13 @@
     const r = (window.BASICS && BASICS.audio[seg]) || (window.TAUDIO && TAUDIO[seg]);
     return r ? "audio/" + r + ".mp3" : null;
   }
+  const hanOnly = t => [...t.replace(/〇/g, "零")].filter(c => /[㐀-鿿]/.test(c)).join("");
+  // recordings for a text: the whole line (one speaker), else words and characters, else one syllable per character
   function segment(text) {
-    const s = [...text.replace(/〇/g, "零").replace(/[，。！？、：；,.!?\s·→]/g, "")], out = [];
+    const key = hanOnly(text);
+    if (!key) return null;
+    if (window.SAYPHRASE && SAYPHRASE[key]) return ["audio/" + SAYPHRASE[key] + ".mp3"];
+    const s = [...key], out = [];
     let i = 0;
     while (i < s.length) {
       let done = false;
@@ -27,7 +32,11 @@
         const w = s.slice(i, i + L).join(""), src = srcFor(w);
         if (src) { out.push(src); i += L; done = true; break; }
       }
-      if (!done) return null;
+      if (!done) {
+        const k = window.CHARPY && CHARPY[s[i]];
+        if (!k) return null;
+        out.push("audio/py/" + k + ".mp3"); i++;
+      }
     }
     return out;
   }
@@ -51,7 +60,7 @@
     for (const s of segs) { if (my !== tokn) break; if (!(await playOne(s))) { tts(text); break; } }
     if (btn) btn.classList.remove("playing");
   }
-  window.CSSay = say;
+  window.CSSay = say; window.CSHasSound = text => !!segment(text); window.CSSegment = segment;
   function sayBtn(getText, label, big) {
     const b = el("button", big ? "say" : "say mini"); b.innerHTML = sayIcon + (big ? "Listen" : ""); b.setAttribute("aria-label", label || "Listen");
     b.onclick = e => { e.stopPropagation(); say(typeof getText === "function" ? getText() : getText, b); }; return b;

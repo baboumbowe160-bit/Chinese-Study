@@ -456,7 +456,8 @@
     const order = voice === "v2" ? ["v2", "v1"] : voice === "v1" ? ["v1", "v2"] : [];
     const pick = a ? order.find(v => a[v === "v1" ? 1 : 2]) : null;
     if (!pick) {
-      if (voice !== "tts") note(a ? "" : "No recording for this word yet, so your phone's voice is reading it.");
+      if (voice !== "tts" && window.CSSay && window.CSHasSound && CSHasSound(text)) { note(""); return CSSay(text, btn); }
+      if (voice !== "tts") note("No recording for this word yet, so your phone's voice is reading it.");
       return ttsSpeak(text, slow ? 0.5 : 0.85, btn);
     }
     note(pick !== voice ? "Voice " + voice.slice(1) + " has no recording of this word, so Voice " + pick.slice(1) + " is playing." : "");

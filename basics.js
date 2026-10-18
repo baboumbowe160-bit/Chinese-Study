@@ -47,12 +47,12 @@
   }
   async function sayChar(c, btn) {
     const src = clip(c);
-    if (src) { if (!(await playSrc(src, btn))) ttsSay(c); } else ttsSay(c);
+    if (src) { if (!(await playSrc(src, btn))) ttsSay(c); } else if (window.CSSay) CSSay(c, btn); else ttsSay(c);
   }
   async function saySeq(chars, btn) {
     const my = ++seqToken;
     const srcs = chars.map(clip);
-    if (srcs.some(s => !s)) { ttsSay(chars.join("")); return; }
+    if (srcs.some(s => !s)) { if (window.CSSay) CSSay(chars.join(""), btn); else ttsSay(chars.join("")); return; }
     if (window.CSAudio) { await CSAudio.playSeq(srcs, { btn, gap: 0.04 }); return; }
     if (btn) btn.classList.add("playing");
     for (const src of srcs) { if (my !== seqToken) break; await playSrc(src); }
