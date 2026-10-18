@@ -13,7 +13,8 @@
   let classState = store.get("classState", {});   // per class assignment: { done, work }
   let course = store.get("aCourse", "all");
   const courseName = c => { const x = COURSES.find(k => k[0] === c); return x ? x[1] + " · " + x[2] : "Not sorted"; };
-  let open = new Set(store.get("aOpen", []));
+  let viewId = null, viewNav = null;   // the one assignment shown on its own page (null = the list)
+  const open = { has: id => id === viewId };
   let editing = null;
   const save = () => store.set("assignments", list);
 
@@ -245,11 +246,11 @@
     head.innerHTML = '<span class="anum"></span><span class="ameta"><span class="atitle"></span><span class="adate"></span></span><span class="astate"></span>';
     head.querySelector(".anum").textContent = a.tag || (a.newcomer ? "新" : (a.n || "•"));
     head.querySelector(".atitle").textContent = a.title;
-    head.querySelector(".adate").textContent = (a.fromClass ? "From class" : "My assignment") + (course === "all" ? " · " + courseName(a.course) : "") + (a.date ? " · " + niceDate(a.date) : "");
+    head.querySelector(".adate").textContent = open.has(a.id) ? (a.fromClass ? "From class · " + courseName(a.course) : "My assignment") + (a.date ? " · " + niceDate(a.date) : "") : (a.date ? niceDate(a.date) : a.fromClass ? "From class" : "My assignment");
     const tk = a.chars ? ((classState[a.id] || {}).ticks || []).length : 0;
     const qn = a.qs ? a.qs.reduce((s, g) => s + g.items.length, 0) : 0, qk = a.qs ? ((classState[a.id] || {}).got || []).length : 0;
     head.querySelector(".astate").textContent = a.done ? "Done" : a.chars && tk ? tk + "/" + a.chars.length : qn && qk ? qk + "/" + qn : "To do";
-    head.onclick = () => { open.has(a.id) ? open.delete(a.id) : open.add(a.id); store.set("aOpen", [...open]); render(); };
+    head.onclick = () => open.has(a.id) ? closeView() : openView(a.id);
     card.appendChild(head);
     if (!open.has(a.id)) return card;
     const body = document.createElement("div"); body.className = "abody";
@@ -366,10 +367,29 @@
     card.appendChild(body);
     return card;
   }
+  /* One assignment per page: tap a title (or a number in the guide) → only that assignment, with a Back button. */
+  function findA(id) { const c = CLASS.find(x => x.id === id); return c ? view(c) : list.find(x => x.id === id); }
+  function openView(id) {
+    if (!findA(id)) return;
+    if (viewId === null && window.CSNav) viewNav = CSNav.push(() => { viewNav = null; showList(); });
+    viewId = id; render(); window.scrollTo(0, 0); const pa = $("paneA"); if (pa) pa.scrollTop = 0;
+  }
+  function showList() { const was = viewId; viewId = null; render(); const el2 = was && document.getElementById("acard-" + was); if (el2) el2.scrollIntoView({ block: "center" }); }
+  function closeView() { if (!(window.CSNav && CSNav.done(viewNav))) { viewNav = null; showList(); } }
   function render() {
     classState = store.get("classState", {});   // the Write tab may have ticked characters
     const q = $("aq").value.trim().toLowerCase();
     const box = $("aList"); box.innerHTML = "";
+    const one = viewId !== null && findA(viewId);
+    document.querySelector("#paneA .arow").hidden = !!one; $("aCourses").hidden = !!one;
+    if (one) {
+      const bar = document.createElement("div"); bar.className = "aback";
+      const bk = document.createElement("button"); bk.className = "ghost"; bk.textContent = "‹ All homework"; bk.onclick = closeView;
+      const where = document.createElement("span"); where.textContent = one.fromClass ? courseName(one.course) : "My assignment";
+      bar.append(bk, where); box.append(bar, card(one));
+      return;
+    }
+    if (viewId !== null) viewId = null;
     const match = a => !q || [a.title, a.task, a.work, "assignment " + a.n, courseName(a.course)].join(" ").toLowerCase().includes(q);
     const inCourse = a => course === "all" || a.course === course;
     const cls = CLASS.map(view).filter(inCourse).filter(match).sort((x, y) => (x.course || "").localeCompare(y.course || "") || (x.n || 0) - (y.n || 0));
@@ -390,12 +410,13 @@
         const b = document.createElement("button"); b.className = "aguide-b" + (a === latest ? " latest" : "");
         const st = classState[a.id] || {}, tk = (st.ticks || []).length;
         b.innerHTML = '<b></b><span></span>'; b.children[0].textContent = a.newcomer ? "New" : a.n; b.children[1].textContent = (a.newcomer ? "L1–7" : a.date ? niceDate(a.date).replace(/,? \d{4}$/, "") : "–") + (st.done ? " ✓" : tk ? " · " + tk + "/" + a.chars.length : "");
-        b.title = a.title; b.onclick = () => { open.add(a.id); store.set("aOpen", [...open]); render(); const el2 = document.getElementById("acard-" + a.id); if (el2) el2.scrollIntoView({ behavior: "smooth", block: "start" }); };
+        b.title = a.title; b.onclick = () => openView(a.id);
         row.appendChild(b);
       });
       g.appendChild(row); box.appendChild(g);
     }
-    section("From class", cls, q ? "No class assignment matches your search." : "Class assignments for " + (course === "all" ? "your courses" : courseName(course)) + " will appear here.");
+    if (course === "all" && cls.length) COURSES.forEach(([c]) => { const its = cls.filter(a => a.course === c); if (its.length) section(courseName(c), its, ""); });
+    else section(course === "all" ? "From class" : courseName(course), cls, q ? "No class assignment matches your search." : "Class assignments for " + (course === "all" ? "your courses" : courseName(course)) + " will appear here.");
     section("My own assignments", mine, q ? "None of your assignments match." : "Tap ＋ New to add your own.");
   }
 
@@ -428,7 +449,7 @@
     if (editing) Object.assign(editing, v);
     else {
       const a = Object.assign({ id: "a" + Date.now(), n: Math.max(0, ...list.map(x => x.n)) + 1, done: false }, v);
-      list.push(a); open.add(a.id); store.set("aOpen", [...open]);
+      list.push(a);
     }
     save(); userCloseForm(); render();
   });
