@@ -2,7 +2,7 @@
    App code (pages, scripts, word lists, homework) is fetched fresh whenever the phone is online,
    so every student gets new class assignments right away; the saved copy is used offline.
    Sounds live in their own long-lasting store (they never change), so updates stay small. */
-const VERSION = "chinese-study-v76";
+const VERSION = "chinese-study-v77";
 const AUDIO_CACHE = "chinese-study-audio-3";
 const MODEL_CACHE = "chinese-study-model-1";   // handwriting reader (6.5 MB) – downloaded the first time it is used, then kept
 const FILES = [
