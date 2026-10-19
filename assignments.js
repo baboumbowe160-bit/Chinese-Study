@@ -201,8 +201,14 @@
         if (got.has(sk)) show("right");
         row.append(inp, btn); r.append(qh, row);
         if (hint) {
-          const hb = mk("button", "aq-hintb", "💡 Hint"), ht = mk("p", "aq-hint", hint); ht.hidden = true;
-          hb.onclick = () => { ht.hidden = !ht.hidden; hb.textContent = ht.hidden ? "💡 Hint" : "💡 Hide hint"; };
+          // hints open one step at a time: a clue, then the parts, then the pinyin – never the answer itself
+          const steps = hint.split("||"), hb = mk("button", "aq-hintb", "💡 Hint"), ht = mk("div", "aq-hint"); ht.hidden = true;
+          let shown = 0;
+          const label = () => { hb.textContent = shown >= steps.length ? "💡 Hide hints" : shown ? "💡 More help (" + (shown + 1) + "/" + steps.length + ")" : "💡 Hint"; };
+          hb.onclick = () => {
+            if (shown >= steps.length) { shown = 0; ht.innerHTML = ""; ht.hidden = true; return label(); }
+            ht.append(mk("p", "aq-hstep", steps[shown])); shown++; ht.hidden = false; label();
+          };
           r.append(hb, ht);
         }
         r.append(fb); box.append(r);

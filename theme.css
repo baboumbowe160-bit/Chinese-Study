@@ -809,3 +809,5 @@ p.sp-t{margin:10px 0 4px;font-weight:700;font-size:.92rem}
 .sp-tones .sp-tone{display:flex;flex-direction:column;align-items:center;flex:1 1 70px}
 .sp-tone b{font-size:1.3rem}
 .sp-note{margin-top:4px}
+.aq-hint p.aq-hstep{margin:4px 0;padding:6px 10px;border-left:3px solid var(--gold);background:#fffaea;border-radius:6px}
+.aq-hint p.aq-hstep+p.aq-hstep{border-left-color:var(--seal)}
