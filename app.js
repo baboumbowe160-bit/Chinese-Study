@@ -538,9 +538,13 @@
       if (isZh) { if (w[0] === raw) score = 3; else if (w[0].includes(raw)) score = 2; }
       else {
         const p = plain(w[1]), m = (w[2] || "").toLowerCase();
-        if (p === q) score = 3; else if (p.startsWith(q)) score = 2.5; else if (p.includes(q)) score = 1.5;
-        if (new RegExp("(^|[^a-z])" + ql.replace(/[^a-z0-9 ]/g, "")).test(m)) score = Math.max(score, 2.2);
+        const e = ql.replace(/[^a-z0-9 ]/g, ""), whole = new RegExp("(^|[^a-z])" + e + "([^a-z]|$)"), start = new RegExp("(^|[^a-z])" + e);
+        if (p === q) score = 3; else if (p.startsWith(q)) score = q.length < 4 ? 1.2 : 2.5; else if (q.length > 3 && p.includes(q)) score = 1.5;
+        if (whole.test(m)) score = Math.max(score, 2.6);
+        else if (start.test(m)) score = Math.max(score, 2.2);
         else if (m.includes(ql)) score = Math.max(score, 1);
+        // also the usage note's first line (e.g. "was" finds 是 · to be – am / is / are / was / were)
+        if (score < 2.6 && e.length > 1 && window.NOTES && NOTES[w[0]]) { const n = (NOTES[w[0]].split(" · ")[1] || "").split(/[.(:]/)[0].toLowerCase(); if (whole.test(n)) score = Math.max(score, 2.3); }
       }
       if (score) hits.push({ score, si, wi, w });
     }));
