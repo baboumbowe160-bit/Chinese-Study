@@ -55,6 +55,12 @@ var RHYMES = [
             ["性相近，习相远。", "Xìng xiāng jìn, xí xiāng yuǎn.", "Our natures are alike; our habits make us different."]] },
 
   /* ---- classic poems ---- */
+  { id: "sanrenxing", cat: "poem", t: "三人行，必有我师", py: "Sān rén xíng, bì yǒu wǒ shī", en: "Among three people, there is a teacher", by: "孔子 Kǒngzǐ · Confucius · 《论语》 The Analects",
+    note: "One of the most famous sayings in China. 意思：几个人在一起，其中一定有值得我学习的人。好的地方我学习，不好的地方我改正。 – When people work together, there is always someone you can learn from: copy their good points, and fix in yourself what you see is wrong.", rhyme: [],
+    lines: [["子曰：", "Zǐ yuē:", "The Master (Confucius) said:"],
+            ["三人行，必有我师焉。", "Sān rén xíng, bì yǒu wǒ shī yān.", "When three people walk (work) together, there must be one I can learn from."],
+            ["择其善者而从之，", "Zé qí shàn zhě ér cóng zhī,", "I choose their good points and follow them,"],
+            ["其不善者而改之。", "qí bú shàn zhě ér gǎi zhī.", "and their bad points I correct in myself."]] },
   { id: "jingye", cat: "poem", t: "静夜思", py: "Jìng yè sī", en: "Quiet Night Thoughts", by: "李白 Lǐ Bái · Tang dynasty (701–762)",
     note: "The most famous poem in China – almost everyone can recite it. Homesick at night, the poet sees moonlight on the floor. Rhymes: guāng – shuāng – xiāng.", rhyme: ["光", "霜", "乡"],
     lines: [["床前明月光，", "Chuáng qián míng yuè guāng,", "Before my bed, the bright moonlight –"],
