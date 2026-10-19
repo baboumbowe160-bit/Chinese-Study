@@ -37,7 +37,7 @@
     const strip = $("sets"); strip.innerHTML = "";
     ALL.forEach((s, i) => {
       const b = document.createElement("button");
-      b.textContent = s[0] === "WB" ? "Workbook" : s[0].startsWith("WS") ? "Worksheet " + s[0].slice(2) : s[0][0] === "B" ? "Book " + ({ BV: "words", BP: "names+", BO: "old→new", BS: "extra", BC: "characters", BR: "radicals" }[s[0]] || "") : s[0] === "HN" ? "New students" : s[0][0] === "C" ? "Class " + (s[0].slice(1) || "1") : s[0][0] === "H" ? "Homework " + s[0].slice(1) : s[0] === "M" ? "Mine" : s[0] === "A" ? "＋ Added" : "L" + s[0];
+      b.textContent = s[0] === "WB" ? "Workbook" : s[0] === "S" ? "Supplementary" : s[0].startsWith("WS") ? "Worksheet " + s[0].slice(2) : s[0][0] === "B" ? "Book " + ({ BV: "words", BP: "names+", BO: "old→new", BS: "extra", BC: "characters", BR: "radicals" }[s[0]] || "") : s[0] === "HN" ? "New students" : s[0][0] === "C" ? "Class " + (s[0].slice(1) || "1") : s[0][0] === "H" ? "Homework " + s[0].slice(1) : s[0] === "M" ? "Mine" : s[0] === "A" ? "＋ Added" : "L" + s[0];
       b.setAttribute("aria-pressed", String(i === setIdx));
       b.onclick = () => { setIdx = i; wordIdx = 0; charIdx = 0; store.set("set", i); renderAll(); };
       strip.appendChild(b);
@@ -72,6 +72,29 @@
     $("count").textContent = done + " / " + total + " words passed";
   }
 
+  /* Part of speech and how to use the word – and each of its characters */
+  function noteLine(k) {
+    const t = window.NOTES && NOTES[k]; if (!t) return null;
+    const i = t.indexOf(" · "), p = document.createElement("p");
+    const b = document.createElement("b"); b.textContent = (k.length > 1 || i < 0 ? "" : "") + (i < 0 ? "" : t.slice(0, i));
+    if (i >= 0) p.append(b, document.createTextNode(" – " + t.slice(i + 3))); else p.textContent = t;
+    return p;
+  }
+  function showNote(word) {
+    const box = $("wnote"); if (!box) return; box.innerHTML = "";
+    const main = noteLine(word); if (main) box.append(main);
+    const cs = hanChars(word);
+    if (cs.length > 1) {
+      const parts = cs.map(c => [c, noteLine(c)]).filter(x => x[1]);
+      if (parts.length) {
+        const d = document.createElement("details"); d.className = "wnote-parts";
+        const sm = document.createElement("summary"); sm.textContent = "Each character"; d.append(sm);
+        parts.forEach(([c, p]) => { const z = document.createElement("span"); z.className = "wnote-c"; z.textContent = c; p.prepend(z); d.append(p); });
+        box.append(d);
+      }
+    }
+    box.hidden = !box.childNodes.length;
+  }
   function renderWord() {
     if (typeof repStop === "function") repStop(true);
     setTimeout(() => { try { prefetchNear(); } catch (e) {} }, 0);
@@ -83,6 +106,7 @@
     const w = W[wordIdx];
     $("py").textContent = w[1];
     $("mn").textContent = w[2];
+    showNote(w[0]);
     $("bDel").hidden = ALL[setIdx][0] !== "A";
     const cs = hanChars(w[0]);
     const row = $("chars"); row.innerHTML = "";
@@ -498,7 +522,7 @@
 
   /* ---- Search across every lesson ---- */
   const plain = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/ü/g, "v").replace(/[\s'’·-]/g, "");
-  function setName(s) { return s[0][0] === "B" ? "Book" : s[0][0] === "H" ? "Homework" : s[0][0] === "C" ? "Class" : s[0] === "M" ? "Mine" : s[0] === "A" ? "Added" : "L" + s[0]; }
+  function setName(s) { return s[0] === "S" ? "Supplementary" : s[0][0] === "B" ? "Book" : s[0][0] === "H" ? "Homework" : s[0][0] === "C" ? "Class" : s[0] === "M" ? "Mine" : s[0] === "A" ? "Added" : "L" + s[0]; }
   function doSearch() {
     const raw = $("q").value.trim(), box = $("results");
     if (!raw) { box.hidden = true; box.innerHTML = ""; return; }
