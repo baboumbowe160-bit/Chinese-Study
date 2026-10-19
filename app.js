@@ -54,6 +54,11 @@
     $("addcard").hidden = s[0] !== "A";
   }
 
+  // jump to the writing grid (again a moment later: the page grows while the character loads)
+  function goGrid() {
+    const go = () => { const bx = $("chars") || $("box"); if (bx) bx.scrollIntoView({ behavior: "auto", block: "start" }); };
+    requestAnimationFrame(go); setTimeout(go, 350);
+  }
   function renderWords() {
     const W = words(), box = $("words"); box.innerHTML = "";
     if (!W.length) { box.innerHTML = '<span class="empty">No words yet. Add one below.</span>'; }
@@ -64,7 +69,7 @@
       b.setAttribute("aria-label", w[0] + ", " + w[1] + ", " + w[2]);
       b.setAttribute("aria-pressed", String(i === wordIdx));
       if (wordDone(w[0])) b.classList.add("done");
-      b.onclick = () => { wordIdx = i; charIdx = 0; renderWords(); renderWord(); };
+      b.onclick = () => { wordIdx = i; charIdx = 0; renderWords(); renderWord(); goGrid(); };
       box.appendChild(b);
     });
     const total = ALL.reduce((n, s) => n + s[3].length, 0);
@@ -563,8 +568,7 @@
       b.children[2].textContent = h.w[2]; b.children[3].textContent = setName(ALL[h.si]);
       b.onclick = () => {
         setIdx = h.si; wordIdx = h.wi; charIdx = 0; store.set("set", h.si);
-        $("q").value = ""; box.hidden = true; renderAll();
-        $("practice").scrollIntoView({ behavior: "smooth", block: "start" });
+        $("q").value = ""; box.hidden = true; renderAll(); goGrid();
       };
       box.appendChild(b);
     });
@@ -632,8 +636,7 @@
       wordIdx = Math.max(0, wi); charIdx = ci;
       userTab("p"); renderAll();
       // go straight to the writing grid (twice: the page grows while the character loads)
-      const go = () => { const bx = $("chars") || $("box"); if (bx) bx.scrollIntoView({ behavior: "auto", block: "start" }); };
-      setTimeout(go, 60); setTimeout(go, 450);
+      setTimeout(goGrid, 60);
       return true;
     }
   };

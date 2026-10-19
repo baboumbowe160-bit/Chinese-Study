@@ -816,3 +816,4 @@ p.sp-t{margin:10px 0 4px;font-weight:700;font-size:.92rem}
 .wnote-parts summary{cursor:pointer;color:var(--seal-deep);font-weight:700;margin-top:4px;font-size:.82rem}
 .wnote-parts p{margin:4px 0 0}
 .wnote-c{font-family:"Noto Serif SC",serif;font-size:1.05rem;color:var(--ink);margin-right:6px}
+.appver{text-align:center;font-size:.72rem;color:var(--muted);margin:2px 0 0;order:99}
