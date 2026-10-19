@@ -604,12 +604,36 @@
   window.CS = { say: (text, btn) => play(text, false, btn) };
   // open a list (and a word in it) in the Write tab – used by Homework
   window.CSWrite = {
+    // open a word (or a single character) on the writing grid – from Homework, Learn or the Workbook
     open(setId, word) {
-      const si = ALL.findIndex(s => s[0] === setId); if (si < 0) return false;
+      const z = word ? [...String(word)].filter(isHan).join("") : "";
+      let si = ALL.findIndex(s => s[0] === setId), wi = -1, ci = 0;
+      const find = (s, exactOnly) => {
+        let i = s[3].findIndex(w => w[0] === z || hanChars(w[0]).join("") === z);
+        if (i >= 0) return [i, 0];
+        if (exactOnly || [...z].length !== 1) return null;
+        i = s[3].findIndex(w => hanChars(w[0]).includes(z));
+        return i >= 0 ? [i, hanChars(s[3][i][0]).indexOf(z)] : null;
+      };
+      if (z) {
+        let hit = si >= 0 && find(ALL[si], true);
+        if (!hit) for (let k = 0; k < ALL.length && !hit; k++) { const h = find(ALL[k], true); if (h) { si = k; hit = h; } }
+        if (!hit && si >= 0) hit = find(ALL[si], false);
+        if (!hit) for (let k = 0; k < ALL.length && !hit; k++) { const h = find(ALL[k], false); if (h) { si = k; hit = h; } }
+        if (!hit) {   // not in any list yet: practise it as a new word (strokes are fetched once)
+          userTab("p");
+          addWord(z, "", "", () => {}).then(ok => { if (ok) { const k = ALL.findIndex(s => s[0] === "A"); this.open("A", z); } });
+          return true;
+        }
+        [wi, ci] = hit;
+      }
+      if (si < 0) return false;
       setIdx = si; store.set("set", si);
-      const wi = word ? ALL[si][3].findIndex(w => w[0] === word) : 0; wordIdx = Math.max(0, wi); charIdx = 0;
+      wordIdx = Math.max(0, wi); charIdx = ci;
       userTab("p"); renderAll();
-      setTimeout(() => { const pr = $("practice"); if (pr) pr.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
+      // go straight to the writing grid (twice: the page grows while the character loads)
+      const go = () => { const bx = $("chars") || $("box"); if (bx) bx.scrollIntoView({ behavior: "auto", block: "start" }); };
+      setTimeout(go, 60); setTimeout(go, 450);
       return true;
     }
   };

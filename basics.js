@@ -83,7 +83,9 @@
     const data = strokeData(o.c);
     if (data && window.HanziWriter) {
       const bW = el("button", "ghost", "▶ Watch"), bT = el("button", "ghost", "✍ Trace");
-      row.append(bW, bT);
+      const bG = el("button", "ghost", "✍ Write 18×");
+      bG.onclick = () => { const c = o.c; userCloseSheet(); setTimeout(() => window.CSWrite && CSWrite.open(null, c), 80); };
+      row.append(bW, bT, bG);
       const size = Math.min(200, Math.round(window.innerWidth * 0.42));
       big.style.width = big.style.height = size + "px";
       sheetWriter = HanziWriter.create(w, o.c, {
