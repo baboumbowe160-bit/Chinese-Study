@@ -836,3 +836,10 @@ p.sp-t{margin:10px 0 4px;font-weight:700;font-size:.92rem}
 .rwp{color:var(--seal);font-size:.85rem}
 .rwd{flex-basis:100%;font-size:.8rem;color:var(--muted)}
 .rww{padding:4px 8px;font-size:.9rem;min-width:0}
+
+.radsub{margin:14px 0 4px;font-weight:700;font-size:.85rem;color:var(--ink)}
+.radsub.bk{color:var(--seal)}
+.radmore{margin-top:14px}
+.radmore summary{cursor:pointer;font-weight:700;font-size:.85rem;color:var(--muted);padding:8px 0}
+.exc.bk{position:relative;border-color:var(--gold,#d4a017);background:#fffaf0}
+.exc.bk::after{content:"📗";position:absolute;top:2px;right:4px;font-size:.6rem}

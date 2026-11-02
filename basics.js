@@ -844,7 +844,7 @@
   function radicals() {
     const p = $("bpane"); p.append(header("Radicals", "部"));
     const c1 = el("div", "b-card");
-    c1.innerHTML = "<p>A <b>radical</b> (部首 bùshǒu) is the part of a character that usually hints at its <b>meaning</b>. Chinese dictionaries have sorted characters by radical for centuries; the famous <b>Kangxi Dictionary</b> of 1716 used <b>214 radicals</b>, and that list is still the standard.</p><p>Example: 氵(water) appears in 汉, 没, 渴 (thirsty), 洗 (wash). 讠(speech) appears in 说, 语, 请, 谢, 读. Learn the common radicals and new characters become much easier to guess.</p><p class=\"hint\">Many radicals change shape when they sit beside other parts: 人 → 亻, 水 → 氵, 手 → 扌, 心 → 忄. Simplified Chinese also shortened some: 言 → 讠, 金 → 钅, 食 → 饣. Tap a radical to see its characters and at least 30 words made with it.</p>";
+    c1.innerHTML = "<p>A <b>radical</b> (部首 bùshǒu) is the part of a character that usually hints at its <b>meaning</b>. Chinese dictionaries have sorted characters by radical for centuries; the famous <b>Kangxi Dictionary</b> of 1716 used <b>214 radicals</b>, and that list is still the standard.</p><p>Example: 氵(water) appears in 汉, 没, 渴 (thirsty), 洗 (wash). 讠(speech) appears in 说, 语, 请, 谢, 读. Learn the common radicals and new characters become much easier to guess.</p><p class=\"hint\">Many radicals change shape when they sit beside other parts: 人 → 亻, 水 → 氵, 手 → 扌, 心 → 忄. Simplified Chinese also shortened some: 言 → 讠, 金 → 钅, 食 → 饣. Tap a radical to see its characters and words: 📗 your HSK 1 book words come first, then simple words.</p>";
     p.append(c1);
     const ctl = el("div", "radctl");
     const q = el("input"); q.type = "search"; q.placeholder = "Search: water, 氵, shui, 85…"; q.id = "radQ"; q.value = radQ; q.setAttribute("aria-label", "Search radicals");
@@ -861,7 +861,7 @@
       if (r.v && r.v !== (r.s || r.r)) f.append(el("small", null, r.v));
       const t = el("span", "rt"); t.append(el("span", "rm", r.m), el("span", "rnum", "#" + r.n + (r.py ? " · " + r.py : "")));
       const W = window.RADWORDS && RADWORDS.rad[r.n];
-      if (W) t.append(el("span", "rcount", W.w.length + " words · " + W.c.length + " characters"));
+      if (W) { const nb = W.w.filter(x => x[3] === "b").length; t.append(el("span", "rcount", nb ? "📗 " + nb + " from your book · " + W.w.length + " words" : W.w.length + " words · " + W.c.length + " characters")); }
       b.append(f, t); b.onclick = () => showRad(r); return b;
     };
     function draw() {
@@ -898,10 +898,10 @@
     const own = new Set((W ? W.a : "") + forms.join(""));
     const mark = (w, box) => [...w].forEach(ch => { const s = el("span", own.has(ch) ? "rhl" : null, ch); box.append(s); });
     if (W && W.c.length) {
-      extra.append(el("p", "label", W.c.length + " characters with this radical (most common first)"));
+      extra.append(el("p", "label", W.c.length + " characters with this radical" + (W.c.some(x => x[3]) ? " · 📗 = in your book" : " (most common first)")));
       const g = el("div", "exgrid");
-      W.c.forEach(([c, py, d]) => {
-        const b = el("button", "exc"); b.innerHTML = '<span class="ez"></span><span class="ep"></span><span class="ed"></span>';
+      W.c.forEach(([c, py, d, bk]) => {
+        const b = el("button", bk ? "exc bk" : "exc"); b.innerHTML = '<span class="ez"></span><span class="ep"></span><span class="ed"></span>';
         b.children[0].textContent = c; b.children[1].textContent = py; b.children[2].textContent = d;
         b.onclick = () => sayChar(c, b);
         g.append(b);
@@ -915,17 +915,29 @@
     }
     if (W && W.w.length) {
       extra.append(el("p", "label", W.w.length + " words made with it" + (W.w.length < 30 ? " (a rare radical – these are all the words in use)" : "")));
-      const list = el("div", "radwords");
-      W.w.forEach(([w, py, d]) => {
+      const row = ([w, py, d]) => {
         const row = el("div", "rw");
         const z = el("span", "rwz"); mark(w, z);
         const t = el("span", "rwt"); t.append(z, el("span", "rwp", py), el("span", "rwd", d));
         const say = el("button", "say mini"); say.innerHTML = sayIcon; say.setAttribute("aria-label", "Listen to " + w); say.onclick = () => window.CSSay && CSSay(w, say);
         const wr = el("button", "ghost rww", "✍"); wr.title = "Practise writing " + w; wr.setAttribute("aria-label", "Practise writing " + w);
         wr.onclick = () => { userCloseSheet(); setTimeout(() => window.CSWrite && CSWrite.open(null, w), 80); };
-        row.append(t, say, wr); list.append(row);
+        row.append(t, say, wr); return row;
+      };
+      const parts = [["b", "📗 From your book (HSK 1)"], ["c", "From your classes"], ["s", "Simple words (HSK 2–3)"], ["h", "Harder words – for later"]];
+      if (!W.w.some(x => x[3] === "b")) extra.append(el("p", "hint", W.w.some(x => x[3] === "s" || x[3] === "c") ? "None of the HSK 1 book words use this radical – start with the simple words." : "No HSK 1–3 words use this radical – these words are for later."));
+      parts.forEach(([k, title]) => {
+        const ws = W.w.filter(x => (x[3] || "h") === k);
+        if (!ws.length) return;
+        const list = el("div", "radwords"); ws.forEach(x => list.append(row(x)));
+        if (k === "h") {
+          const det = el("details", "radmore"); const sm = el("summary", null, title + " (" + ws.length + ")");
+          if (ws.length === W.w.length) det.open = true;      // nothing simpler to show first
+          det.append(sm, list); extra.append(det);
+        } else {
+          extra.append(el("p", "radsub" + (k === "b" ? " bk" : ""), title + " · " + ws.length), list);
+        }
       });
-      extra.append(list);
     }
     extra.append(el("p", "hint", "Tap a character or the speaker to hear it · ✍ opens the word on the writing grid. The radical's characters are in red."));
     const fm = [r.v && r.v !== r.r ? "Side form: " + r.v : "", r.s ? "Simplified: " + r.s : ""].filter(Boolean).join(" · ");
