@@ -180,5 +180,19 @@ var CLASS_ASSIGNMENTS = [
       ["例子", "lìzi", "example", "49"],
       ["带", "dài", "ribbon, belt; to bring", "50"],
       ["例外", "lìwài", "exception", "51"]
+    ] },
+  { id: "c3-7", course: "c3", n: 7, sheet: "sheets/chinese3-assignment-7.pdf", title: "Character writing 7 – Lessons 14 and 15 words (27 words)", date: "2026-10-26", dateNote: "Given in the week of 26 October 2026 · HSK Standard Course 1, Lessons 14–15, New Words", set: "H7", times: 18,
+    task: "Write every new word from Lessons 14 and 15 of the book 18 times, clearly, in your exercise book.\nWords are kept whole, in the book's order (L14 = Lesson 14). Tap a word to watch its stroke order and practise it first.",
+    marks: [["漂", "漂亮 piàoliang: 漂 has 氵 (water) on the left. 亮 is said liang (no tone) in this word."], ["服", "衣服 yīfu: the left side of 服 is 月. 服 is said fu (no tone) in this word."], ["识", "认识 rènshi: both characters have 讠 (speech) on the left."], ["机", "机 = 木 (wood) + 几. The same 机 is in 飞机 and 手机."], ["租", "租 (in 出租车) = 禾 + 且."], ["些", "些 = 此 on top of 二."], ["张", "张 Zhāng is a surname here: 张先生 = Mr Zhang."]],
+    tips: [["少", "少 shǎo (few) is not 小 xiǎo (small): 少 has one more stroke, a 丿 at the bottom."], ["回来", "回来 huílai: 来 has no tone in this word."], ["一点儿", "一点儿 yìdiǎnr: 一 changes to yì before 点."]],
+    words: [],
+    chars: [
+      ["东西", "dōngxi", "thing", "L14"], ["一点儿", "yìdiǎnr", "a little", "L14"], ["苹果", "píngguǒ", "apple", "L14"], ["看见", "kànjiàn", "to see", "L14"],
+      ["先生", "xiānsheng", "Mr., sir", "L14"], ["开", "kāi", "to drive", "L14"], ["车", "chē", "car", "L14"], ["回来", "huílai", "to come back", "L14"],
+      ["分钟", "fēnzhōng", "minute", "L14"], ["后", "hòu", "after", "L14"], ["衣服", "yīfu", "clothes", "L14"], ["漂亮", "piàoliang", "pretty", "L14"],
+      ["啊", "a", "particle", "L14"], ["少", "shǎo", "few", "L14"], ["不少", "bù shǎo", "many", "L14"], ["这些", "zhèxiē", "these", "L14"],
+      ["都", "dōu", "all", "L14"], ["张", "Zhāng", "Zhang (surname)", "L14"], ["认识", "rènshi", "to know, meet", "L15"], ["年", "nián", "year", "L15"],
+      ["大学", "dàxué", "university", "L15"], ["饭店", "fàndiàn", "restaurant, hotel", "L15"], ["出租车", "chūzūchē", "taxi", "L15"], ["一起", "yìqǐ", "together", "L15"],
+      ["高兴", "gāoxìng", "happy", "L15"], ["听", "tīng", "to listen", "L15"], ["飞机", "fēijī", "airplane", "L15"]
     ] }
 ];
