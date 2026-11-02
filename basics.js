@@ -834,54 +834,102 @@
   }
 
   /* ---------- 4. Radicals ---------- */
-  let radFilter = store.get("radFilter", "common"), radQ = "";
+  let radFilter = store.get("radFilter", "common"), radView = store.get("radView", "meaning"), radQ = "";
+  // characters and words for every radical live in their own file, loaded the first time Radicals opens
+  function loadRadWords(cb) {
+    if (window.RADWORDS) return cb();
+    const sc = document.createElement("script"); sc.src = "radical-words.js";
+    sc.onload = cb; sc.onerror = cb; document.head.append(sc);
+  }
   function radicals() {
     const p = $("bpane"); p.append(header("Radicals", "部"));
     const c1 = el("div", "b-card");
-    c1.innerHTML = "<p>A <b>radical</b> (部首 bùshǒu) is the part of a character that usually hints at its <b>meaning</b>. Chinese dictionaries have sorted characters by radical for centuries; the famous <b>Kangxi Dictionary</b> of 1716 used <b>214 radicals</b>, and that list is still the standard.</p><p>Example: 氵(water) appears in 汉, 没, 渴 (thirsty), 洗 (wash). 讠(speech) appears in 说, 语, 请, 谢, 读. Learn the common radicals and new characters become much easier to guess.</p><p class=\"hint\">Many radicals change shape when they sit beside other parts: 人 → 亻, 水 → 氵, 手 → 扌, 心 → 忄. Simplified Chinese also shortened some: 言 → 讠, 金 → 钅, 食 → 饣.</p>";
+    c1.innerHTML = "<p>A <b>radical</b> (部首 bùshǒu) is the part of a character that usually hints at its <b>meaning</b>. Chinese dictionaries have sorted characters by radical for centuries; the famous <b>Kangxi Dictionary</b> of 1716 used <b>214 radicals</b>, and that list is still the standard.</p><p>Example: 氵(water) appears in 汉, 没, 渴 (thirsty), 洗 (wash). 讠(speech) appears in 说, 语, 请, 谢, 读. Learn the common radicals and new characters become much easier to guess.</p><p class=\"hint\">Many radicals change shape when they sit beside other parts: 人 → 亻, 水 → 氵, 手 → 扌, 心 → 忄. Simplified Chinese also shortened some: 言 → 讠, 金 → 钅, 食 → 饣. Tap a radical to see its characters and at least 30 words made with it.</p>";
     p.append(c1);
     const ctl = el("div", "radctl");
     const q = el("input"); q.type = "search"; q.placeholder = "Search: water, 氵, shui, 85…"; q.id = "radQ"; q.value = radQ; q.setAttribute("aria-label", "Search radicals");
-    const seg = el("div", "voices");
-    [["common", "Most useful (60)"], ["all", "All 214"]].forEach(([v, l]) => { const b = el("button", null, l); b.setAttribute("aria-pressed", String(radFilter === v)); b.onclick = () => { radFilter = v; store.set("radFilter", v); draw(); seg.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); }; seg.append(b); });
-    ctl.append(q, seg); p.append(ctl);
+    const seg = (opts, cur, set) => { const g = el("div", "voices"); opts.forEach(([v, l]) => { const b = el("button", null, l); b.setAttribute("aria-pressed", String(cur() === v)); b.onclick = () => { set(v); draw(); g.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); }; g.append(b); }); return g; };
+    const v1 = seg([["meaning", "By meaning"], ["strokes", "By strokes"]], () => radView, v => { radView = v; store.set("radView", v); });
+    const v2 = seg([["common", "Most useful (60)"], ["all", "All 214"]], () => radFilter, v => { radFilter = v; store.set("radFilter", v); });
+    ctl.append(q, v1, v2); p.append(ctl);
     const out = el("div", "radlist"); p.append(out);
     const plainPy = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    const byN = {}; B.radicals.forEach(r => byN[r.n] = r);
+    const tile = r => {
+      const b = el("button", "rad");
+      const f = el("span", "rf"); f.textContent = r.s || r.r;
+      if (r.v && r.v !== (r.s || r.r)) f.append(el("small", null, r.v));
+      const t = el("span", "rt"); t.append(el("span", "rm", r.m), el("span", "rnum", "#" + r.n + (r.py ? " · " + r.py : "")));
+      const W = window.RADWORDS && RADWORDS.rad[r.n];
+      if (W) t.append(el("span", "rcount", W.w.length + " words · " + W.c.length + " characters"));
+      b.append(f, t); b.onclick = () => showRad(r); return b;
+    };
     function draw() {
       out.innerHTML = "";
       const qq = radQ.trim().toLowerCase();
-      const list = B.radicals.filter(r => (radFilter === "all" || r.common || qq) && (!qq ||
-        r.r === qq || r.s === qq || r.v === qq || String(r.n) === qq || r.m.includes(qq) || (plainPy(r.py) && plainPy(r.py) === plainPy(qq)) || r.o.toLowerCase().includes(qq) || r.ex.some(e => e[0] === qq)));
+      const ok = r => (radFilter === "all" || r.common || qq) && (!qq ||
+        r.r === qq || r.s === qq || r.v === qq || String(r.n) === qq || r.m.includes(qq) || (plainPy(r.py) && plainPy(r.py) === plainPy(qq)) || r.o.toLowerCase().includes(qq) || r.ex.some(e => e[0] === qq) ||
+        (window.RADWORDS && RADWORDS.rad[r.n] && RADWORDS.rad[r.n].a.includes(qq)));
+      const list = B.radicals.filter(ok);
       if (!list.length) { out.append(el("p", "empty", "No radical found.")); return; }
-      let lastSt = 0;
-      list.forEach(r => {
-        if (r.st !== lastSt) { lastSt = r.st; out.append(el("div", "radgroup", r.st + " stroke" + (r.st > 1 ? "s" : ""))); }
-        const b = el("button", "rad");
-        const f = el("span", "rf"); f.textContent = r.r + (r.v && r.v !== r.r ? " " + r.v : "") + (r.s ? " " + r.s : "");
-        const t = el("span", "rt"); const m = el("span", "rm", r.m); const n = el("span", "rnum", "#" + r.n + (r.py ? " · " + r.py : ""));
-        t.append(m, n); b.append(f, t);
-        b.onclick = () => showRad(r);
-        out.append(b);
-      });
+      if (radView === "meaning" && window.RADWORDS) {
+        RADWORDS.cats.forEach(([icon, name, nums]) => {
+          const rs = nums.map(n => byN[n]).filter(r => r && list.includes(r)).sort((a, b) => (b.common - a.common) || a.n - b.n);
+          if (!rs.length) return;
+          const h = el("div", "radgroup radcat"); h.append(el("span", "rci", icon), el("span", null, name + " · " + rs.length)); out.append(h);
+          const g = el("div", "radgrid"); rs.forEach(r => g.append(tile(r))); out.append(g);
+        });
+      } else {
+        let lastSt = 0, g = null;
+        list.forEach(r => {
+          if (r.st !== lastSt) { lastSt = r.st; out.append(el("div", "radgroup", r.st + " stroke" + (r.st > 1 ? "s" : ""))); g = el("div", "radgrid"); out.append(g); }
+          g.append(tile(r));
+        });
+      }
     }
     q.addEventListener("input", () => { radQ = q.value; draw(); });
     draw();
+    loadRadWords(draw);
   }
   function showRad(r) {
     const extra = el("div");
-    if (r.ex.length) {
-      extra.append(el("p", "label", "Characters with this radical (HSK 1–3)"));
+    const W = window.RADWORDS && RADWORDS.rad[r.n];
+    const forms = [r.s || r.r, r.v, r.r].filter((x, i, a) => x && a.indexOf(x) === i);
+    const own = new Set((W ? W.a : "") + forms.join(""));
+    const mark = (w, box) => [...w].forEach(ch => { const s = el("span", own.has(ch) ? "rhl" : null, ch); box.append(s); });
+    if (W && W.c.length) {
+      extra.append(el("p", "label", W.c.length + " characters with this radical (most common first)"));
       const g = el("div", "exgrid");
-      r.ex.forEach(([c, py, d]) => {
+      W.c.forEach(([c, py, d]) => {
         const b = el("button", "exc"); b.innerHTML = '<span class="ez"></span><span class="ep"></span><span class="ed"></span>';
         b.children[0].textContent = c; b.children[1].textContent = py; b.children[2].textContent = d;
         b.onclick = () => sayChar(c, b);
         g.append(b);
       });
-      extra.append(g, el("p", "hint", "Tap a character to hear it."));
+      extra.append(g);
+    } else if (r.ex.length) {
+      extra.append(el("p", "label", "Characters with this radical"));
+      const g = el("div", "exgrid");
+      r.ex.forEach(([c, py, d]) => { const b = el("button", "exc"); b.innerHTML = '<span class="ez"></span><span class="ep"></span><span class="ed"></span>'; b.children[0].textContent = c; b.children[1].textContent = py; b.children[2].textContent = d; b.onclick = () => sayChar(c, b); g.append(b); });
+      extra.append(g);
     }
-    const forms = [r.v && r.v !== r.r ? "Side form: " + r.v : "", r.s ? "Simplified: " + r.s : ""].filter(Boolean).join(" · ");
-    openSheet({ c: r.s || r.r, py: r.py, mean: "Radical " + r.n + ": " + r.m, forms: (r.s ? "Traditional: " + r.r + " · " : "") + forms, story: r.o || "", extra });
+    if (W && W.w.length) {
+      extra.append(el("p", "label", W.w.length + " words made with it" + (W.w.length < 30 ? " (a rare radical – these are all the words in use)" : "")));
+      const list = el("div", "radwords");
+      W.w.forEach(([w, py, d]) => {
+        const row = el("div", "rw");
+        const z = el("span", "rwz"); mark(w, z);
+        const t = el("span", "rwt"); t.append(z, el("span", "rwp", py), el("span", "rwd", d));
+        const say = el("button", "say mini"); say.innerHTML = sayIcon; say.setAttribute("aria-label", "Listen to " + w); say.onclick = () => window.CSSay && CSSay(w, say);
+        const wr = el("button", "ghost rww", "✍"); wr.title = "Practise writing " + w; wr.setAttribute("aria-label", "Practise writing " + w);
+        wr.onclick = () => { userCloseSheet(); setTimeout(() => window.CSWrite && CSWrite.open(null, w), 80); };
+        row.append(t, say, wr); list.append(row);
+      });
+      extra.append(list);
+    }
+    extra.append(el("p", "hint", "Tap a character or the speaker to hear it · ✍ opens the word on the writing grid. The radical's characters are in red."));
+    const fm = [r.v && r.v !== r.r ? "Side form: " + r.v : "", r.s ? "Simplified: " + r.s : ""].filter(Boolean).join(" · ");
+    openSheet({ c: r.s || r.r, py: r.py, mean: "Radical " + r.n + ": " + r.m, forms: (r.s ? "Traditional: " + r.r + " · " : "") + fm, story: r.o || "", extra });
   }
 
   /* ---------- 5. Picture characters ---------- */
